@@ -468,6 +468,8 @@ class VirtualBar {
         };
         this.scene.add(doorGroup);*/
 
+        
+
         // Grupo del inodoro completo
         const toiletGroup = new THREE.Group();
 
