@@ -86,9 +86,11 @@ class VirtualBar {
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
 
+
+        
         // Inicializar WebSocket
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        this.socket = new WebSocket(`wss://${window.location.hostname}:3000`);
+        this.socket = new WebSocket(`${protocol}//${window.location.hostname}:3000`);
 
         this.socket.addEventListener('open', () => {
             this.setupNetworking();
