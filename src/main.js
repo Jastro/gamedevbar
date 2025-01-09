@@ -75,6 +75,7 @@ class VirtualBar {
         this.socket.addEventListener('open', () => {
             this.setupNetworking();
             this.init();
+            setTimeout(loadPaintings, 500)
         });
     }
 
@@ -1050,7 +1051,6 @@ class VirtualBar {
 
 // Iniciar la aplicación
 const app = new VirtualBar();
-setTimeout(loadPaintings, 1000);
 
 // Manejar resize
 window.addEventListener("resize", () => {
