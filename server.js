@@ -6,6 +6,8 @@ const { WebSocketServer } = require('ws');
 const http = require('http');
 const { v4: uuidv4 } = require('uuid');
 
+const CHAT_LOG_HISTORY_MAX_LENGTH = 50;
+
 // Crear servidor HTTP
 const server = http.createServer(app);
 
@@ -23,6 +25,9 @@ app.get('/', (req, res) => {
 // Almacenar estado del servidor
 const users = new Map(); // Mapa de usuarios conectados
 const seats = new Map(); // Mapa de asientos ocupados
+
+// Chat log history
+const ChatLog = new Array();
 
 class User {
     constructor(ws) {
@@ -56,40 +61,43 @@ wss.on('connection', (ws, req) => {
     const user = new User(ws);
     users.set(ws, user);
 
-    // Enviar ID al nuevo usuario
-    ws.send(JSON.stringify({
-        type: 'init',
-        userId: user.id
-    }));
-
-    // Informar a todos los demás usuarios sobre el nuevo usuario
-    broadcast(ws, {
-        type: 'userJoined',
-        userId: user.id,
-        username: user.username,
-        position: user.position,
-        rotation: user.rotation
-    });
-
-    // Enviar al nuevo usuario información sobre los usuarios existentes
-    users.forEach((existingUser, existingWs) => {
-        if (existingWs !== ws) {
-            ws.send(JSON.stringify({
-                type: 'userJoined',
-                userId: existingUser.id,
-                username: existingUser.username,
-                position: existingUser.position,
-                rotation: existingUser.rotation,
-                seatId: existingUser.seatId
-            }));
-        }
-    });
-
     ws.on('message', (message) => {
         const data = JSON.parse(message);
         const user = users.get(ws);
 
         switch (data.type) {
+            case 'initCompleted':
+                user.username = data.username;
+
+                // Informar a todos los demás usuarios sobre el nuevo usuario
+                broadcast(ws, {
+                    type: 'userJoined',
+                    userId: user.id,
+                    username: user.username,
+                    position: user.position,
+                    rotation: user.rotation
+                });
+
+                // Enviar al nuevo usuario información sobre los usuarios existentes
+                users.forEach((existingUser, existingWs) => {
+                    if (existingWs !== ws) {
+                        ws.send(JSON.stringify({
+                            type: 'userJoined',
+                            userId: existingUser.id,
+                            username: existingUser.username,
+                            position: existingUser.position,
+                            rotation: existingUser.rotation,
+                            seatId: existingUser.seatId
+                        }));
+                    }
+                });
+
+                // Send cached chat logs to new user
+                ChatLog.forEach((chatLogEntry) => {
+                    ws.send(JSON.stringify(chatLogEntry));
+                });
+                break;
+
             case 'duelRequest':
                 const targetClient = [...wss.clients].find(client => users.get(client).id === data.targetId);
                 if (targetClient) {
@@ -174,13 +182,23 @@ wss.on('connection', (ws, req) => {
                 break;
 
             case 'userChat':
-                broadcast(ws, {
+                let messageData = {
                     type: 'userChat',
                     userId: user.id,
                     username: user.username,
                     message: data.message,
                     isEmote: data.isEmote
-                });
+                };
+
+                // Add message to chat log
+                ChatLog.push(messageData);
+
+                // Remove oldest entry if we are over the limit
+                if (ChatLog.length > CHAT_LOG_HISTORY_MAX_LENGTH) {
+                    ChatLog.shift();
+                }
+
+                broadcast(ws, messageData);
                 break;
         }
     });
@@ -205,6 +223,12 @@ wss.on('connection', (ws, req) => {
     ws.on('error', (error) => {
         console.error('WebSocket error:', error);
     });
+
+    // Enviar ID al nuevo usuario
+    ws.send(JSON.stringify({
+        type: 'init',
+        userId: user.id
+    }));
 });
 
 const PORT = process.env.PORT || 3000;
