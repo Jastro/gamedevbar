@@ -6,7 +6,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/ws': {
-        target: 'ws://localhost:3000',
+        target: 'wss://localhost:3000',
         ws: true,
         changeOrigin: true
       }
