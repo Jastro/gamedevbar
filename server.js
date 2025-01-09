@@ -36,7 +36,6 @@ class User {
 
 // Enviar mensaje a todos excepto al remitente
 function broadcast(ws, message) {
-    console.log("Broadcasting:", message.type);
     wss.clients.forEach(client => {
         client.send(JSON.stringify(message));
     });
@@ -52,7 +51,6 @@ function broadcastAll(message) {
 // Manejo de conexiones WebSocket
 wss.on('connection', (ws, req) => {
     const ip = req.socket.remoteAddress;
-    console.log(`New connection from: ${ip}`);
 
     const user = new User(ws);
     users.set(ws, user);

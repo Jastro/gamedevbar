@@ -178,9 +178,7 @@ class VirtualBar {
     }
 
     addOtherUser(userId, position) {
-        console.log("Adding user:", userId, position);
         if (this.users.has(userId)) {
-            console.log("User already exists:", userId);
             return;
         }
 
@@ -192,7 +190,6 @@ class VirtualBar {
 
         const user = this.createUser(userId, pos);
         this.users.set(userId, user);
-        console.log("Users after adding:", Array.from(this.users.keys()));
     }
 
     setupNetworking() {
@@ -202,12 +199,10 @@ class VirtualBar {
 
         this.socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log("Received message:", data.type);
 
             switch (data.type) {
                 case "init":
                     this.userId = data.userId;
-                    console.log("Got user ID:", this.userId);
                     break;
 
                 case "userJoined":
@@ -306,7 +301,6 @@ class VirtualBar {
         ];
 
         paintingPositions.forEach((pos, index) => {
-            console.log('paintingPositions', pos.rotation, index);
             this.createPainting(pos.x, pos.y, pos.z, pos.rotation, index);
         });
     }
@@ -949,10 +943,8 @@ function loadPaintings() {
 
     // Luego asigna las imágenes en orden
     paintingsInfo.forEach((painting, index) => {
-        console.log(index);
         // Asumiendo que tus imágenes se llaman imagen1.jpg, imagen2.jpg, etc.
         const imageUrl = `/paintings/imagen${index + 1}.jpg`;
-        console.log(imageUrl);
         app.loadImageToPainting(painting.id, imageUrl);
     });
 }
