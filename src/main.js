@@ -61,7 +61,7 @@ class VirtualBar {
         this.createWalls();
         this.createBar();
         this.createFurniture();
-        //this.createBathroom();
+        this.createBathroom();
         this.setupEventListeners();
         this.animate();
     }
@@ -407,7 +407,7 @@ class VirtualBar {
             new THREE.BoxGeometry(0.2, height, 1.4), // 1.4 es el ancho menos la puerta
             wallMaterial
         );
-        doorWall.position.set(11, height / 2, -7.3);
+        doorWall.position.set(11.7, height / 2, -4);
         doorWall.rotation.y = Math.PI / 2;
         this.scene.add(doorWall);
 
@@ -415,26 +415,26 @@ class VirtualBar {
             new THREE.BoxGeometry(0.2, height, 1.4),
             wallMaterial
         );
-        doorWall2.position.set(11, height / 2, -6);
+        doorWall2.position.set(14.3, height / 2, -4);
         doorWall2.rotation.y = Math.PI / 2;
         this.scene.add(doorWall2);
 
         // Techo
         const ceiling = new THREE.Mesh(
             new THREE.BoxGeometry(4.2, 0.2, 4),
-            wall2Material
+            wallMaterial
         );
         ceiling.position.set(13, 2.9, -6);
         this.scene.add(ceiling);
 
-        const doorGroup = new THREE.Group();
+        /*const doorGroup = new THREE.Group();
         doorGroup.position.set(11, 0, -6); // Posición base del grupo
 
         // Crear puerta
         const doorGeometry = new THREE.BoxGeometry(1.4, 2.5, 0.1);
         const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
         const door = new THREE.Mesh(doorGeometry, doorMaterial);
-        door.position.set(0.7, 1.25, 0); // Mover la mitad del ancho en X para que gire desde el borde
+        door.position.set(2, 1.25, 2); // Mover la mitad del ancho en X para que gire desde el borde
         doorGroup.add(door);
 
         // Señalización en la puerta
@@ -466,7 +466,7 @@ class VirtualBar {
             originalRotation: 0,
             isAnimating: false
         };
-        this.scene.add(doorGroup);
+        this.scene.add(doorGroup);*/
 
         // Grupo del inodoro completo
         const toiletGroup = new THREE.Group();
