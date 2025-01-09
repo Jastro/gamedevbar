@@ -8,7 +8,49 @@
       body { 
         margin: 0; 
         overflow: hidden;
+        background-color: #323639;
       }
+
+      #username-dialog {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.9);
+        padding: 20px;
+        border-radius: 8px;
+        z-index: 2000;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        width: 100%;
+        height: 100%;
+      }
+
+      #username-dialog input {
+        margin: 10px 0;
+        padding: 8px;
+        width: 200px;
+        border: none;
+        border-radius: 4px;
+      }
+
+      #username-dialog button {
+        color: #f9fcff;
+        background-color: #dc5a0b;
+        border-color: #ab4609;
+        padding: 8px 16px;
+        border-style: solid;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      #username-dialog button:hover {
+        color: #f9fcff;
+        background-color: #ab4609;
+        border-color: #712e06;
+      }
+
       #chat-input {
         position: fixed;
         bottom: 20px;
@@ -21,7 +63,6 @@
         font-size: 16px;
       }
       
-      /* Nuevo estilo para el área de chat */
       #chat-box {
         position: fixed;
         left: 20px;
@@ -60,11 +101,21 @@
         color: #ff69b4;
         font-style: italic;
       }
+      
+      .hidden {
+        display: none !important;
+      }
     </style>
   </head>
   <body>
-    <div id="chat-box"></div>
-    <input type="text" id="chat-input" placeholder="Escribe tu mensaje... (Enter para enviar, /me para emotes)" />
+    <div id="username-dialog">
+      <h3>Bienvenido al Bar Virtual de Gamedev Mediavida</h3>
+      <input type="text" id="username-input" placeholder="Introduce tu nombre" maxlength="15" />
+      <br>
+      <button id="start-button">Entrar al Bar</button>
+    </div>
+    <div id="chat-box" class="hidden"></div>
+    <input type="text" id="chat-input" placeholder="Escribe tu mensaje... (Enter para enviar, /me para emotes)" class="hidden" />
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

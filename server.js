@@ -28,6 +28,7 @@ class User {
     constructor(ws) {
         this.id = uuidv4();
         this.ws = ws;
+        this.username = null;
         this.position = { x: 0, y: 1, z: 0 };
         this.rotation = 0;
         this.seatId = null;
@@ -87,6 +88,15 @@ wss.on('connection', (ws, req) => {
         const user = users.get(ws);
 
         switch (data.type) {
+            case 'setUsername':
+                user.username = data.username;
+                // Informar a todos los usuarios del nuevo username
+                broadcast(ws, {
+                    type: 'userUsername',
+                    userId: user.id,
+                    username: data.username
+                });
+                break;
             case 'userMoved':
                 user.position = data.position;
                 user.rotation = data.rotation;

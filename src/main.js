@@ -3,14 +3,9 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 class VirtualBar {
     constructor() {
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(
-            75,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            1000
-        );
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
         this.users = new Map();
         this.moveSpeed = 0.1;
         this.keysPressed = {};
@@ -26,19 +21,15 @@ class VirtualBar {
         this.userId = null;
         this.lastSentPosition = undefined;
         this.lastSentRotation = undefined;
+        this.username = null;
+        this.socket = null;
+
         this.previousPosition = null;
         this.previousRotation = null;
         this.cameraTarget = new THREE.Vector3();
         this.transitioningFromSeat = false;
 
-        // Usar URL relativa para WebSocket
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        this.socket = new WebSocket(`${protocol}//${window.location.host}`);
-
-        this.socket.addEventListener('open', () => {
-            this.setupNetworking();
-            this.init();
-        });
+        this.setupUsernameDialog();
     }
 
     init() {
@@ -63,6 +54,56 @@ class VirtualBar {
         this.createFurniture();
         this.setupEventListeners();
         this.animate();
+    }
+
+    initializeGame() {
+        // Inicializar Three.js
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+
+        // Inicializar WebSocket
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        this.socket = new WebSocket(`${protocol}//${window.location.host}`);
+
+        this.socket.addEventListener('open', () => {
+            this.setupNetworking();
+            this.init();
+        });
+    }
+
+
+    setupUsernameDialog() {
+        const dialog = document.getElementById('username-dialog');
+        const usernameInput = document.getElementById('username-input');
+        const startButton = document.getElementById('start-button');
+        const chatInput = document.getElementById('chat-input');
+        const chatBox = document.getElementById('chat-box'); // Añadir esta línea
+    
+        startButton.addEventListener('click', () => {
+            const username = usernameInput.value.trim();
+            if (username) {
+                this.username = username;
+                dialog.classList.add('hidden');
+                chatInput.classList.remove('hidden');
+                chatBox.classList.remove('hidden'); // Añadir esta línea
+                
+                // Iniciar todo después de tener el username
+                this.initializeGame();
+            }
+        });
+    
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                startButton.click();
+            }
+        });
     }
 
     removeOtherUser(userId) {
@@ -218,7 +259,10 @@ class VirtualBar {
 
     setupNetworking() {
         this.socket.onopen = () => {
-            console.log("Connected to server");
+            this.socket.send(JSON.stringify({
+                type: 'setUsername',
+                username: this.username
+            }));
         };
 
         this.socket.onmessage = (event) => {
@@ -806,43 +850,45 @@ class VirtualBar {
     updateUserChat(id, message, isEmote = false) {
         const user = this.users.get(id);
         if (!user) return;
-    
-        // Actualizar el texto sobre la cabeza (mantenemos la funcionalidad existente)
+
+        // Actualizar el texto sobre la cabeza
         const { canvas, context, texture, sprite } = user;
-    
+
         if (user.chatTimeout) {
             clearTimeout(user.chatTimeout);
         }
-    
+
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = isEmote ? "#ff69b4" : "#ffffff";
         context.font = "24px Arial";
         context.textAlign = "center";
         context.textBaseline = "middle";
         context.fillText(message, canvas.width / 2, canvas.height / 2);
-    
+
         texture.needsUpdate = true;
-    
+
         user.chatTimeout = setTimeout(() => {
             context.clearRect(0, 0, canvas.width, canvas.height);
             texture.needsUpdate = true;
         }, 5000);
-    
+
         // Añadir mensaje al chat-box
         const chatBox = document.getElementById('chat-box');
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${isEmote ? 'emote-message' : ''}`;
-        
+
+        // Usar el username si está disponible, si no usar el id
+        const displayName = id === 'local' ? this.username : user.username || id;
+
         if (isEmote) {
-            messageDiv.textContent = `* ${id} ${message}`;
+            messageDiv.textContent = `* ${displayName} ${message}`;
         } else {
-            messageDiv.textContent = `${id}: ${message}`;
+            messageDiv.textContent = `${displayName}: ${message}`;
         }
-        
+
         chatBox.appendChild(messageDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
-    
-        // Limitar el número de mensajes (opcional)
+
         while (chatBox.children.length > 50) {
             chatBox.removeChild(chatBox.firstChild);
         }
