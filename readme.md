@@ -27,7 +27,6 @@ git clone https://github.com/yourusername/virtualbar.git
 ```bash 
 cd virtualbar
 ```
-cd virtualbar
 
 Install dependencies
 
