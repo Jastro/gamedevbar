@@ -86,7 +86,7 @@ class VirtualBar {
         const startButton = document.getElementById('start-button');
         const chatInput = document.getElementById('chat-input');
         const chatBox = document.getElementById('chat-box'); // Añadir esta línea
-    
+
         startButton.addEventListener('click', () => {
             const username = usernameInput.value.trim();
             if (username) {
@@ -94,12 +94,12 @@ class VirtualBar {
                 dialog.classList.add('hidden');
                 chatInput.classList.remove('hidden');
                 chatBox.classList.remove('hidden'); // Añadir esta línea
-                
+
                 // Iniciar todo después de tener el username
                 this.initializeGame();
             }
         });
-    
+
         usernameInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 startButton.click();
@@ -224,7 +224,7 @@ class VirtualBar {
                     );
                 }
                 chatInput.value = "";
-                chatInput.blur();
+                chatInput.focus();
             }
         });
 
@@ -245,7 +245,7 @@ class VirtualBar {
 
     addOtherUser(userId, position) {
         if (this.users.has(userId)) {
-            return;
+            return this.users.get(userId);
         }
 
         const pos = new THREE.Vector3(
@@ -256,6 +256,7 @@ class VirtualBar {
 
         const user = this.createUser(userId, pos);
         this.users.set(userId, user);
+        return user;  // Devolver el usuario creado
     }
 
     setupNetworking() {
@@ -265,6 +266,7 @@ class VirtualBar {
                 username: this.username
             }));
         };
+
 
         this.socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
@@ -276,10 +278,18 @@ class VirtualBar {
 
                 case "userJoined":
                     if (data.userId !== this.userId) {
-                        this.addOtherUser(data.userId, data.position);
+                        const user = this.addOtherUser(data.userId, data.position);
+                        if (data.username) {
+                            user.username = data.username;
+                        }
                     }
                     break;
-
+                case "userUsername":
+                    const userToUpdate = this.users.get(data.userId);
+                    if (userToUpdate) {
+                        userToUpdate.username = data.username;
+                    }
+                    break;
                 case "userLeft":
                     this.removeOtherUser(data.userId);
                     break;
@@ -304,7 +314,7 @@ class VirtualBar {
 
                 case "userChat":
                     if (data.userId !== this.userId) {
-                        this.updateUserChat(data.userId, data.message, data.isEmote);
+                        this.updateUserChat(data.userId, data.message, data.isEmote, data.username);
                     }
                     break;
 
@@ -744,6 +754,7 @@ class VirtualBar {
             canvas: canvas,
             context: context,
             texture: texture,
+            username: id === 'local' ? this.username : null
         };
     }
 
@@ -848,11 +859,10 @@ class VirtualBar {
         // Aquí podrías añadir animación de levantarse si lo deseas
     }
 
-    updateUserChat(id, message, isEmote = false) {
+    updateUserChat(id, message, isEmote = false, username = null) {
         const user = this.users.get(id);
         if (!user) return;
 
-        // Actualizar el texto sobre la cabeza
         const { canvas, context, texture, sprite } = user;
 
         if (user.chatTimeout) {
@@ -873,13 +883,13 @@ class VirtualBar {
             texture.needsUpdate = true;
         }, 5000);
 
-        // Añadir mensaje al chat-box
+        // Añadir mensaje al chat-box con el username correcto
         const chatBox = document.getElementById('chat-box');
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${isEmote ? 'emote-message' : ''}`;
 
-        // Usar el username si está disponible, si no usar el id
-        const displayName = id === 'local' ? this.username : user.username || id;
+        // Usar el username guardado para cada usuario
+        const displayName = id === 'local' ? this.username : (username || user.username || 'borracho');
 
         if (isEmote) {
             messageDiv.textContent = `* ${displayName} ${message}`;

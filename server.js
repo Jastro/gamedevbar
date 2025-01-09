@@ -66,6 +66,7 @@ wss.on('connection', (ws, req) => {
     broadcast(ws, {
         type: 'userJoined',
         userId: user.id,
+        username: user.username,
         position: user.position,
         rotation: user.rotation
     });
@@ -76,6 +77,7 @@ wss.on('connection', (ws, req) => {
             ws.send(JSON.stringify({
                 type: 'userJoined',
                 userId: existingUser.id,
+                username: existingUser.username,
                 position: existingUser.position,
                 rotation: existingUser.rotation,
                 seatId: existingUser.seatId
@@ -147,6 +149,7 @@ wss.on('connection', (ws, req) => {
                 broadcast(ws, {
                     type: 'userChat',
                     userId: user.id,
+                    username: user.username,
                     message: data.message,
                     isEmote: data.isEmote
                 });
