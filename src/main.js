@@ -7,7 +7,12 @@ class VirtualBar {
         this.camera = null;
         this.renderer = null;
         this.users = new Map();
-        this.moveSpeed = 0.1;
+        this.moveSpeed = 0.05;
+		this.jumpSpeed = 0.18; // Initial upward speed
+		this.gravity = -0.005; // Gravity force
+		this.isJumping = false; // Is the player currently jumping
+		this.verticalSpeed = 0; // Current vertical speed
+		this.groundHeight = 1; // Height of the ground level
         this.keysPressed = {};
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
@@ -49,6 +54,9 @@ class VirtualBar {
         // Configuración inicial de la cámara
         this.camera.position.set(0, 5, 10);
 
+		// Radio del bar
+		this.addLocalizedMusic();
+
         // Iluminación
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         this.scene.add(ambientLight);
@@ -88,7 +96,6 @@ class VirtualBar {
             setTimeout(loadPaintings, 500)
         });
     }
-
 
     setupUsernameDialog() {
         const dialog = document.getElementById('username-dialog');
@@ -712,7 +719,7 @@ class VirtualBar {
         });
         const textGeometry = new THREE.PlaneGeometry(1.8, 0.4);
         const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-        textMesh.position.set(0, 1.5, -2.15);
+        textMesh.position.set(0, 1.5, -2.13);
         this.scene.add(textMesh);
 
         this.createBackBar();
@@ -1245,7 +1252,7 @@ class VirtualBar {
         }
     }
 
-    sitOn(seat) {
+	sitOn(seat) {
         const user = this.users.get("local");
         if (!user) return;
 
@@ -1259,7 +1266,7 @@ class VirtualBar {
 
         // Ajustar posición al sentarse
         user.mesh.position.copy(seatPosition);
-        user.mesh.position.y += 0.9;
+        user.mesh.position.y += 1.1;
 
         // Calcular rotación hacia la barra
         const barPosition = new THREE.Vector3(0, user.mesh.position.y, -3);
@@ -1267,10 +1274,15 @@ class VirtualBar {
         const angle = Math.atan2(direction.x, direction.z);
         user.mesh.rotation.y = angle;
 
-        // Ajustar la cámara suavemente
-        this.cameraRotation.horizontal = angle + Math.PI; // Rotar la cámara detrás del personaje
-        this.cameraRotation.vertical = Math.PI / 6;
-    }
+        // Ajustar la cámara del tirón
+		const offsetDistance = 3.3; // Distance behind the seat
+		const offsetHeight = 2; // Height above the user
+		const cameraOffset = new THREE.Vector3(Math.sin(angle + Math.PI) * offsetDistance, offsetHeight, Math.cos(angle + Math.PI) * offsetDistance);
+
+		// Set camera position and focus
+		this.camera.position.copy(seatPosition.clone().add(cameraOffset));
+		this.camera.lookAt(user.mesh.position);
+	}
 
     sitOtherUser(userId, seatId) {
         const user = this.users.get(userId);
@@ -1337,122 +1349,103 @@ class VirtualBar {
         }
     }
 
-    moveLocalUser() {
-        const user = this.users.get("local");
-        if (!user || this.chatActive) return;
+	moveLocalUser() {
+		const user = this.users.get("local");
+		if (!user || this.chatActive) return;
 
-        if (this.sittingOn) {
-            if (
-                this.keysPressed["w"] ||
-                this.keysPressed["s"] ||
-                this.keysPressed["a"] ||
-                this.keysPressed["d"]
-            ) {
-                // Calcular posición para levantarse
-                const seatPosition = new THREE.Vector3();
-                this.sittingOn.getWorldPosition(seatPosition);
+		if (this.keysPressed[" "]) { // Detect jump input
+			if (!this.isJumping) {
+				this.isJumping = true;
+				this.verticalSpeed = this.jumpSpeed; // Apply upward speed
+			}
+		}
 
-                // Moverse hacia atrás del asiento
-                const standOffset = new THREE.Vector3(0, 0, 1);
-                standOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.previousRotation);
+		// Apply gravity if jumping
+		if (this.isJumping) {
+			user.mesh.position.y += this.verticalSpeed;
+			this.verticalSpeed += this.gravity; // Apply gravity
 
-                // Aplicar la nueva posición y rotación
-                user.mesh.position.copy(seatPosition).add(standOffset);
-                user.mesh.position.y = 1;
-                user.mesh.rotation.y = this.previousRotation;
+			// Check if the player has landed
+			if (user.mesh.position.y <= this.groundHeight) {
+				user.mesh.position.y = this.groundHeight; // Reset to ground level
+				this.isJumping = false; // Reset jump state
+				this.verticalSpeed = 0; // Reset vertical speed
+			}
+		}
 
-                this.sittingOn = null;
-                this.transitioningFromSeat = true;
+		// Movement logic for standing users
+		const moveDistance = this.moveSpeed;
+		const rotation = user.mesh.rotation.y;
+		const newPosition = new THREE.Vector3();
+		newPosition.copy(user.mesh.position);
 
-                // Restaurar la cámara
-                this.cameraRotation.horizontal = this.previousRotation + Math.PI;
-                this.cameraRotation.vertical = Math.PI / 6;
+		if (this.keysPressed["w"]) {
+			newPosition.x += Math.sin(rotation) * moveDistance;
+			newPosition.z += Math.cos(rotation) * moveDistance;
+		}
+		if (this.keysPressed["s"]) {
+			newPosition.x -= Math.sin(rotation) * moveDistance;
+			newPosition.z -= Math.cos(rotation) * moveDistance;
+		}
+		if (this.keysPressed["a"]) {
+			user.mesh.rotation.y += 0.03;
+		}
+		if (this.keysPressed["d"]) {
+			user.mesh.rotation.y -= 0.03;
+		}
 
-                // Notificar al servidor
-                this.socket.send(JSON.stringify({ type: "userStood" }));
-                return;
-            }
-            return;
-        }
+		// Ensure movement stays within bounds
+		const bounds = {
+			xMin: -14.5,
+			xMax: 14.5,
+			zMin: -9.5,
+			zMax: 9.5
+		};
 
-        // Resto del código de movimiento normal...
-        const moveDistance = this.moveSpeed;
-        const rotation = user.mesh.rotation.y;
-        const newPosition = new THREE.Vector3();
-        newPosition.copy(user.mesh.position);
+		const playerRadius = 0.4;
 
-        if (this.keysPressed["w"]) {
-            newPosition.x += Math.sin(rotation) * moveDistance;
-            newPosition.z += Math.cos(rotation) * moveDistance;
-        }
-        if (this.keysPressed["s"]) {
-            newPosition.x -= Math.sin(rotation) * moveDistance;
-            newPosition.z -= Math.cos(rotation) * moveDistance;
-        }
-        if (this.keysPressed["a"]) {
-            user.mesh.rotation.y += 0.03;
-        }
-        if (this.keysPressed["d"]) {
-            user.mesh.rotation.y -= 0.03;
-        }
+		if (
+			newPosition.x > bounds.xMin + playerRadius &&
+			newPosition.x < bounds.xMax - playerRadius &&
+			newPosition.z > bounds.zMin + playerRadius &&
+			newPosition.z < bounds.zMax - playerRadius
+		) {
+			user.mesh.position.x = newPosition.x;
+			user.mesh.position.z = newPosition.z;
+		}
 
-        // Actualizar la cámara
-        const distance = 5;
-        const height = distance * Math.sin(this.cameraRotation.vertical);
-        const radius = distance * Math.cos(this.cameraRotation.vertical);
+		// Update the camera position
+		const distance = 5;
+		const height = distance * Math.sin(this.cameraRotation.vertical);
+		const radius = distance * Math.cos(this.cameraRotation.vertical);
 
-        const cameraOffset = new THREE.Vector3(
-            radius * Math.sin(this.cameraRotation.horizontal),
-            height,
-            radius * Math.cos(this.cameraRotation.horizontal)
-        );
+		const cameraOffset = new THREE.Vector3(
+			radius * Math.sin(this.cameraRotation.horizontal),
+			height,
+			radius * Math.cos(this.cameraRotation.horizontal)
+		);
 
-        // Actualizar posición de la cámara de forma suave
-        this.camera.position.copy(user.mesh.position).add(cameraOffset);
-        this.camera.lookAt(user.mesh.position);
+		this.camera.position.copy(user.mesh.position).add(cameraOffset);
+		this.camera.lookAt(user.mesh.position);
 
-        // Si estamos en transición después de levantarnos
-        if (this.transitioningFromSeat) {
-            this.transitioningFromSeat = false;
-        }
+		// Notify the server of position changes
+		if (
+			this.lastSentPosition === undefined ||
+			!this.lastSentPosition.equals(user.mesh.position) ||
+			this.lastSentRotation !== user.mesh.rotation.y
+		) {
+			this.lastSentPosition = user.mesh.position.clone();
+			this.lastSentRotation = user.mesh.rotation.y;
 
-        // Comprobar colisiones y actualizar posición
-        const bounds = {
-            xMin: -14.5,
-            xMax: 14.5,
-            zMin: -9.5,
-            zMax: 9.5
-        };
-
-        const playerRadius = 0.4;
-
-        if (
-            newPosition.x > bounds.xMin + playerRadius &&
-            newPosition.x < bounds.xMax - playerRadius &&
-            newPosition.z > bounds.zMin + playerRadius &&
-            newPosition.z < bounds.zMax - playerRadius
-        ) {
-            user.mesh.position.copy(newPosition);
-        }
-
-        // Actualizar posición en el servidor si ha cambiado
-        if (
-            this.lastSentPosition === undefined ||
-            !this.lastSentPosition.equals(user.mesh.position) ||
-            this.lastSentRotation !== user.mesh.rotation.y
-        ) {
-            this.lastSentPosition = user.mesh.position.clone();
-            this.lastSentRotation = user.mesh.rotation.y;
-
-            this.socket.send(
-                JSON.stringify({
-                    type: "userMoved",
-                    position: user.mesh.position.toArray(),
-                    rotation: user.mesh.rotation.y
-                })
-            );
-        }
-    }
+			this.socket.send(
+				JSON.stringify({
+					type: "userMoved",
+					position: user.mesh.position.toArray(),
+					rotation: user.mesh.rotation.y
+				})
+			);
+		}
+	}
 
     animate() {
         requestAnimationFrame(() => this.animate());
@@ -1489,6 +1482,33 @@ class VirtualBar {
         return info;
     }
 
+	addLocalizedMusic() {
+		// Add an AudioListener to the camera
+		const listener = new THREE.AudioListener();
+		this.camera.add(listener);
+
+		// Create a positional audio object
+		const sound = new THREE.PositionalAudio(listener);
+
+		// Load the .mp3 file
+		const audioLoader = new THREE.AudioLoader();
+		audioLoader.load('assets/sound/ElFary_LaMandanga.mp3', (buffer) => {
+			sound.setBuffer(buffer);
+			sound.setLoop(true); // Set to true if you want the music to loop
+			sound.setVolume(0.5); // Adjust volume (0.0 to 1.0)
+			sound.play();
+		});
+
+		// Attach the sound to an object in the scene
+		const soundSource = new THREE.SphereGeometry(0.4, 18, 18); // Small visual sphere for the sound source
+		const soundMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+		const soundMesh = new THREE.Mesh(soundSource, soundMaterial);
+		soundMesh.position.set(-5, 1.7, -3); // Position the sound in the scene
+		this.scene.add(soundMesh);
+
+		// Attach the sound to the sound source
+		soundMesh.add(sound);
+	}
 }
 
 // Iniciar la aplicación
@@ -1512,3 +1532,4 @@ function loadPaintings() {
         app.loadImageToPainting(painting.id, imageUrl);
     });
 }
+
