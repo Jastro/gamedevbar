@@ -271,20 +271,18 @@ class VirtualBar {
     }
 
     setupNetworking() {
-        this.socket.onopen = () => {
-            this.socket.send(JSON.stringify({
-                type: 'setUsername',
-                username: this.username
-            }));
-        };
-
-
         this.socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
 
             switch (data.type) {
                 case "init":
                     this.userId = data.userId;
+
+                    this.socket.send(JSON.stringify({
+                        type: 'initCompleted',
+                        username: this.username
+                    }));
+
                     break;
 
                 case "userJoined":
@@ -1295,27 +1293,28 @@ class VirtualBar {
 
     updateUserChat(id, message, isEmote = false, username = null) {
         const user = this.users.get(id);
-        if (!user) return;
 
-        const { canvas, context, texture, sprite } = user;
+        if (user) {
+            const { canvas, context, texture, sprite } = user;
 
-        if (user.chatTimeout) {
-            clearTimeout(user.chatTimeout);
-        }
+            if (user.chatTimeout) {
+                clearTimeout(user.chatTimeout);
+            }
 
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = isEmote ? "#ff69b4" : "#ffffff";
-        context.font = "24px Arial";
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        context.fillText(message, canvas.width / 2, canvas.height / 2);
-
-        texture.needsUpdate = true;
-
-        user.chatTimeout = setTimeout(() => {
             context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = isEmote ? "#ff69b4" : "#ffffff";
+            context.font = "24px Arial";
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            context.fillText(message, canvas.width / 2, canvas.height / 2);
+
             texture.needsUpdate = true;
-        }, 5000);
+
+            user.chatTimeout = setTimeout(() => {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                texture.needsUpdate = true;
+            }, 5000);
+        }
 
         const chatBox = document.getElementById('chat-box');
         const messageDiv = document.createElement('div');
