@@ -90,6 +90,34 @@ wss.on('connection', (ws, req) => {
         const user = users.get(ws);
 
         switch (data.type) {
+            case 'duelRequest':
+                const targetClient = [...wss.clients].find(client => users.get(client).id === data.targetId);
+                if (targetClient) {
+                    targetClient.send(JSON.stringify({
+                        type: 'duelRequest',
+                        challengerId: user.id,
+                        challengerName: data.challengerName
+                    }));
+                }
+                break;
+
+            case 'duelAccepted':
+                const challengerClient = [...wss.clients].find(client => users.get(client).id === data.challengerId);
+                if (challengerClient) {
+                    challengerClient.send(JSON.stringify({
+                        type: 'duelAccepted',
+                        targetId: user.id
+                    }));
+                }
+                break;
+
+            case 'duelChoice':
+                broadcast(ws, {
+                    type: 'duelChoice',
+                    playerId: user.id,
+                    choice: data.choice
+                });
+                break;
             case 'setUsername':
                 user.username = data.username;
                 // Informar a todos los usuarios del nuevo username

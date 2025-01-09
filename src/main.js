@@ -29,6 +29,15 @@ class VirtualBar {
         this.cameraTarget = new THREE.Vector3();
         this.transitioningFromSeat = false;
 
+        this.duelState = {
+            challenged: null,
+            challenger: null,
+            isInDuel: false,
+            duelStartTime: null,
+            myChoice: null,
+            spinning: false
+        };
+
         this.setupUsernameDialog();
     }
 
@@ -52,6 +61,7 @@ class VirtualBar {
         this.createWalls();
         this.createBar();
         this.createFurniture();
+        //this.createBathroom();
         this.setupEventListeners();
         this.animate();
     }
@@ -85,7 +95,7 @@ class VirtualBar {
         const usernameInput = document.getElementById('username-input');
         const startButton = document.getElementById('start-button');
         const chatInput = document.getElementById('chat-input');
-        const chatBox = document.getElementById('chat-box'); // Añadir esta línea
+        const chatBox = document.getElementById('chat-box');
 
         startButton.addEventListener('click', () => {
             const username = usernameInput.value.trim();
@@ -93,7 +103,7 @@ class VirtualBar {
                 this.username = username;
                 dialog.classList.add('hidden');
                 chatInput.classList.remove('hidden');
-                chatBox.classList.remove('hidden'); // Añadir esta línea
+                chatBox.classList.remove('hidden'); 
 
                 // Iniciar todo después de tener el username
                 this.initializeGame();
@@ -311,7 +321,40 @@ class VirtualBar {
                         this.standOtherUser(data.userId);
                     }
                     break;
+                case "duelRequest":
+                    if (data.targetId === this.userId) {
+                        // Mostrar ventana de confirmación
+                        if (confirm(`${data.challengerName} te ha retado a un duelo! ¿Aceptas?`)) {
+                            this.socket.send(JSON.stringify({
+                                type: "duelAccepted",
+                                challengerId: data.challengerId
+                            }));
+                        } else {
+                            this.socket.send(JSON.stringify({
+                                type: "duelRejected",
+                                challengerId: data.challengerId
+                            }));
+                        }
+                    }
+                    break;
 
+                case "duelAccepted":
+                    if (data.challengerId === this.userId) {
+                        this.startDuel(data.targetId);
+                    }
+                    break;
+
+                case "duelRejected":
+                    if (data.challengerId === this.userId) {
+                        alert("Tu reto ha sido rechazado!");
+                    }
+                    break;
+
+                case "duelChoice":
+                    if (this.duelState.isInDuel) {
+                        this.processDuelChoice(data.choice, data.playerId);
+                    }
+                    break;
                 case "userChat":
                     if (data.userId !== this.userId) {
                         this.updateUserChat(data.userId, data.message, data.isEmote, data.username);
@@ -331,6 +374,188 @@ class VirtualBar {
         this.socket.onclose = () => {
             console.log("Disconnected from server");
         };
+    }
+
+    createBathroom() {
+        // Tamaño del baño
+        const width = 4;
+        const height = 3;
+        const depth = 4;
+
+        // Paredes del baño
+        const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
+        const wall2Material = new THREE.MeshStandardMaterial({ color: 0xdc5a0b });
+
+        // Pared trasera
+        const backWall = new THREE.Mesh(
+            new THREE.BoxGeometry(width, height, 0.2),
+            wallMaterial
+        );
+        backWall.position.set(13, height / 2, -8);
+        this.scene.add(backWall);
+
+        // Pared lateral
+        const sideWall = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, height, depth),
+            wallMaterial
+        );
+        sideWall.position.set(11, height / 2, -6);
+        this.scene.add(sideWall);
+
+        // Pared para la puerta
+        const doorWall = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, height, 1.4), // 1.4 es el ancho menos la puerta
+            wallMaterial
+        );
+        doorWall.position.set(11, height / 2, -7.3);
+        doorWall.rotation.y = Math.PI / 2;
+        this.scene.add(doorWall);
+
+        const doorWall2 = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, height, 1.4),
+            wallMaterial
+        );
+        doorWall2.position.set(11, height / 2, -6);
+        doorWall2.rotation.y = Math.PI / 2;
+        this.scene.add(doorWall2);
+
+        // Techo
+        const ceiling = new THREE.Mesh(
+            new THREE.BoxGeometry(4.2, 0.2, 4),
+            wall2Material
+        );
+        ceiling.position.set(13, 2.9, -6);
+        this.scene.add(ceiling);
+
+        const doorGroup = new THREE.Group();
+        doorGroup.position.set(11, 0, -6); // Posición base del grupo
+
+        // Crear puerta
+        const doorGeometry = new THREE.BoxGeometry(1.4, 2.5, 0.1);
+        const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
+        const door = new THREE.Mesh(doorGeometry, doorMaterial);
+        door.position.set(0.7, 1.25, 0); // Mover la mitad del ancho en X para que gire desde el borde
+        doorGroup.add(door);
+
+        // Señalización en la puerta
+        const signGeometry = new THREE.PlaneGeometry(1, 1);
+        const signCanvas = document.createElement('canvas');
+        signCanvas.width = 256;
+        signCanvas.height = 256;
+        const signContext = signCanvas.getContext('2d');
+        signContext.fillStyle = '#FFFFFF';
+        signContext.fillRect(0, 0, 256, 256);
+        signContext.fillStyle = '#000000';
+        signContext.font = '48px Arial';
+        signContext.textAlign = 'center';
+        signContext.textBaseline = 'middle';
+        signContext.fillText('🚽', 128, 128);
+
+        const signTexture = new THREE.CanvasTexture(signCanvas);
+        const signMaterial = new THREE.MeshBasicMaterial({ map: signTexture });
+        const sign = new THREE.Mesh(signGeometry, signMaterial);
+        sign.position.copy(door.position);
+        sign.position.z += 0.06;
+        sign.position.y += 0.7;
+        doorGroup.add(sign);
+
+        // Configurar el userData en el grupo en lugar de la puerta
+        doorGroup.userData = {
+            type: "door",
+            isOpen: false,
+            originalRotation: 0,
+            isAnimating: false
+        };
+        this.scene.add(doorGroup);
+
+        // Grupo del inodoro completo
+        const toiletGroup = new THREE.Group();
+
+        // Base del inodoro (más detallada y colorida)
+        const toiletBase = new THREE.Mesh(
+            new THREE.BoxGeometry(0.6, 0.4, 0.6),
+            new THREE.MeshStandardMaterial({ color: 0xE3F2FD }) // Azul muy claro
+        );
+        toiletBase.position.y = 0.2;
+        toiletGroup.add(toiletBase);
+
+        // Asiento del inodoro
+        const toiletSeat = new THREE.Mesh(
+            new THREE.BoxGeometry(0.6, 0.1, 0.5),
+            new THREE.MeshStandardMaterial({ color: 0xBBDEFB }) // Azul claro
+        );
+        toiletSeat.position.y = 0.45;
+        toiletGroup.add(toiletSeat);
+
+        // Tanque de agua
+        const toiletTank = new THREE.Mesh(
+            new THREE.BoxGeometry(0.6, 0.8, 0.3),
+            new THREE.MeshStandardMaterial({ color: 0xE3F2FD })
+        );
+        toiletTank.position.set(0, 0.6, -0.2);
+        toiletGroup.add(toiletTank);
+
+        // Botón del tanque
+        const tankButton = new THREE.Mesh(
+            new THREE.BoxGeometry(0.1, 0.1, 0.05),
+            new THREE.MeshStandardMaterial({ color: 0x90CAF9 })
+        );
+        tankButton.position.set(0, 0.9, -0.15);
+        toiletGroup.add(tankButton);
+
+        toiletGroup.position.set(13.5, 0, -7);
+        toiletGroup.userData = {
+            type: "seat",
+            isBathroom: true,
+            originalMaterial: toiletSeat.material,
+            highlightMaterial: new THREE.MeshStandardMaterial({
+                color: 0x7fff7f,
+                emissive: 0x2f2f2f,
+            }),
+            forwardDirection: new THREE.Vector3(0, 0, -1),
+        };
+
+        this.scene.add(toiletGroup);
+        this.seats.set(toiletGroup.id, toiletGroup);
+
+        // Lavamanos con más detalles
+        const sinkGroup = new THREE.Group();
+
+        // Base del lavamanos
+        const sinkBase = new THREE.Mesh(
+            new THREE.BoxGeometry(0.6, 0.1, 0.4),
+            new THREE.MeshStandardMaterial({ color: 0xECEFF1 }) // Gris muy claro
+        );
+        sinkBase.position.y = 0.9;
+        sinkGroup.add(sinkBase);
+
+        // Cuenco del lavamanos
+        const sinkBowl = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.25, 0.2, 0.15, 16),
+            new THREE.MeshStandardMaterial({ color: 0xFFFFFF })
+        );
+        sinkBowl.position.y = 0.85;
+        sinkGroup.add(sinkBowl);
+
+        // Soporte
+        const sinkStand = new THREE.Mesh(
+            new THREE.BoxGeometry(0.1, 0.9, 0.1),
+            new THREE.MeshStandardMaterial({ color: 0xCFD8DC }) // Gris claro
+        );
+        sinkStand.position.y = 0.45;
+        sinkGroup.add(sinkStand);
+
+        // Grifo
+        const faucet = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.03, 0.03, 0.2),
+            new THREE.MeshStandardMaterial({ color: 0xB0BEC5 }) // Gris metálico
+        );
+        faucet.rotation.x = Math.PI / 2;
+        faucet.position.set(0, 1, -0.1);
+        sinkGroup.add(faucet);
+
+        sinkGroup.position.set(11.5, 0, -7.5);
+        this.scene.add(sinkGroup);
     }
 
     createWalls() {
@@ -763,21 +988,57 @@ class VirtualBar {
         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
         this.raycaster.setFromCamera(this.mouse, this.camera);
-        const intersects = this.raycaster.intersectObjects(
-            this.scene.children,
-            true
-        );
+        const intersects = this.raycaster.intersectObjects(this.scene.children, true);
 
         // Restaurar highlight anterior
         if (this.highlightedObject) {
-            this.highlightedObject.traverse((child) => {
-                if (child.isMesh && child.userData.originalMaterial) {
-                    child.material = child.userData.originalMaterial;
+            if (this.highlightedObject.userData && this.highlightedObject.userData.type === "seat") {
+                this.highlightedObject.traverse((child) => {
+                    if (child.isMesh && child.userData.originalMaterial) {
+                        child.material = child.userData.originalMaterial;
+                    }
+                });
+            } else if (this.highlightedObject.type === "user") {
+                const user = this.users.get(this.highlightedObject.userId);
+                if (user && user.mesh) {
+                    user.mesh.children.forEach(child => {
+                        if (child.isMesh && child.userData.originalMaterial) {
+                            child.material = child.userData.originalMaterial;
+                        }
+                    });
                 }
-            });
+            }
         }
 
-        // Buscar el primer objeto seleccionable
+        // Limpiar el highlight actual
+        this.highlightedObject = null;
+
+        // Primero buscar usuarios
+        const localUser = this.users.get('local');
+        for (const intersect of intersects) {
+            const userId = this.findUserByMesh(intersect.object);
+            if (userId && userId !== 'local') {
+                const targetUser = this.users.get(userId);
+                const distance = localUser.mesh.position.distanceTo(targetUser.mesh.position);
+
+                if (distance <= 2 && !this.duelState.isInDuel && !targetUser.isInDuel) {
+                    this.highlightedObject = { type: 'user', userId: userId };
+                    // Highlight del usuario
+                    targetUser.mesh.children.forEach(child => {
+                        if (child.isMesh) {
+                            child.userData.originalMaterial = child.material.clone();
+                            child.material = new THREE.MeshStandardMaterial({
+                                color: 0x7fff7f,
+                                emissive: 0x2f2f2f,
+                            });
+                        }
+                    });
+                    return;
+                }
+            }
+        }
+
+        // Si no encontramos usuario, buscar asientos
         const selectable = intersects.find(
             (intersect) =>
                 intersect.object.parent &&
@@ -792,12 +1053,155 @@ class VirtualBar {
                     child.material = child.userData.highlightMaterial;
                 }
             });
-        } else {
-            this.highlightedObject = null;
+        }
+    }
+
+    findUserByMesh(mesh) {
+        for (const [userId, user] of this.users.entries()) {
+            if (user.mesh === mesh || user.mesh.children.includes(mesh)) {
+                return userId;
+            }
+        }
+        return null;
+    }
+
+    startDuel(opponentId) {
+        this.duelState.isInDuel = true;
+        this.duelState.opponent = opponentId;
+        this.duelState.spinning = true;
+        this.duelState.duelStartTime = Date.now();
+        this.duelState.myChoice = null;
+
+        // Crear UI para el duelo
+        const duelUI = document.createElement('div');
+        duelUI.id = 'duel-ui';
+        duelUI.style.position = 'fixed';
+        duelUI.style.top = '50%';
+        duelUI.style.left = '50%';
+        duelUI.style.transform = 'translate(-50%, -50%)';
+        duelUI.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        duelUI.style.padding = '20px';
+        duelUI.style.borderRadius = '10px';
+        duelUI.style.color = 'white';
+        duelUI.innerHTML = `
+            <div id="duel-countdown">¡Prepárate!</div>
+            <div id="duel-choices" style="display: none">
+                <button onclick="app.makeDuelChoice('piedra')">🪨 Piedra</button>
+                <button onclick="app.makeDuelChoice('papel')">📄 Papel</button>
+                <button onclick="app.makeDuelChoice('tijera')">✂️ Tijera</button>
+            </div>
+        `;
+        document.body.appendChild(duelUI);
+
+        // Iniciar la animación de dar vueltas
+        this.spinPlayers();
+    }
+
+    spinPlayers() {
+        const spinDuration = 3000; // 3 segundos de giro
+        const startTime = Date.now();
+        const opponent = this.users.get(this.duelState.opponent);
+        const localUser = this.users.get('local');
+        const radius = 1;
+        const center = opponent.mesh.position.clone();
+
+        const animate = () => {
+            if (!this.duelState.spinning) return;
+
+            const elapsed = Date.now() - startTime;
+            if (elapsed < spinDuration) {
+                const angle = (elapsed / 500) * Math.PI * 2; // Una vuelta cada 500ms
+                localUser.mesh.position.x = center.x + Math.cos(angle) * radius;
+                localUser.mesh.position.z = center.z + Math.sin(angle) * radius;
+                localUser.mesh.lookAt(center);
+
+                requestAnimationFrame(animate);
+            } else {
+                this.duelState.spinning = false;
+                document.getElementById('duel-countdown').textContent = '¡ELIGE!';
+                document.getElementById('duel-choices').style.display = 'block';
+            }
+        };
+
+        animate();
+    }
+
+    makeDuelChoice(choice) {
+        this.duelState.myChoice = choice;
+        this.socket.send(JSON.stringify({
+            type: "duelChoice",
+            choice: choice,
+            playerId: this.userId
+        }));
+        document.getElementById('duel-choices').style.display = 'none';
+        document.getElementById('duel-countdown').textContent = 'Esperando al oponente...';
+    }
+
+    processDuelChoice(choice, playerId) {
+        if (playerId === this.duelState.opponent) {
+            const opponentChoice = choice;
+            const myChoice = this.duelState.myChoice;
+
+            let result;
+            if (myChoice === opponentChoice) {
+                result = "¡Empate!";
+            } else if (
+                (myChoice === 'piedra' && opponentChoice === 'tijera') ||
+                (myChoice === 'papel' && opponentChoice === 'piedra') ||
+                (myChoice === 'tijera' && opponentChoice === 'papel')
+            ) {
+                result = "¡Has ganado!";
+            } else {
+                result = "¡Has perdido!";
+            }
+
+            document.getElementById('duel-countdown').textContent =
+                `${result} (${myChoice} vs ${opponentChoice})`;
+
+            // Terminar el duelo después de 2 segundos
+            setTimeout(() => {
+                document.getElementById('duel-ui').remove();
+                this.duelState.isInDuel = false;
+                this.duelState.opponent = null;
+                this.duelState.myChoice = null;
+            }, 2000);
         }
     }
 
     handleClick() {
+        if (this.chatActive || this.duelState.isInDuel) return;
+
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+
+        // Buscar si hemos clickeado en otro jugador
+        for (const intersect of intersects) {
+            const userId = this.findUserByMesh(intersect.object);
+            if (userId && userId !== 'local') {
+                const targetUser = this.users.get(userId);
+                const localUser = this.users.get('local');
+
+                // Comprobar distancia
+                const distance = localUser.mesh.position.distanceTo(targetUser.mesh.position);
+                if (distance > 2) {
+                    alert("¡Estás demasiado lejos para retar a este jugador!");
+                    return;
+                }
+
+                // Comprobar si el jugador ya está en duelo
+                if (targetUser.isInDuel) {
+                    alert("¡Este jugador ya está en un duelo!");
+                    return;
+                }
+
+                this.socket.send(JSON.stringify({
+                    type: "duelRequest",
+                    targetId: userId,
+                    challengerName: this.username
+                }));
+                return;
+            }
+        }
         if (this.highlightedObject && !this.sittingOn) {
             this.sitOn(this.highlightedObject);
 
@@ -808,6 +1212,35 @@ class VirtualBar {
                     seatId: this.highlightedObject.id
                 })
             );
+        }
+
+        const doorClick = intersects.find(
+            intersect => {
+                const parent = intersect.object.parent;
+                return parent && parent.userData && parent.userData.type === "door";
+            }
+        );
+
+        if (doorClick) {
+            const doorGroup = doorClick.object.parent;
+            if (doorGroup.userData.isAnimating) return;
+
+            doorGroup.userData.isOpen = !doorGroup.userData.isOpen;
+            doorGroup.userData.isAnimating = true;
+            const targetRotation = doorGroup.userData.isOpen ? -Math.PI / 2 : doorGroup.userData.originalRotation;
+
+            const animate = () => {
+                const diff = targetRotation - doorGroup.rotation.y;
+                if (Math.abs(diff) > 0.01) {
+                    doorGroup.rotation.y += diff * 0.1;
+                    requestAnimationFrame(animate);
+                } else {
+                    doorGroup.rotation.y = targetRotation;
+                    doorGroup.userData.isAnimating = false;
+                }
+            };
+            animate();
+            return;
         }
     }
 
@@ -883,12 +1316,10 @@ class VirtualBar {
             texture.needsUpdate = true;
         }, 5000);
 
-        // Añadir mensaje al chat-box con el username correcto
         const chatBox = document.getElementById('chat-box');
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${isEmote ? 'emote-message' : ''}`;
 
-        // Usar el username guardado para cada usuario
         const displayName = id === 'local' ? this.username : (username || user.username || 'borracho');
 
         if (isEmote) {
@@ -1062,7 +1493,6 @@ class VirtualBar {
 // Iniciar la aplicación
 const app = new VirtualBar();
 
-// Manejar resize
 window.addEventListener("resize", () => {
     app.camera.aspect = window.innerWidth / window.innerHeight;
     app.camera.updateProjectionMatrix();
@@ -1070,17 +1500,13 @@ window.addEventListener("resize", () => {
 });
 
 
-// Exponer la app globalmente para debugging
 window.app = app;
 
 
 function loadPaintings() {
-    // Primero obtén la lista de IDs de los cuadros
     const paintingsInfo = app.getPaintingsInfo();
 
-    // Luego asigna las imágenes en orden
     paintingsInfo.forEach((painting, index) => {
-        // Asumiendo que tus imágenes se llaman imagen1.jpg, imagen2.jpg, etc.
         const imageUrl = `/paintings/imagen${index + 1}.jpg`;
         app.loadImageToPainting(painting.id, imageUrl);
     });
