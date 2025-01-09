@@ -80,7 +80,7 @@ class VirtualBar {
 
         // Inicializar WebSocket
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        this.socket = new WebSocket(`${protocol}//${window.location.host}`);
+        this.socket = new WebSocket(`ws://${window.location.hostname}:3000`);
 
         this.socket.addEventListener('open', () => {
             this.setupNetworking();
@@ -172,6 +172,7 @@ class VirtualBar {
                 isRightMouseDown = false;
             }
         });
+        
 
         window.addEventListener("click", () => this.handleClick());
         window.addEventListener("mousemove", (e) => {
@@ -467,8 +468,6 @@ class VirtualBar {
             isAnimating: false
         };
         this.scene.add(doorGroup);*/
-
-        
 
         // Grupo del inodoro completo
         const toiletGroup = new THREE.Group();

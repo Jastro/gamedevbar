@@ -5,9 +5,10 @@ export default defineConfig({
     port: 5148,
     host: true,
     proxy: {
-      '/socket.io': {
+      '/ws': {
         target: 'ws://localhost:3000',
-        ws: true
+        ws: true,
+        changeOrigin: true
       }
     }
   },
