@@ -20,10 +20,51 @@
         border-radius: 4px;
         font-size: 16px;
       }
+      
+      /* Nuevo estilo para el área de chat */
+      #chat-box {
+        position: fixed;
+        left: 20px;
+        bottom: 80px;
+        width: 300px;
+        height: 400px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        border-radius: 8px;
+        padding: 15px;
+        overflow-y: auto;
+        font-family: Arial, sans-serif;
+        z-index: 1000;
+      }
+
+      #chat-box::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      #chat-box::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+      }
+
+      #chat-box::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+      }
+
+      .chat-message {
+        margin: 5px 0;
+        word-wrap: break-word;
+      }
+
+      .emote-message {
+        color: #ff69b4;
+        font-style: italic;
+      }
     </style>
-    <script type="module" crossorigin src="/assets/index-DJ9CUTUi.js"></script>
+    <script type="module" crossorigin src="/assets/index-p-Th9FNQ.js"></script>
   </head>
   <body>
+    <div id="chat-box"></div>
     <input type="text" id="chat-input" placeholder="Escribe tu mensaje... (Enter para enviar, /me para emotes)" />
   </body>
 </html>

@@ -26,6 +26,10 @@ class VirtualBar {
         this.userId = null;
         this.lastSentPosition = undefined;
         this.lastSentRotation = undefined;
+        this.previousPosition = null;
+        this.previousRotation = null;
+        this.cameraTarget = new THREE.Vector3();
+        this.transitioningFromSeat = false;
 
         // Usar URL relativa para WebSocket
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -59,6 +63,26 @@ class VirtualBar {
         this.createFurniture();
         this.setupEventListeners();
         this.animate();
+    }
+
+    removeOtherUser(userId) {
+        const user = this.users.get(userId);
+        if (user) {
+            // Eliminar el modelo 3D de la escena
+            this.scene.remove(user.mesh);
+
+            // Limpiar el asiento si el usuario estaba sentado
+            if (this.seats) {
+                for (const [seatId, seat] of this.seats.entries()) {
+                    if (seat.occupiedBy === userId) {
+                        seat.occupiedBy = null;
+                    }
+                }
+            }
+
+            // Eliminar el usuario del mapa de usuarios
+            this.users.delete(userId);
+        }
     }
 
     setupEventListeners() {
@@ -735,16 +759,27 @@ class VirtualBar {
         const user = this.users.get("local");
         if (!user) return;
 
+        // Guardar estado anterior
+        this.previousPosition = user.mesh.position.clone();
         this.previousRotation = user.mesh.rotation.y;
+
         this.sittingOn = seat;
         const seatPosition = new THREE.Vector3();
         seat.getWorldPosition(seatPosition);
 
+        // Ajustar posición al sentarse
         user.mesh.position.copy(seatPosition);
         user.mesh.position.y += 0.9;
 
-        const lookAtPoint = new THREE.Vector3(0, user.mesh.position.y, -3);
-        user.mesh.lookAt(lookAtPoint);
+        // Calcular rotación hacia la barra
+        const barPosition = new THREE.Vector3(0, user.mesh.position.y, -3);
+        const direction = barPosition.sub(user.mesh.position).normalize();
+        const angle = Math.atan2(direction.x, direction.z);
+        user.mesh.rotation.y = angle;
+
+        // Ajustar la cámara suavemente
+        this.cameraRotation.horizontal = angle + Math.PI; // Rotar la cámara detrás del personaje
+        this.cameraRotation.vertical = Math.PI / 6;
     }
 
     sitOtherUser(userId, seatId) {
@@ -771,26 +806,46 @@ class VirtualBar {
     updateUserChat(id, message, isEmote = false) {
         const user = this.users.get(id);
         if (!user) return;
-
+    
+        // Actualizar el texto sobre la cabeza (mantenemos la funcionalidad existente)
         const { canvas, context, texture, sprite } = user;
-
+    
         if (user.chatTimeout) {
             clearTimeout(user.chatTimeout);
         }
-
+    
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = isEmote ? "#ff69b4" : "#ffffff";
         context.font = "24px Arial";
         context.textAlign = "center";
         context.textBaseline = "middle";
         context.fillText(message, canvas.width / 2, canvas.height / 2);
-
+    
         texture.needsUpdate = true;
-
+    
         user.chatTimeout = setTimeout(() => {
             context.clearRect(0, 0, canvas.width, canvas.height);
             texture.needsUpdate = true;
         }, 5000);
+    
+        // Añadir mensaje al chat-box
+        const chatBox = document.getElementById('chat-box');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${isEmote ? 'emote-message' : ''}`;
+        
+        if (isEmote) {
+            messageDiv.textContent = `* ${id} ${message}`;
+        } else {
+            messageDiv.textContent = `${id}: ${message}`;
+        }
+        
+        chatBox.appendChild(messageDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    
+        // Limitar el número de mensajes (opcional)
+        while (chatBox.children.length > 50) {
+            chatBox.removeChild(chatBox.firstChild);
+        }
     }
 
     moveLocalUser() {
@@ -804,16 +859,34 @@ class VirtualBar {
                 this.keysPressed["a"] ||
                 this.keysPressed["d"]
             ) {
-                this.sittingOn = null;
-                user.mesh.rotation.y = this.previousRotation || 0;
-                user.mesh.position.z += 0.5;
+                // Calcular posición para levantarse
+                const seatPosition = new THREE.Vector3();
+                this.sittingOn.getWorldPosition(seatPosition);
 
-                // Notificar al servidor que el usuario se levantó
+                // Moverse hacia atrás del asiento
+                const standOffset = new THREE.Vector3(0, 0, 1);
+                standOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.previousRotation);
+
+                // Aplicar la nueva posición y rotación
+                user.mesh.position.copy(seatPosition).add(standOffset);
+                user.mesh.position.y = 1;
+                user.mesh.rotation.y = this.previousRotation;
+
+                this.sittingOn = null;
+                this.transitioningFromSeat = true;
+
+                // Restaurar la cámara
+                this.cameraRotation.horizontal = this.previousRotation + Math.PI;
+                this.cameraRotation.vertical = Math.PI / 6;
+
+                // Notificar al servidor
                 this.socket.send(JSON.stringify({ type: "userStood" }));
+                return;
             }
             return;
         }
 
+        // Resto del código de movimiento normal...
         const moveDistance = this.moveSpeed;
         const rotation = user.mesh.rotation.y;
         const newPosition = new THREE.Vector3();
@@ -834,42 +907,7 @@ class VirtualBar {
             user.mesh.rotation.y -= 0.03;
         }
 
-        const bounds = {
-            xMin: -14.5,
-            xMax: 14.5,
-            zMin: -9.5,
-            zMax: 9.5,
-        };
-
-        const playerRadius = 0.4;
-
-        const canMove =
-            newPosition.x > bounds.xMin + playerRadius &&
-            newPosition.x < bounds.xMax - playerRadius &&
-            newPosition.z > bounds.zMin + playerRadius &&
-            newPosition.z < bounds.zMax - playerRadius;
-
-        if (canMove) {
-            user.mesh.position.copy(newPosition);
-
-            if (
-                this.lastSentPosition === undefined ||
-                !this.lastSentPosition.equals(user.mesh.position) ||
-                this.lastSentRotation !== user.mesh.rotation.y
-            ) {
-                this.lastSentPosition = user.mesh.position.clone();
-                this.lastSentRotation = user.mesh.rotation.y;
-
-                this.socket.send(
-                    JSON.stringify({
-                        type: "userMoved",
-                        position: user.mesh.position.toArray(),
-                        rotation: user.mesh.rotation.y,
-                    })
-                );
-            }
-        }
-
+        // Actualizar la cámara
         const distance = 5;
         const height = distance * Math.sin(this.cameraRotation.vertical);
         const radius = distance * Math.cos(this.cameraRotation.vertical);
@@ -880,8 +918,51 @@ class VirtualBar {
             radius * Math.cos(this.cameraRotation.horizontal)
         );
 
+        // Actualizar posición de la cámara de forma suave
         this.camera.position.copy(user.mesh.position).add(cameraOffset);
         this.camera.lookAt(user.mesh.position);
+
+        // Si estamos en transición después de levantarnos
+        if (this.transitioningFromSeat) {
+            this.transitioningFromSeat = false;
+        }
+
+        // Comprobar colisiones y actualizar posición
+        const bounds = {
+            xMin: -14.5,
+            xMax: 14.5,
+            zMin: -9.5,
+            zMax: 9.5
+        };
+
+        const playerRadius = 0.4;
+
+        if (
+            newPosition.x > bounds.xMin + playerRadius &&
+            newPosition.x < bounds.xMax - playerRadius &&
+            newPosition.z > bounds.zMin + playerRadius &&
+            newPosition.z < bounds.zMax - playerRadius
+        ) {
+            user.mesh.position.copy(newPosition);
+        }
+
+        // Actualizar posición en el servidor si ha cambiado
+        if (
+            this.lastSentPosition === undefined ||
+            !this.lastSentPosition.equals(user.mesh.position) ||
+            this.lastSentRotation !== user.mesh.rotation.y
+        ) {
+            this.lastSentPosition = user.mesh.position.clone();
+            this.lastSentRotation = user.mesh.rotation.y;
+
+            this.socket.send(
+                JSON.stringify({
+                    type: "userMoved",
+                    position: user.mesh.position.toArray(),
+                    rotation: user.mesh.rotation.y
+                })
+            );
+        }
     }
 
     animate() {
