@@ -287,7 +287,6 @@ class VirtualBar {
         frontWall.position.set(0, 4, 10);
         this.scene.add(frontWall);
 
-        // Crear cuadros
         const paintingPositions = [
             { x: -12, y: 4, z: -9.8, rotation: 0 },
             { x: -8, y: 4, z: -9.8, rotation: 0 },
