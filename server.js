@@ -38,18 +38,14 @@ class User {
 function broadcast(ws, message) {
     console.log("Broadcasting:", message.type);
     wss.clients.forEach(client => {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(message));
-        }
+        client.send(JSON.stringify(message));
     });
 }
 
 // Enviar mensaje a todos incluyendo al remitente
 function broadcastAll(message) {
     wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(message));
-        }
+        client.send(JSON.stringify(message));
     });
 }
 
@@ -152,7 +148,7 @@ wss.on('connection', (ws, req) => {
 
     ws.on('close', () => {
         const user = users.get(ws);
-        
+
         // Liberar asiento si el usuario estaba sentado
         if (user.seatId) {
             seats.delete(user.seatId);
