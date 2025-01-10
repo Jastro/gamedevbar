@@ -90,7 +90,8 @@ class VirtualBar {
         
         // Inicializar WebSocket
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        this.socket = new WebSocket(`${protocol}//${window.location.hostname}:3000`);
+        const url = protocol === 'ws:' ? `${protocol}//${window.location.hostname}:3000`: `${protocol}//${window.location.hostname}`;
+        this.socket = new WebSocket(url);
 
         this.socket.addEventListener('open', () => {
             this.setupNetworking();
