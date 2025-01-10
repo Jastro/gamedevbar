@@ -1315,7 +1315,7 @@ class VirtualBar {
                 console.log(`[createUser] Cargando modelo ${modelPath}: ${(progress.loaded / progress.total * 100)}%`);
             },
             (error) => {
-                console.error(`[createUser] Error cargando modelo ${modelPath}:`, error);
+                console.error(`[create User] Error cargando modelo ${modelPath}:`, error);
             }
         );
 
