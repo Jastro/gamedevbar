@@ -18,6 +18,7 @@ class VirtualBar {
         this.chatTimeout = null;
         this.sittingOn = null;
         this.seats = new Map();
+        this.doors = new Map();
         this.chatActive = false;
         this.paintings = new Map();
         this.userId = null;
@@ -76,27 +77,63 @@ class VirtualBar {
         this.camera.position.set(0, 5, 10);
 
         // Iluminación
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        /*const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         this.scene.add(ambientLight);
 
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         directionalLight.position.set(10, 10, 10);
         directionalLight.castShadow = true;
-        this.scene.add(directionalLight);
+        this.scene.add(directionalLight);*/
 
-        this.createWalls();
-        this.createBar();
+        const floorMesh = this.scene.getObjectByName("Floor");
+        if (floorMesh) {
+            const floorTexture = new THREE.TextureLoader().load(
+                "https://threejs.org/examples/textures/hardwood2_diffuse.jpg"
+            );
+            floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+            floorTexture.repeat.set(8, 6);
+            floorMesh.material.map = floorTexture;
+            floorMesh.material.needsUpdate = true;
+        }
+
+
+        const paintingPositions = [
+            { x: -12, y: 4, z: -9.8, rotation: 0 },
+            { x: -8, y: 4, z: -9.8, rotation: 0 },
+            { x: -4, y: 4, z: -9.8, rotation: 0 },
+            { x: 0, y: 4, z: -9.8, rotation: 0 },
+            { x: 4, y: 4, z: -9.8, rotation: 0 },
+            { x: 8, y: 4, z: -9.8, rotation: 0 },
+            { x: 12, y: 4, z: -9.8, rotation: 0 },
+            { x: 14.8, y: 4, z: -6, rotation: 4.7 },
+            { x: 14.8, y: 4, z: -2, rotation: 4.7 },
+            { x: 14.8, y: 4, z: 2, rotation: 4.7 },
+            { x: 14.8, y: 4, z: 6, rotation: 4.7 },
+            { x: -14.8, y: 4, z: -6, rotation: -4.7 },
+            { x: -14.8, y: 4, z: -2, rotation: -4.7 },
+            { x: -14.8, y: 4, z: 2, rotation: -4.7 },
+            { x: -14.8, y: 4, z: 6, rotation: -4.7 },
+        ];
+    
+        paintingPositions.forEach((pos, index) => {
+            this.createPainting(pos.x, pos.y, pos.z, pos.rotation, index);
+        });
+
+
+        this.createGlassesAndBottles();
+        //this.createWalls();
+        //this.createBar();
         this.createFurniture();
-        this.createBathroom();
+        //this.createBathroom();
         this.setupEventListeners();
 
         this.animate();
         this.addLocalizedMusic();
+        setTimeout(loadPaintings, 500);
     }
 
     initializeGame() {
-        // Inicializar Three.js
-        this.scene = new THREE.Scene();
+        // Inicializar Three.js base
         this.camera = new THREE.PerspectiveCamera(
             75,
             window.innerWidth / window.innerHeight,
@@ -106,23 +143,64 @@ class VirtualBar {
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
 
-        // Inicializar WebSocket y esperar a que se conecte
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const url = protocol === 'ws:' ? 
-            `${protocol}//${window.location.hostname}:3000` : 
-            `${protocol}//${window.location.hostname}`;
-        this.socket = new WebSocket(url);
+        // Cargar la escena desde JSON
+        const loader = new THREE.ObjectLoader();
+        loader.load('level.json', (loadedScene) => {
+            this.scene = loadedScene;
 
-        this.socket.addEventListener('open', () => {
-            this.socket.send(JSON.stringify({
-                type: 'setUsername',
-                username: this.username,
-                selectedModel: this.selectedModel
-            }));
+            // Configurar sombras y seats después de cargar
+            this.scene.traverse((object) => {
+                if (object.isMesh) {
+                    object.castShadow = true;
+                    object.receiveShadow = true;
+                }
 
-            this.setupNetworking();
-            this.init();
-            setTimeout(loadPaintings, 500);
+                // Procesar sillas y taburetes
+                if (object.userData && object.userData.type === "seat") {
+                    this.seats.set(object.id, object);
+
+                    // Añadir material de highlight si no existe
+                    if (!object.userData.highlightMaterial) {
+                        object.userData.highlightMaterial = new THREE.MeshStandardMaterial({
+                            color: 0x7fff7f,
+                            emissive: 0x2f2f2f,
+                        });
+                    }
+
+                    // Guardar material original si no existe
+                    if (!object.userData.originalMaterial) {
+                        object.traverse((child) => {
+                            if (child.isMesh) {
+                                child.userData.originalMaterial = child.material;
+                            }
+                        });
+                    }
+                }
+
+                // Guardar referencia a las puertas
+                if (object.userData && object.userData.type === "door") {
+                    this.doors.set(object.id, object);
+                }
+            });
+
+            // Inicializar WebSocket después de cargar la escena
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const url = protocol === 'ws:' ?
+                `${protocol}//${window.location.hostname}:3000` :
+                `${protocol}//${window.location.hostname}`;
+            this.socket = new WebSocket(url);
+
+            this.socket.addEventListener('open', () => {
+                this.socket.send(JSON.stringify({
+                    type: 'setUsername',
+                    username: this.username,
+                    selectedModel: this.selectedModel
+                }));
+
+                this.setupNetworking();
+                this.init();
+                setTimeout(loadPaintings, 500);
+            });
         });
     }
 
@@ -237,7 +315,7 @@ class VirtualBar {
                 isRightMouseDown = false;
             }
         });
-        
+
 
         window.addEventListener("click", () => this.handleClick());
         window.addEventListener("mousemove", (e) => {
@@ -331,11 +409,11 @@ class VirtualBar {
         // Añadir control de zoom con la rueda del ratón
         window.addEventListener("wheel", (e) => {
             if (this.chatActive) return;
-            
+
             // Ajustar la sensibilidad del zoom
             const zoomSpeed = 0.001;
             this.cameraDistance += e.deltaY * zoomSpeed * this.cameraDistance;
-            
+
             // Limitar el zoom entre los valores mínimo y máximo
             this.cameraDistance = Math.max(
                 this.minCameraDistance,
@@ -350,7 +428,7 @@ class VirtualBar {
 
         // Guardar la posición anterior para comparar
         const previousPosition = user.mesh.position.clone();
-        
+
         // Actualizar posición y rotación
         user.mesh.position.set(position[0], position[1], position[2]);
         user.mesh.rotation.y = rotation;
@@ -404,7 +482,7 @@ class VirtualBar {
             switch (data.type) {
                 case "init":
                     this.userId = data.userId;
-                    
+
                     this.socket.send(JSON.stringify({
                         type: 'initCompleted',
                         username: this.username,
@@ -453,7 +531,7 @@ class VirtualBar {
                         // Mostrar ventana de confirmación mejorada
                         const challenger = this.users.get(data.challengerId);
                         const challengerName = challenger ? challenger.username : data.challengerName;
-                        
+
                         const confirmDialog = document.createElement('div');
                         confirmDialog.style.cssText = `
                             position: fixed;
@@ -470,7 +548,7 @@ class VirtualBar {
                             box-shadow: 0 0 20px rgba(220, 90, 11, 0.3);
                             z-index: 2001;
                         `;
-                        
+
                         confirmDialog.innerHTML = `
                             <div style="font-size: 24px; margin-bottom: 20px;">
                                 ⚔️ ¡Desafío! ⚔️
@@ -483,7 +561,7 @@ class VirtualBar {
                                 <button id="reject-duel" style="padding: 10px 20px; background: #dc3545; border: none; border-radius: 5px; color: white; cursor: pointer;">Rechazar</button>
                             </div>
                         `;
-                        
+
                         document.body.appendChild(confirmDialog);
 
                         // Manejar respuesta
@@ -530,11 +608,11 @@ class VirtualBar {
                             border: 2px solid #dc3545;
                             z-index: 2001;
                         `;
-                        
+
                         rejectDialog.innerHTML = `
                             <div style="font-size: 24px;">❌ Tu reto ha sido rechazado</div>
                         `;
-                        
+
                         document.body.appendChild(rejectDialog);
                         setTimeout(() => rejectDialog.remove(), 2000);
                     }
@@ -755,7 +833,7 @@ class VirtualBar {
         }
 
         toiletGroup.userData.soundInterval = null;
-        toiletGroup.userData.playRandomSound = function() {
+        toiletGroup.userData.playRandomSound = function () {
             if (this.sounds.length === 0) return;
             const randomIndex = Math.floor(Math.random() * this.sounds.length);
             const sound = this.sounds[randomIndex];
@@ -764,7 +842,7 @@ class VirtualBar {
             }
         };
 
-        toiletGroup.userData.startSounds = function() {
+        toiletGroup.userData.startSounds = function () {
             if (this.soundInterval) return;
             this.playRandomSound();
             this.soundInterval = setInterval(() => {
@@ -772,7 +850,7 @@ class VirtualBar {
             }, 5000);
         };
 
-        toiletGroup.userData.stopSounds = function() {
+        toiletGroup.userData.stopSounds = function () {
             if (this.soundInterval) {
                 clearInterval(this.soundInterval);
                 this.soundInterval = null;
@@ -1060,59 +1138,64 @@ class VirtualBar {
     }
 
     createGlassesAndBottles() {
-        const createBottle = (x, y, z, color) => {
-            const bottleGroup = new THREE.Group();
-
-            const bodyGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.6, 8);
-            const bodyMaterial = new THREE.MeshStandardMaterial({
-                color: color,
-                transparent: true,
-                opacity: 0.8,
-            });
-            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-
-            const neckGeometry = new THREE.CylinderGeometry(0.05, 0.1, 0.2, 8);
-            const neck = new THREE.Mesh(neckGeometry, bodyMaterial);
-            neck.position.y = 0.4;
-
-            bottleGroup.add(body);
-            bottleGroup.add(neck);
-            bottleGroup.position.set(x, y, z);
-            this.scene.add(bottleGroup);
-        };
-
-        const createGlass = (x, y, z) => {
-            const glassGeometry = new THREE.CylinderGeometry(0.1, 0.07, 0.2, 8);
-            const glassMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                transparent: true,
-                opacity: 0.4,
-            });
-            const glass = new THREE.Mesh(glassGeometry, glassMaterial);
-            glass.position.set(x, y, z);
-            this.scene.add(glass);
-        };
-
         const colors = [0x4caf50, 0x2196f3, 0xf44336, 0xffeb3b];
 
+        const bottleGroup = new THREE.Group();
+        bottleGroup.name = 'BottlesAndGlasses';
+
+        // Crear botellas
         for (let i = -5; i <= 5; i += 1) {
-            createBottle(
-                i,
-                1.8,
-                -6.7,
-                colors[Math.floor(Math.random() * colors.length)]
-            );
-            createBottle(
-                i * 0.8,
-                2.3,
-                -6.7,
-                colors[Math.floor(Math.random() * colors.length)]
-            );
+            // Primera fila de botellas
+            const bottle1 = this.createBottle(colors[Math.floor(Math.random() * colors.length)]);
+            bottle1.position.set(i, 1.8, -6.7);
+            bottleGroup.add(bottle1);
+
+            // Segunda fila de botellas
+            const bottle2 = this.createBottle(colors[Math.floor(Math.random() * colors.length)]);
+            bottle2.position.set(i * 0.8, 2.3, -6.7);
+            bottleGroup.add(bottle2);
         }
 
+        // Crear vasos
         for (let i = -5; i <= 5; i += 1) {
-            createGlass(i * 0.8, 1.4, -2.5);
+            const glass = this.createGlass();
+            glass.position.set(i * 0.8, 1.4, -2.5);
+            bottleGroup.add(glass);
         }
+
+        this.scene.add(bottleGroup);
+    }
+
+    createBottle(color) {
+        const bottleGroup = new THREE.Group();
+
+        // Cuerpo de la botella
+        const bodyGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.6, 8);
+        const bodyMaterial = new THREE.MeshStandardMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.8,
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        bottleGroup.add(body);
+
+        // Cuello de la botella
+        const neckGeometry = new THREE.CylinderGeometry(0.05, 0.1, 0.2, 8);
+        const neck = new THREE.Mesh(neckGeometry, bodyMaterial);
+        neck.position.y = 0.4;
+        bottleGroup.add(neck);
+
+        return bottleGroup;
+    }
+
+    createGlass() {
+        const glassGeometry = new THREE.CylinderGeometry(0.1, 0.07, 0.2, 8);
+        const glassMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.4,
+        });
+        return new THREE.Mesh(glassGeometry, glassMaterial);
     }
 
     createFurniture() {
@@ -1217,7 +1300,7 @@ class VirtualBar {
         if (id === 'local') {
             modelToUse = this.selectedModel;
         }
-        
+
         const modelPath = `/assets/models/${modelToUse}.glb`;
 
         // Chat sprite
@@ -1227,7 +1310,7 @@ class VirtualBar {
         chatCanvas.height = 512;
 
         const chatTexture = new THREE.CanvasTexture(chatCanvas);
-        const chatSpriteMaterial = new THREE.SpriteMaterial({ 
+        const chatSpriteMaterial = new THREE.SpriteMaterial({
             map: chatTexture,
             transparent: true,
             depthTest: false,
@@ -1248,7 +1331,7 @@ class VirtualBar {
         nameCanvas.height = 128;
 
         const nameTexture = new THREE.CanvasTexture(nameCanvas);
-        const nameSpriteMaterial = new THREE.SpriteMaterial({ 
+        const nameSpriteMaterial = new THREE.SpriteMaterial({
             map: nameTexture,
             transparent: true,
             depthTest: false,
@@ -1268,7 +1351,7 @@ class VirtualBar {
         emojiCanvas.height = 256;
 
         const emojiTexture = new THREE.CanvasTexture(emojiCanvas);
-        const emojiSpriteMaterial = new THREE.SpriteMaterial({ 
+        const emojiSpriteMaterial = new THREE.SpriteMaterial({
             map: emojiTexture,
             transparent: true,
             depthTest: false,
@@ -1282,7 +1365,7 @@ class VirtualBar {
         group.add(emojiSprite);
 
         // Cargar el modelo GLB
-        loader.load(modelPath, 
+        loader.load(modelPath,
             (gltf) => {
                 const model = gltf.scene;
                 model.scale.set(0.8, 0.8, 0.8);
@@ -1291,7 +1374,7 @@ class VirtualBar {
 
                 // Configurar animaciones
                 animations.mixer = new THREE.AnimationMixer(model);
-                
+
                 // Guardar todas las animaciones
                 gltf.animations.forEach((clip) => {
                     const cleanName = clip.name.toLowerCase().trim();
@@ -1414,10 +1497,10 @@ class VirtualBar {
             }
 
             // 3. Comprobar asientos
-            if (intersect.object.parent && 
-                intersect.object.parent.userData && 
+            if (intersect.object.parent &&
+                intersect.object.parent.userData &&
                 intersect.object.parent.userData.type === "seat") {
-                
+
                 this.highlightedObject = intersect.object.parent;
                 this.highlightedObject.traverse((child) => {
                     if (child.isMesh && child.userData.highlightMaterial) {
@@ -1532,7 +1615,7 @@ class VirtualBar {
                 countdownEl.textContent = '¡ELIGE!';
                 document.getElementById('duel-choices').style.display = 'flex';
                 document.getElementById('duel-choices').style.justifyContent = 'center';
-                
+
                 // Iniciar temporizador para elegir
                 let timeLeft = 10;
                 const timerInterval = setInterval(() => {
@@ -1584,14 +1667,14 @@ class VirtualBar {
 
     makeDuelChoice(choice) {
         if (this.duelState.myChoice || !this.duelState.isInDuel) return;
-        
+
         this.duelState.myChoice = choice;
         this.duelState.waitingForResult = true;
-        
+
         // Deshabilitar botones después de elegir
         const buttons = document.querySelectorAll('.duel-button');
         buttons.forEach(button => button.disabled = true);
-        
+
         document.getElementById('duel-countdown').textContent = 'Esperando al oponente...';
         document.getElementById('duel-timer').textContent = '';
 
@@ -1607,7 +1690,7 @@ class VirtualBar {
 
         if (playerId === this.duelState.opponent) {
             this.duelState.opponentChoice = choice;
-            
+
             // Mostrar mensaje de espera
             const duelCountdown = document.getElementById('duel-countdown');
             if (duelCountdown && !this.duelState.myChoice) {
@@ -1620,7 +1703,7 @@ class VirtualBar {
         if (!this.duelState.isInDuel || !this.duelState.waitingForResult) return;
 
         const myChoice = this.duelState.myChoice;
-        const opponentChoice = result.player1.id === this.userId ? 
+        const opponentChoice = result.player1.id === this.userId ?
             result.player2.choice : result.player1.choice;
 
         let resultText;
@@ -1692,9 +1775,9 @@ class VirtualBar {
         const intersects = this.raycaster.intersectObjects(this.scene.children, true);
 
         // Primero buscar interacción con la radio
-        const radioIntersect = intersects.find(intersect => 
-            intersect.object.parent && 
-            intersect.object.parent.userData && 
+        const radioIntersect = intersects.find(intersect =>
+            intersect.object.parent &&
+            intersect.object.parent.userData &&
             intersect.object.parent.userData.type === "radio"
         );
 
@@ -1702,7 +1785,7 @@ class VirtualBar {
             const radioGroup = radioIntersect.object.parent;
             const sound = radioGroup.userData.sound;
             const indicator = radioGroup.userData.indicator;
-            
+
             if (radioGroup.userData.isPlaying) {
                 sound.pause();
                 indicator.material.emissive.setHex(0x696969);
@@ -1746,11 +1829,11 @@ class VirtualBar {
 
                 // Añadir feedback para el retador
                 this.showMessage("¡Solicitud de duelo enviada! Esperando respuesta...");
-                
+
                 const targetName = targetUser.username || "otro jugador";
                 this.updateUserChat("local", `ha retado a ${targetName} a un duelo`, true);
 
-        this.socket.send(JSON.stringify({
+                this.socket.send(JSON.stringify({
                     type: "duelRequest",
                     targetId: userId,
                     challengerId: this.userId,
@@ -1761,10 +1844,10 @@ class VirtualBar {
         }
 
         // Finalmente, buscar interacción con asientos
-        if (this.highlightedObject && !this.sittingOn && 
-            this.highlightedObject.userData && 
+        if (this.highlightedObject && !this.sittingOn &&
+            this.highlightedObject.userData &&
             this.highlightedObject.userData.type === "seat") {
-            
+
             this.sitOn(this.highlightedObject);
             this.socket.send(JSON.stringify({
                 type: "userSat",
@@ -1817,7 +1900,7 @@ class VirtualBar {
 
         // Ajustar posición al sentarse
         user.mesh.position.copy(seatPosition);
-        
+
         if (seat.userData.isBathroom) {
             // Ajustes específicos para el aseo
             user.mesh.position.y += 1.2; // Altura específica para el inodoro
@@ -1875,7 +1958,7 @@ class VirtualBar {
             emojiContext.font = 'bold 180px Arial';
             emojiContext.textAlign = 'center';
             emojiContext.textBaseline = 'middle';
-            emojiContext.fillText('💩', emojiCanvas.width/2, emojiCanvas.height/2);
+            emojiContext.fillText('💩', emojiCanvas.width / 2, emojiCanvas.height / 2);
             emojiTexture.needsUpdate = true;
             emojiSprite.material.opacity = 1;
             emojiSprite.visible = true;
@@ -1894,7 +1977,7 @@ class VirtualBar {
         seat.getWorldPosition(seatPosition);
 
         user.mesh.position.copy(seatPosition);
-        
+
         if (seat.userData.isBathroom) {
             // Ajustes específicos para el aseo para otros usuarios
             user.mesh.position.y += 1.2;
@@ -1920,7 +2003,7 @@ class VirtualBar {
             emojiContext.font = 'bold 180px Arial';
             emojiContext.textAlign = 'center';
             emojiContext.textBaseline = 'middle';
-            emojiContext.fillText('💩', emojiCanvas.width/2, emojiCanvas.height/2);
+            emojiContext.fillText('💩', emojiCanvas.width / 2, emojiCanvas.height / 2);
             emojiTexture.needsUpdate = true;
             emojiSprite.material.opacity = 1;
             emojiSprite.visible = true;
@@ -1976,7 +2059,7 @@ class VirtualBar {
         // Si hay un emoji directo, solo mostrar el emoji sin burbuja de chat
         if (emoji) {
             this.showEmoji(id, emoji);
-            
+
             // Actualizar el chat box
             const chatBox = document.getElementById('chat-box');
             const messageDiv = document.createElement('div');
@@ -1985,7 +2068,7 @@ class VirtualBar {
             messageDiv.textContent = `* ${displayName} ${message}`;
             chatBox.appendChild(messageDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
-            
+
             while (chatBox.children.length > 50) {
                 chatBox.removeChild(chatBox.firstChild);
             }
@@ -2010,7 +2093,7 @@ class VirtualBar {
         chatContext.font = 'bold 48px Arial';
         chatContext.textAlign = 'left';
         chatContext.textBaseline = 'top';
-        
+
         // Medir y envolver el texto
         const maxWidth = chatCanvas.width - (padding * 4); // Más padding para el texto
         const words = message.split(' ');
@@ -2060,9 +2143,9 @@ class VirtualBar {
         chatContext.beginPath();
         const arrowWidth = 25;
         const centerX = chatCanvas.width / 2;
-        chatContext.moveTo(centerX - arrowWidth/2, yOffset + bubbleHeight);
+        chatContext.moveTo(centerX - arrowWidth / 2, yOffset + bubbleHeight);
         chatContext.lineTo(centerX, yOffset + bubbleHeight + arrowHeight);
-        chatContext.lineTo(centerX + arrowWidth/2, yOffset + bubbleHeight);
+        chatContext.lineTo(centerX + arrowWidth / 2, yOffset + bubbleHeight);
         chatContext.closePath();
         chatContext.fill();
 
@@ -2072,7 +2155,7 @@ class VirtualBar {
         // Dibujar el borde de la burbuja
         chatContext.strokeStyle = isEmote ? 'rgba(255, 182, 193, 0.8)' : 'rgba(200, 200, 200, 0.8)';
         chatContext.lineWidth = 2;
-        
+
         // Borde de la burbuja
         roundRect(
             chatContext,
@@ -2086,9 +2169,9 @@ class VirtualBar {
 
         // Borde de la flecha
         chatContext.beginPath();
-        chatContext.moveTo(centerX - arrowWidth/2, yOffset + bubbleHeight);
+        chatContext.moveTo(centerX - arrowWidth / 2, yOffset + bubbleHeight);
         chatContext.lineTo(centerX, yOffset + bubbleHeight + arrowHeight);
-        chatContext.lineTo(centerX + arrowWidth/2, yOffset + bubbleHeight);
+        chatContext.lineTo(centerX + arrowWidth / 2, yOffset + bubbleHeight);
         chatContext.stroke();
 
         // Dibujar el texto con mejor contraste
@@ -2119,7 +2202,7 @@ class VirtualBar {
             const fade = () => {
                 const elapsed = Date.now() - fadeStart;
                 const opacity = 1 - (elapsed / this.CHAT_FADE_TIME);
-                
+
                 if (opacity > 0) {
                     chatSprite.material.opacity = opacity;
                     requestAnimationFrame(fade);
@@ -2136,7 +2219,7 @@ class VirtualBar {
         const chatBox = document.getElementById('chat-box');
         const messageDiv = document.createElement('div');
         const displayName = id === 'local' ? this.username : (user ? user.username : username);
-        
+
         if (id === 'taberna') {
             messageDiv.className = 'chat-message taberna-message';
             messageDiv.innerHTML = `<span class="taberna-tag">Taberna</span> ${message}`;
@@ -2176,11 +2259,11 @@ class VirtualBar {
 
         // Actualizar el estado de movimiento antes de procesar el movimiento
         const wasMoving = this.isMoving;
-        this.isMoving = (this.keysPressed["w"] || this.keysPressed["a"] || 
-                        this.keysPressed["s"] || this.keysPressed["d"]);
+        this.isMoving = (this.keysPressed["w"] || this.keysPressed["a"] ||
+            this.keysPressed["s"] || this.keysPressed["d"]);
 
         // Si el usuario está sentado y presiona cualquier tecla de movimiento, levantarse
-        if (this.sittingOn && (this.keysPressed["w"] || this.keysPressed["a"] || 
+        if (this.sittingOn && (this.keysPressed["w"] || this.keysPressed["a"] ||
             this.keysPressed["s"] || this.keysPressed["d"])) {
             this.standUp();
             return;
@@ -2211,7 +2294,7 @@ class VirtualBar {
             // Actualizar la cámara mientras está sentado
             const seatPosition = new THREE.Vector3();
             this.sittingOn.getWorldPosition(seatPosition);
-            
+
             const distance = this.cameraDistance;
             const height = distance * Math.sin(this.cameraRotation.vertical);
             const radius = distance * Math.cos(this.cameraRotation.vertical);
@@ -2254,7 +2337,7 @@ class VirtualBar {
         // Normalizar el vector de movimiento si existe movimiento
         if (moveVector.lengthSq() > 0) {
             moveVector.normalize();
-            
+
             // Aplicar el movimiento
             newPosition.add(moveVector.multiplyScalar(moveDistance));
 
@@ -2270,12 +2353,12 @@ class VirtualBar {
                 const direction = new THREE.Vector3()
                     .subVectors(this.ball.mesh.position, newPosition)
                     .normalize();
-                
+
                 // Calcular la velocidad basada en el movimiento del jugador
                 const kickPower = 5 * moveDistance / 0.1; // Ajustar según necesidad
                 direction.multiply(moveVector); // Aplicar dirección del movimiento
                 direction.y = 0.2; // Pequeño impulso hacia arriba
-                
+
                 this.ball.kick(direction, kickPower);
             }
         }
@@ -2310,10 +2393,10 @@ class VirtualBar {
         // Función auxiliar para comprobar colisión con un área rectangular
         const checkCollision = (bounds, position, playerHeight) => {
             const horizontalCollision = position.x >= bounds.xMin - playerRadius &&
-                                      position.x <= bounds.xMax + playerRadius &&
-                                      position.z >= bounds.zMin - playerRadius &&
-                                      position.z <= bounds.zMax + playerRadius;
-            
+                position.x <= bounds.xMax + playerRadius &&
+                position.z >= bounds.zMin - playerRadius &&
+                position.z <= bounds.zMax + playerRadius;
+
             // Si hay colisión horizontal, verificar si el jugador está por encima del objeto
             if (horizontalCollision) {
                 return playerHeight < bounds.height;
@@ -2351,7 +2434,7 @@ class VirtualBar {
                 newPosition.z > bounds.zMin + playerRadius &&
                 newPosition.z < bounds.zMax - playerRadius &&
                 (!collidesWithBar && !collidesWithBackBar)) {
-                
+
                 user.mesh.position.x = newPosition.x;
                 user.mesh.position.z = newPosition.z;
             }
@@ -2379,9 +2462,9 @@ class VirtualBar {
         );
 
         // Lista de objetos a comprobar para colisiones (paredes)
-        const walls = this.scene.children.filter(obj => 
-            obj.isMesh && 
-            (obj.geometry instanceof THREE.BoxGeometry) && 
+        const walls = this.scene.children.filter(obj =>
+            obj.isMesh &&
+            (obj.geometry instanceof THREE.BoxGeometry) &&
             obj.position.y >= 2 // Asumiendo que las paredes están en y >= 2
         );
 
@@ -2461,10 +2544,10 @@ class VirtualBar {
 
     animate() {
         requestAnimationFrame(() => this.animate());
-        
+
         const delta = this.clock.getDelta();
         const currentTime = Date.now();
-        
+
         // Actualizar todas las animaciones de los usuarios
         this.users.forEach(user => {
             if (user.animations && user.animations.mixer) {
@@ -2512,7 +2595,7 @@ class VirtualBar {
                 }
             });
         }
-        
+
         this.moveLocalUser();
         this.renderer.render(this.scene, this.camera);
     }
@@ -2572,54 +2655,54 @@ class VirtualBar {
         }
 
         user.username = username;
-        
+
         // No mostrar nombre sobre nuestro propio personaje
         if (userId === 'local') {
             return;
         }
-        
+
         const { nameContext, nameCanvas, nameTexture } = user;
-        
+
         // Aumentar el tamaño del canvas para mejor resolución
         nameCanvas.width = 1024; // Duplicar el ancho
         nameCanvas.height = 256; // Duplicar el alto
-        
+
         nameContext.clearRect(0, 0, nameCanvas.width, nameCanvas.height);
-        
+
         const displayName = username || 'sin nombre';
-        
+
         // Aumentar tamaño de fuente
         nameContext.font = "bold 96px Arial"; // Doblar el tamaño de la fuente
         nameContext.textAlign = "center";
         nameContext.textBaseline = "middle";
-        
+
         // Mejorar la sombra para mayor legibilidad
         nameContext.shadowColor = 'rgba(0, 0, 0, 0.8)';
         nameContext.shadowBlur = 8;
         nameContext.shadowOffsetX = 4;
         nameContext.shadowOffsetY = 4;
-        
+
         // Borde más grueso
         nameContext.strokeStyle = "#000000";
         nameContext.lineWidth = 12;
-        nameContext.strokeText(displayName, nameCanvas.width/2, nameCanvas.height/2);
-        
+        nameContext.strokeText(displayName, nameCanvas.width / 2, nameCanvas.height / 2);
+
         // Texto principal con gradiente más visible
         const gradient = nameContext.createLinearGradient(
-            0, 
-            nameCanvas.height/2 - 30,
-            0, 
-            nameCanvas.height/2 + 30
+            0,
+            nameCanvas.height / 2 - 30,
+            0,
+            nameCanvas.height / 2 + 30
         );
         gradient.addColorStop(0, '#FFFFFF');
         gradient.addColorStop(1, '#DDDDDD');
-        
+
         nameContext.fillStyle = gradient;
-        nameContext.fillText(displayName, nameCanvas.width/2, nameCanvas.height/2);
-        
+        nameContext.fillText(displayName, nameCanvas.width / 2, nameCanvas.height / 2);
+
         // Quitar sombra
         nameContext.shadowColor = 'transparent';
-        
+
         nameTexture.needsUpdate = true; // Asegurarnos de que la textura se actualice
         user.nameSprite.material.opacity = 1; // Asegurarnos de que el sprite sea visible
         user.nameSprite.visible = true; // Asegurarnos de que el sprite esté visible
@@ -2644,15 +2727,15 @@ class VirtualBar {
         emojiContext.textAlign = 'center';
         emojiContext.textBaseline = 'middle';
         emojiContext.fillStyle = '#FFFFFF'; // Color blanco para mejor contraste
-        emojiContext.fillText(emoji, emojiCanvas.width/2, emojiCanvas.height/2);
+        emojiContext.fillText(emoji, emojiCanvas.width / 2, emojiCanvas.height / 2);
         emojiContext.restore();
 
         emojiTexture.needsUpdate = true;
         emojiSprite.material.opacity = 1;
-        
+
         // Hacer el sprite más grande para mejor visibilidad
         emojiSprite.scale.set(1.2, 1.2, 1);
-        
+
         // Posicionar el emoji más alto sobre la cabeza
         emojiSprite.position.y = 2.0;
 
@@ -2660,19 +2743,19 @@ class VirtualBar {
         const startTime = Date.now();
         const animate = () => {
             const elapsed = Date.now() - startTime;
-            
+
             if (elapsed < this.EMOTE_DISPLAY_TIME) {
                 // Animación de flotación más pronunciada
                 const float = Math.sin(elapsed * 0.004) * 0.15;
                 emojiSprite.position.y = 2.0 + float;
-                
+
                 // Rotación suave
                 emojiSprite.rotation.z = Math.sin(elapsed * 0.002) * 0.15;
-                
+
                 // Escala pulsante sutil
                 const scale = 1.2 + Math.sin(elapsed * 0.006) * 0.1;
                 emojiSprite.scale.set(scale, scale, 1);
-                
+
                 requestAnimationFrame(animate);
             } else {
                 // Desvanecer más lentamente
@@ -2681,7 +2764,7 @@ class VirtualBar {
                 const fade = () => {
                     const fadeElapsed = Date.now() - fadeStart;
                     const opacity = 1 - (fadeElapsed / fadeDuration);
-                    
+
                     if (opacity > 0) {
                         emojiSprite.material.opacity = opacity;
                         // Flotar hacia arriba mientras desaparece
@@ -2714,7 +2797,7 @@ class VirtualBar {
             z-index: 2001;
             animation: fadeOut 2s forwards;
         `;
-        
+
         const style = document.createElement('style');
         style.textContent = `
             @keyframes fadeOut {
@@ -2724,10 +2807,10 @@ class VirtualBar {
             }
         `;
         document.head.appendChild(style);
-        
+
         messageDiv.textContent = message;
         document.body.appendChild(messageDiv);
-        
+
         setTimeout(() => {
             messageDiv.remove();
             style.remove();
@@ -2743,7 +2826,7 @@ class VirtualBar {
 
         // Cuerpo principal de la radio - Cambiar color a uno más distintivo
         const bodyGeometry = new THREE.BoxGeometry(1, 0.5, 0.4); // Aumentar tamaño
-        const bodyMaterial = new THREE.MeshStandardMaterial({ 
+        const bodyMaterial = new THREE.MeshStandardMaterial({
             color: 0x964B00, // Marrón más oscuro
             roughness: 0.7,
             metalness: 0.3
@@ -2753,7 +2836,7 @@ class VirtualBar {
 
         // Panel frontal - Ajustar tamaño proporcionalmente
         const panelGeometry = new THREE.BoxGeometry(0.95, 0.45, 0.01);
-        const panelMaterial = new THREE.MeshStandardMaterial({ 
+        const panelMaterial = new THREE.MeshStandardMaterial({
             color: 0x2F4F4F,
             roughness: 0.5,
             metalness: 0.5
@@ -2764,7 +2847,7 @@ class VirtualBar {
 
         // Altavoz (rejilla) - Ajustar posición
         const speakerGeometry = new THREE.CircleGeometry(0.15, 32);
-        const speakerMaterial = new THREE.MeshStandardMaterial({ 
+        const speakerMaterial = new THREE.MeshStandardMaterial({
             color: 0x696969,
             roughness: 1,
             metalness: 0
@@ -2776,7 +2859,7 @@ class VirtualBar {
 
         // Perilla de volumen - Ajustar posición
         const knobGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.02, 32);
-        const knobMaterial = new THREE.MeshStandardMaterial({ 
+        const knobMaterial = new THREE.MeshStandardMaterial({
             color: 0xC0C0C0,
             roughness: 0.3,
             metalness: 0.8
@@ -2788,7 +2871,7 @@ class VirtualBar {
 
         // Luz indicadora
         const indicatorGeometry = new THREE.CircleGeometry(0.03, 32);
-        const indicatorMaterial = new THREE.MeshStandardMaterial({ 
+        const indicatorMaterial = new THREE.MeshStandardMaterial({
             color: 0x32CD32,
             emissive: 0x32CD32,
             emissiveIntensity: 0.5
@@ -2838,7 +2921,7 @@ class VirtualBar {
 
     setupModelSelector() {
         const options = document.querySelectorAll('.model-option');
-        
+
         // Crear previsualización para cada modelo
         options.forEach(option => {
             const modelId = option.dataset.model;
@@ -2862,7 +2945,7 @@ class VirtualBar {
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        
+
         renderer.setSize(container.clientWidth, container.clientHeight);
         container.appendChild(renderer.domElement);
 
@@ -2908,7 +2991,7 @@ class VirtualBar {
         // Animación de rotación
         const animate = () => {
             requestAnimationFrame(animate);
-            
+
             const preview = this.modelPreviews.get(modelId);
             if (preview) {
                 if (preview.model) {
