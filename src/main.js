@@ -8,11 +8,11 @@ class VirtualBar {
         this.renderer = null;
         this.users = new Map();
         this.moveSpeed = 0.05;
-		this.jumpSpeed = 0.18; // Initial upward speed
-		this.gravity = -0.005; // Gravity force
-		this.isJumping = false; // Is the player currently jumping
-		this.verticalSpeed = 0; // Current vertical speed
-		this.groundHeight = 1; // Height of the ground level
+        this.jumpSpeed = 0.18; // Initial upward speed
+        this.gravity = -0.005; // Gravity force
+        this.isJumping = false; // Is the player currently jumping
+        this.verticalSpeed = 0; // Current vertical speed
+        this.groundHeight = 1; // Height of the ground level
         this.keysPressed = {};
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
@@ -54,8 +54,8 @@ class VirtualBar {
         // Configuración inicial de la cámara
         this.camera.position.set(0, 5, 10);
 
-		// Radio del bar
-		this.addLocalizedMusic();
+        // Radio del bar
+        this.addLocalizedMusic();
 
         // Iluminación
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -87,10 +87,10 @@ class VirtualBar {
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
 
 
-        
+
         // Inicializar WebSocket
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const url = protocol === 'ws:' ? `${protocol}//${window.location.hostname}:3000`: `${protocol}//${window.location.hostname}`;
+        const url = protocol === 'ws:' ? `${protocol}//${window.location.hostname}:3000` : `${protocol}//${window.location.hostname}`;
         this.socket = new WebSocket(url);
 
         this.socket.addEventListener('open', () => {
@@ -113,7 +113,7 @@ class VirtualBar {
                 this.username = username;
                 dialog.classList.add('hidden');
                 chatInput.classList.remove('hidden');
-                chatBox.classList.remove('hidden'); 
+                chatBox.classList.remove('hidden');
 
                 // Iniciar todo después de tener el username
                 this.initializeGame();
@@ -182,7 +182,7 @@ class VirtualBar {
                 isRightMouseDown = false;
             }
         });
-        
+
 
         window.addEventListener("click", () => this.handleClick());
         window.addEventListener("mousemove", (e) => {
@@ -393,7 +393,6 @@ class VirtualBar {
 
         // Paredes del baño
         const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
-        const wall2Material = new THREE.MeshStandardMaterial({ color: 0xdc5a0b });
 
         // Pared trasera
         const backWall = new THREE.Mesh(
@@ -436,14 +435,15 @@ class VirtualBar {
         ceiling.position.set(13, 2.9, -6);
         this.scene.add(ceiling);
 
-        /*const doorGroup = new THREE.Group();
-        doorGroup.position.set(11, 0, -6); // Posición base del grupo
+        // Grupo de la puerta
+        const doorGroup = new THREE.Group();
+        doorGroup.position.set(13.7, 0, -4); // Posición del grupo alineada con el marco de la puerta
 
         // Crear puerta
         const doorGeometry = new THREE.BoxGeometry(1.4, 2.5, 0.1);
         const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
         const door = new THREE.Mesh(doorGeometry, doorMaterial);
-        door.position.set(2, 1.25, 2); // Mover la mitad del ancho en X para que gire desde el borde
+        door.position.set(-0.7, 1.25, 0); // La mitad del ancho en X negativo para que gire desde el borde
         doorGroup.add(door);
 
         // Señalización en la puerta
@@ -468,14 +468,15 @@ class VirtualBar {
         sign.position.y += 0.7;
         doorGroup.add(sign);
 
-        // Configurar el userData en el grupo en lugar de la puerta
+
         doorGroup.userData = {
             type: "door",
             isOpen: false,
             originalRotation: 0,
             isAnimating: false
         };
-        this.scene.add(doorGroup);*/
+
+        this.scene.add(doorGroup);
 
         // Grupo del inodoro completo
         const toiletGroup = new THREE.Group();
@@ -1253,7 +1254,7 @@ class VirtualBar {
         }
     }
 
-	sitOn(seat) {
+    sitOn(seat) {
         const user = this.users.get("local");
         if (!user) return;
 
@@ -1276,14 +1277,14 @@ class VirtualBar {
         user.mesh.rotation.y = angle;
 
         // Ajustar la cámara del tirón
-		const offsetDistance = 3.3; // Distance behind the seat
-		const offsetHeight = 2; // Height above the user
-		const cameraOffset = new THREE.Vector3(Math.sin(angle + Math.PI) * offsetDistance, offsetHeight, Math.cos(angle + Math.PI) * offsetDistance);
+        const offsetDistance = 3.3; // Distance behind the seat
+        const offsetHeight = 2; // Height above the user
+        const cameraOffset = new THREE.Vector3(Math.sin(angle + Math.PI) * offsetDistance, offsetHeight, Math.cos(angle + Math.PI) * offsetDistance);
 
-		// Set camera position and focus
-		this.camera.position.copy(seatPosition.clone().add(cameraOffset));
-		this.camera.lookAt(user.mesh.position);
-	}
+        // Set camera position and focus
+        this.camera.position.copy(seatPosition.clone().add(cameraOffset));
+        this.camera.lookAt(user.mesh.position);
+    }
 
     sitOtherUser(userId, seatId) {
         const user = this.users.get(userId);
@@ -1351,103 +1352,103 @@ class VirtualBar {
         }
     }
 
-	moveLocalUser() {
-		const user = this.users.get("local");
-		if (!user || this.chatActive) return;
+    moveLocalUser() {
+        const user = this.users.get("local");
+        if (!user || this.chatActive) return;
 
-		if (this.keysPressed[" "]) { // Detect jump input
-			if (!this.isJumping) {
-				this.isJumping = true;
-				this.verticalSpeed = this.jumpSpeed; // Apply upward speed
-			}
-		}
+        if (this.keysPressed[" "]) { // Detect jump input
+            if (!this.isJumping) {
+                this.isJumping = true;
+                this.verticalSpeed = this.jumpSpeed; // Apply upward speed
+            }
+        }
 
-		// Apply gravity if jumping
-		if (this.isJumping) {
-			user.mesh.position.y += this.verticalSpeed;
-			this.verticalSpeed += this.gravity; // Apply gravity
+        // Apply gravity if jumping
+        if (this.isJumping) {
+            user.mesh.position.y += this.verticalSpeed;
+            this.verticalSpeed += this.gravity; // Apply gravity
 
-			// Check if the player has landed
-			if (user.mesh.position.y <= this.groundHeight) {
-				user.mesh.position.y = this.groundHeight; // Reset to ground level
-				this.isJumping = false; // Reset jump state
-				this.verticalSpeed = 0; // Reset vertical speed
-			}
-		}
+            // Check if the player has landed
+            if (user.mesh.position.y <= this.groundHeight) {
+                user.mesh.position.y = this.groundHeight; // Reset to ground level
+                this.isJumping = false; // Reset jump state
+                this.verticalSpeed = 0; // Reset vertical speed
+            }
+        }
 
-		// Movement logic for standing users
-		const moveDistance = this.moveSpeed;
-		const rotation = user.mesh.rotation.y;
-		const newPosition = new THREE.Vector3();
-		newPosition.copy(user.mesh.position);
+        // Movement logic for standing users
+        const moveDistance = this.moveSpeed;
+        const rotation = user.mesh.rotation.y;
+        const newPosition = new THREE.Vector3();
+        newPosition.copy(user.mesh.position);
 
-		if (this.keysPressed["w"]) {
-			newPosition.x += Math.sin(rotation) * moveDistance;
-			newPosition.z += Math.cos(rotation) * moveDistance;
-		}
-		if (this.keysPressed["s"]) {
-			newPosition.x -= Math.sin(rotation) * moveDistance;
-			newPosition.z -= Math.cos(rotation) * moveDistance;
-		}
-		if (this.keysPressed["a"]) {
-			user.mesh.rotation.y += 0.03;
-		}
-		if (this.keysPressed["d"]) {
-			user.mesh.rotation.y -= 0.03;
-		}
+        if (this.keysPressed["w"]) {
+            newPosition.x += Math.sin(rotation) * moveDistance;
+            newPosition.z += Math.cos(rotation) * moveDistance;
+        }
+        if (this.keysPressed["s"]) {
+            newPosition.x -= Math.sin(rotation) * moveDistance;
+            newPosition.z -= Math.cos(rotation) * moveDistance;
+        }
+        if (this.keysPressed["a"]) {
+            user.mesh.rotation.y += 0.03;
+        }
+        if (this.keysPressed["d"]) {
+            user.mesh.rotation.y -= 0.03;
+        }
 
-		// Ensure movement stays within bounds
-		const bounds = {
-			xMin: -14.5,
-			xMax: 14.5,
-			zMin: -9.5,
-			zMax: 9.5
-		};
+        // Ensure movement stays within bounds
+        const bounds = {
+            xMin: -14.5,
+            xMax: 14.5,
+            zMin: -9.5,
+            zMax: 9.5
+        };
 
-		const playerRadius = 0.4;
+        const playerRadius = 0.4;
 
-		if (
-			newPosition.x > bounds.xMin + playerRadius &&
-			newPosition.x < bounds.xMax - playerRadius &&
-			newPosition.z > bounds.zMin + playerRadius &&
-			newPosition.z < bounds.zMax - playerRadius
-		) {
-			user.mesh.position.x = newPosition.x;
-			user.mesh.position.z = newPosition.z;
-		}
+        if (
+            newPosition.x > bounds.xMin + playerRadius &&
+            newPosition.x < bounds.xMax - playerRadius &&
+            newPosition.z > bounds.zMin + playerRadius &&
+            newPosition.z < bounds.zMax - playerRadius
+        ) {
+            user.mesh.position.x = newPosition.x;
+            user.mesh.position.z = newPosition.z;
+        }
 
-		// Update the camera position
-		const distance = 5;
-		const height = distance * Math.sin(this.cameraRotation.vertical);
-		const radius = distance * Math.cos(this.cameraRotation.vertical);
+        // Update the camera position
+        const distance = 5;
+        const height = distance * Math.sin(this.cameraRotation.vertical);
+        const radius = distance * Math.cos(this.cameraRotation.vertical);
 
-		const cameraOffset = new THREE.Vector3(
-			radius * Math.sin(this.cameraRotation.horizontal),
-			height,
-			radius * Math.cos(this.cameraRotation.horizontal)
-		);
+        const cameraOffset = new THREE.Vector3(
+            radius * Math.sin(this.cameraRotation.horizontal),
+            height,
+            radius * Math.cos(this.cameraRotation.horizontal)
+        );
 
-		this.camera.position.copy(user.mesh.position).add(cameraOffset);
-		this.camera.lookAt(user.mesh.position);
+        this.camera.position.copy(user.mesh.position).add(cameraOffset);
+        this.camera.lookAt(user.mesh.position);
 
-		// Notify the server of position changes
-		if (
-			this.lastSentPosition === undefined ||
-			!this.lastSentPosition.equals(user.mesh.position) ||
-			this.lastSentRotation !== user.mesh.rotation.y
-		) {
-			this.lastSentPosition = user.mesh.position.clone();
-			this.lastSentRotation = user.mesh.rotation.y;
+        // Notify the server of position changes
+        if (
+            this.lastSentPosition === undefined ||
+            !this.lastSentPosition.equals(user.mesh.position) ||
+            this.lastSentRotation !== user.mesh.rotation.y
+        ) {
+            this.lastSentPosition = user.mesh.position.clone();
+            this.lastSentRotation = user.mesh.rotation.y;
 
-			this.socket.send(
-				JSON.stringify({
-					type: "userMoved",
-					position: user.mesh.position.toArray(),
-					rotation: user.mesh.rotation.y
-				})
-			);
-		}
-	}
+            this.socket.send(
+                JSON.stringify({
+                    type: "userMoved",
+                    position: user.mesh.position.toArray(),
+                    rotation: user.mesh.rotation.y
+                })
+            );
+        }
+    }
 
     animate() {
         requestAnimationFrame(() => this.animate());
@@ -1484,33 +1485,33 @@ class VirtualBar {
         return info;
     }
 
-	addLocalizedMusic() {
-		// Add an AudioListener to the camera
-		const listener = new THREE.AudioListener();
-		this.camera.add(listener);
+    addLocalizedMusic() {
+        // Add an AudioListener to the camera
+        const listener = new THREE.AudioListener();
+        this.camera.add(listener);
 
-		// Create a positional audio object
-		const sound = new THREE.PositionalAudio(listener);
+        // Create a positional audio object
+        const sound = new THREE.PositionalAudio(listener);
 
-		// Load the .mp3 file
-		const audioLoader = new THREE.AudioLoader();
-		audioLoader.load('assets/sound/ElFary_LaMandanga.mp3', (buffer) => {
-			sound.setBuffer(buffer);
-			sound.setLoop(true); // Set to true if you want the music to loop
-			sound.setVolume(0.5); // Adjust volume (0.0 to 1.0)
-			sound.play();
-		});
+        // Load the .mp3 file
+        const audioLoader = new THREE.AudioLoader();
+        audioLoader.load('assets/sound/ElFary_LaMandanga.mp3', (buffer) => {
+            sound.setBuffer(buffer);
+            sound.setLoop(true); // Set to true if you want the music to loop
+            sound.setVolume(0.5); // Adjust volume (0.0 to 1.0)
+            sound.play();
+        });
 
-		// Attach the sound to an object in the scene
-		const soundSource = new THREE.SphereGeometry(0.4, 18, 18); // Small visual sphere for the sound source
-		const soundMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-		const soundMesh = new THREE.Mesh(soundSource, soundMaterial);
-		soundMesh.position.set(-5, 1.7, -3); // Position the sound in the scene
-		this.scene.add(soundMesh);
+        // Attach the sound to an object in the scene
+        const soundSource = new THREE.SphereGeometry(0.4, 18, 18); // Small visual sphere for the sound source
+        const soundMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+        const soundMesh = new THREE.Mesh(soundSource, soundMaterial);
+        soundMesh.position.set(-5, 1.7, -3); // Position the sound in the scene
+        this.scene.add(soundMesh);
 
-		// Attach the sound to the sound source
-		soundMesh.add(sound);
-	}
+        // Attach the sound to the sound source
+        soundMesh.add(sound);
+    }
 }
 
 // Iniciar la aplicación
