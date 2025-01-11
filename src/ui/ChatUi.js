@@ -22,28 +22,24 @@ export class ChatUI {
     }
 
     createChatElements() {
-        // Chat Box
         this.chatBox = document.getElementById('chat-box');
         if (!this.chatBox) {
             console.error('Chat box element not found');
             return;
         }
 
-        // Chat Input Container
         this.chatContainer = document.getElementById('chat-container');
         if (!this.chatContainer) {
             console.error('Chat container element not found');
             return;
         }
 
-        // Chat Input
         this.chatInput = document.getElementById('chat-input');
         if (!this.chatInput) {
             console.error('Chat input element not found');
             return;
         }
 
-        // Inicializar EmotesUI
         this.emotesUI = new EmotesUI(this.chatInput, (emote) => this.handleEmote(emote));
     }
 
@@ -95,14 +91,12 @@ export class ChatUI {
         this.addMessageToChat('local', message, isEmote);
     }
 
-    addMessage(messageData) {
-        // Guardar mensaje en el histórico
+    addMessageToChat(messageData) {
         this.messages.push(messageData);
         if (this.messages.length > this.maxMessages) {
             this.messages.shift();
         }
 
-        // Crear elemento de mensaje
         const messageDiv = document.createElement('div');
         
         if (messageData.isTaberna) {
@@ -118,29 +112,9 @@ export class ChatUI {
             }
         }
 
-        // Añadir al chatBox
         this.chatBox.appendChild(messageDiv);
         this.chatBox.scrollTop = this.chatBox.scrollHeight;
 
-        // Mantener límite de mensajes en el DOM
-        while (this.chatBox.children.length > this.maxMessages) {
-            this.chatBox.removeChild(this.chatBox.firstChild);
-        }
-    }
-
-    addMessageToChat(userId, message, isEmote = false, username = null) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `chat-message ${isEmote ? 'emote-message' : ''}`;
-        
-        const displayName = username || (userId === 'local' ? 'Tú' : 'Usuario');
-        messageDiv.textContent = isEmote ? 
-            `* ${displayName} ${message}` : 
-            `${displayName}: ${message}`;
-
-        this.chatBox.appendChild(messageDiv);
-        this.chatBox.scrollTop = this.chatBox.scrollHeight;
-
-        // Mantener límite de mensajes
         while (this.chatBox.children.length > this.maxMessages) {
             this.chatBox.removeChild(this.chatBox.firstChild);
         }

@@ -1,4 +1,3 @@
-// src/world/Radio.js
 import * as THREE from 'three';
 
 export class Radio {

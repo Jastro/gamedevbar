@@ -49,12 +49,10 @@ export class Game {
                 if (chatContainer) chatContainer.classList.remove('hidden');
                 if (chatBox) chatBox.classList.remove('hidden');
 
-                // Inicializar el juego después de tener el username
                 this.init();
                 this.setupEventListeners();
                 this.animate();
 
-                // Inicializar el audio de la radio después de entrar
                 if (this.environment?.radio) {
                     this.environment.radio.initializeAudio();
                 }

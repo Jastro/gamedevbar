@@ -1,4 +1,3 @@
-// src/ui/ModelSelector.js
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
@@ -126,7 +125,7 @@ export class ModelSelector {
         return this.selectedModel;
     }
 
-    // Métodos para manejar callbacks de cambio de modelo
+
     onModelChange(callback) {
         this.onModelChangeCallbacks.add(callback);
     }
@@ -135,7 +134,7 @@ export class ModelSelector {
         this.onModelChangeCallbacks.forEach(callback => callback(modelId));
     }
 
-    // Limpieza
+
     cleanup() {
         this.modelPreviews.forEach(preview => {
             if (preview.renderer) {
