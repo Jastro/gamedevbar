@@ -329,7 +329,7 @@ wss.on('connection', (ws, req) => {
                     message: data.message,
                     isEmote: data.isEmote,
                     emoji: data.emoji,
-                    timestamp: Date.now() // Añadir timestamp para ordenar mensajes
+                    timestamp: Date.now() 
                 };
 
                 // Añadir mensaje al historial
@@ -355,7 +355,7 @@ wss.on('connection', (ws, req) => {
                     username: user.username,
                     position: user.position,
                     rotation: user.rotation,
-                    selectedModel: user.selectedModel
+                    selectedModel: data.selectedModel
                 });
 
                 // Enviar al nuevo usuario información sobre los usuarios existentes
@@ -367,41 +367,26 @@ wss.on('connection', (ws, req) => {
                             username: existingUser.username,
                             position: existingUser.position,
                             rotation: existingUser.rotation,
-                            seatId: existingUser.seatId,
-                            selectedModel: existingUser.selectedModel
+                            selectedModel: existingUser.selectedModel,
+                            seatId: existingUser.seatId
                         }));
                     }
                 });
 
                 // Enviar historial de chat al nuevo usuario
                 if (ChatLog.length > 0) {
-                    // Enviar mensaje especial indicando inicio del historial
-                    //ws.send(JSON.stringify({
-                    //    type: 'userChat',
-                    //    userId: 'taberna',
-                    //    message: '=== Historial de mensajes recientes ===',
-                    //    isTaberna: true
-                    //}));
 
                     // Enviar todos los mensajes del historial
                     ChatLog.forEach(chatMessage => {
                         ws.send(JSON.stringify(chatMessage));
                     });
-
-                    // Enviar mensaje especial indicando fin del historial
-                    //ws.send(JSON.stringify({
-                    //    type: 'userChat',
-                    //    userId: 'taberna',
-                    //    message: '=== Fin del historial ===',
-                    //    isTaberna: true
-                    //}));
                 }
 
                 // Añadir mensaje de bienvenida al chat después del historial
                 const welcomeMessage = {
                     type: 'userChat',
                     userId: 'taberna',
-                    message: `🍺 ¡el borracho de ${data.username} ha entrado a la taberna!`,
+                    message: `🍺 ¡El borracho de ${data.username} ha entrado!`,
                     isTaberna: true,
                     timestamp: Date.now()
                 };
