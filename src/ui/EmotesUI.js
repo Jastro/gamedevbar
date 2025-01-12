@@ -10,7 +10,6 @@ export class EmotesUI {
     }
 
     createEmotesPanel() {
-        // Crear botón de emotes
         this.emoteButton = document.createElement('button');
         this.emoteButton.id = 'emote-button';
         this.emoteButton.innerHTML = '😊';
