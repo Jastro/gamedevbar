@@ -1,4 +1,3 @@
-import { World } from './World';
 import { Bar } from './Bar';
 import { Furniture } from './Furniture';
 import { Radio } from './Radio';
@@ -6,9 +5,9 @@ import { Paintings } from './Paintings';
 import { Bathroom } from './Bathroom';
 
 export class Environment {
-    constructor(scene) {
+    constructor(scene, world) {
         this.scene = scene;
-        this.world = new World(scene);
+        this.world = world;
         this.bar = new Bar(scene);
         this.furniture = new Furniture(scene);
         this.radio = new Radio(scene);
@@ -17,7 +16,6 @@ export class Environment {
     }
 
     create() {
-        this.world.create();
         this.bar.create();
         this.furniture.create();
         this.radio.create();

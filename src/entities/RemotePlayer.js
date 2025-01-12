@@ -10,7 +10,7 @@ export class RemotePlayer extends Player {
 
     updatePosition(position) {
         if (!Array.isArray(position)) return;
-        console.log('Updating remote player position:', position);
+        // console.log('Updating remote player position:', position);
         this.targetPosition.set(position[0], position[1], position[2]);
         this.lastUpdateTime = Date.now();
         

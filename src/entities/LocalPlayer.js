@@ -106,12 +106,18 @@ export class LocalPlayer extends Player {
         if (moveVector.lengthSq() > 0) {
             moveVector.normalize();
             moveVector.multiplyScalar(this.moveSpeed);
-            this.position.add(moveVector);
 
-            // Rotar el personaje hacia la dirección del movimiento
-            const angle = Math.atan2(moveVector.x, moveVector.z);
-            this.rotation = angle;
-            this.isMoving = true;
+            // Calcular la nueva posición
+            const newPosition = this.position.clone().add(moveVector);
+
+            // Comprobar colisiones
+            if (!this.game.world.checkCollision(newPosition)) {
+                this.position.copy(newPosition);
+                // Rotar el personaje hacia la dirección del movimiento
+                const angle = Math.atan2(moveVector.x, moveVector.z);
+                this.rotation = angle;
+                this.isMoving = true;
+            }
         } else {
             this.isMoving = false;
         }

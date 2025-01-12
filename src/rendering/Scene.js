@@ -3,8 +3,8 @@ import * as THREE from 'three';
 export class Scene {
     constructor() {
         this.scene = new THREE.Scene();
-        this.scene = null;
         this.seats = new Map();
+        this.isLoaded = false;
         this.load();
     }
 
@@ -12,7 +12,7 @@ export class Scene {
         const loader = new THREE.ObjectLoader();
         
         try {
-            this.scene = await new Promise((resolve, reject) => {
+            const loadedScene = await new Promise((resolve, reject) => {
                 loader.load('level.json', 
                     (loadedScene) => {
                         // Procesar la escena cargada
@@ -49,12 +49,33 @@ export class Scene {
                     reject
                 );
             });
+
+            // Transferir objetos de la escena cargada a la escena principal
+            while(loadedScene.children.length > 0) {
+                this.scene.add(loadedScene.children[0]);
+            }
+            this.isLoaded = true;
         } catch (error) {
             console.error('Error loading scene:', error);
             // Crear una escena básica como fallback
-            this.scene = new THREE.Scene();
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             this.scene.add(ambientLight);
+            this.isLoaded = true;
+        }
+    }
+
+    async waitForLoad() {
+        if (!this.isLoaded) {
+            await new Promise(resolve => {
+                const checkLoaded = () => {
+                    if (this.isLoaded) {
+                        resolve();
+                    } else {
+                        setTimeout(checkLoaded, 100);
+                    }
+                };
+                checkLoaded();
+            });
         }
     }
 
@@ -63,10 +84,18 @@ export class Scene {
     }
 
     add(object) {
+        if (!this.scene) {
+            console.error('Scene not initialized');
+            return;
+        }
         this.scene.add(object);
     }
 
     remove(object) {
+        if (!this.scene) {
+            console.error('Scene not initialized');
+            return;
+        }
         this.scene.remove(object);
     }
 

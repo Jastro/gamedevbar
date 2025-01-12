@@ -2,7 +2,8 @@
 import * as THREE from 'three';
 
 export class Camera {
-    constructor() {
+    constructor(scene) {
+        this.scene = scene;
         this.camera = new THREE.PerspectiveCamera(
             75,
             window.innerWidth / window.innerHeight,
@@ -83,7 +84,39 @@ export class Camera {
             radius * Math.cos(this.rotation.horizontal)
         );
 
-        this.camera.position.copy(targetPosition).add(cameraOffset);
+        // Posición deseada de la cámara
+        const targetCameraPos = new THREE.Vector3().copy(targetPosition).add(cameraOffset);
+
+        // Crear un raycaster desde el personaje hacia la posición deseada de la cámara
+        const raycaster = new THREE.Raycaster();
+        raycaster.set(
+            targetPosition,
+            cameraOffset.clone().normalize()
+        );
+
+        // Lista de objetos a comprobar para colisiones (paredes)
+        const walls = this.scene.children.filter(obj =>
+            obj.isMesh &&
+            (obj.geometry instanceof THREE.BoxGeometry) &&
+            obj.position.y >= 2 // Asumiendo que las paredes están en y >= 2
+        );
+
+        const intersects = raycaster.intersectObjects(walls);
+
+        if (intersects.length > 0) {
+            // Si hay una colisión, colocar la cámara justo antes del punto de colisión
+            const collision = intersects[0];
+            if (collision.distance < cameraOffset.length()) {
+                const adjustedDistance = collision.distance * 0.9; // 90% de la distancia a la pared
+                const adjustedOffset = cameraOffset.normalize().multiplyScalar(adjustedDistance);
+                this.camera.position.copy(targetPosition).add(adjustedOffset);
+            } else {
+                this.camera.position.copy(targetCameraPos);
+            }
+        } else {
+            this.camera.position.copy(targetCameraPos);
+        }
+
         this.camera.lookAt(targetPosition);
     }
 
