@@ -8,23 +8,33 @@ import { Environment } from '../world/Environment';
 import { ChatUI } from '../ui/ChatUI';
 import { ModelSelector } from '../ui/ModelSelector';
 import * as THREE from 'three';
+import { World } from '../world/World';
 
 export class Game {
     constructor() {
+        // Asignar la instancia del juego a window.game primero
+        window.game = this;
+
         this.config = new Config();
         this.scene = new Scene();
-        this.camera = new Camera();
+        this.camera = new Camera(this.scene.getScene());
         this.renderer = new Renderer(this.scene, this.camera);
-        this.network = new WebSocketManager();
-        this.players = new PlayerManager(this);
-        this.environment = new Environment(this.scene);
+        this.world = new World(this.scene);
+        this.environment = new Environment(this.scene, this.world);
+        
+        // Inicializar UI antes que network
         this.ui = {
             chat: new ChatUI(),
             modelSelector: new ModelSelector()
         };
 
+        // Inicializar network después de UI
+        this.network = new WebSocketManager();
+        this.players = new PlayerManager(this);
+
         this.ui.modelSelector.init();
         this.setupInitialUI();
+        this.clock = new THREE.Clock();
     }
 
     setupInitialUI() {
@@ -40,16 +50,19 @@ export class Game {
             return;
         }
 
-        startButton.addEventListener('click', () => {
+        startButton.addEventListener('click', async () => {
             const username = usernameInput.value.trim();
             if (username) {
-                console.log('Starting game with username:', username);
+                // Esperar a que se seleccione un modelo antes de continuar
+                const selectedModel = await this.ui.modelSelector.waitForModelSelection();
+                console.log('Selected model before starting game:', selectedModel);
+                
                 this.username = username;
                 usernameDialog.classList.add('hidden');
                 if (chatContainer) chatContainer.classList.remove('hidden');
                 if (chatBox) chatBox.classList.remove('hidden');
 
-                this.init();
+                await this.init();
                 this.setupEventListeners();
                 this.animate();
 
@@ -60,15 +73,17 @@ export class Game {
         });
 
         usernameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !startButton.disabled) {
                 startButton.click();
             }
         });
     }
 
-    init() {
+    async init() {
         this.renderer.init();
+        await this.scene.waitForLoad();
         this.network.connect();
+        this.world.create();
         this.environment.create();
         this.ui.modelSelector.init();
     }
@@ -196,12 +211,14 @@ export class Game {
 
     animate() {
         requestAnimationFrame(() => this.animate());
-        this.update();
+        const deltaTime = this.clock.getDelta();
+        this.update(deltaTime);
         this.render();
     }
 
     update(deltaTime) {
         this.players.update(deltaTime);
+        this.world.update(deltaTime);
 
         // Actualizar posición de la cámara para seguir al jugador local
         if (this.players.localPlayer) {

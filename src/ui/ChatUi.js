@@ -54,6 +54,17 @@ export class ChatUI {
             this.chatActive = false;
         });
 
+        // Prevent game controls while typing
+        this.chatInput.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || // Space (jump)
+                e.key.toLowerCase() === 'w' || // Movement
+                e.key.toLowerCase() === 'a' ||
+                e.key.toLowerCase() === 's' ||
+                e.key.toLowerCase() === 'd') {
+                e.stopPropagation(); // Prevent the event from bubbling up
+            }
+        });
+
         this.chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const message = this.chatInput.value.trim();
@@ -82,16 +93,17 @@ export class ChatUI {
             emoji: emoji
         };
 
-        // Enviar a través del WebSocket (necesitarás implementar esto)
-        if (window.game && window.game.network) {
-            window.game.network.send(messageData);
+        if (window.game?.network) {
+            window.game.network.send('userChat', messageData);
         }
-
-        // Mostrar mensaje localmente
-        this.addMessageToChat('local', message, isEmote);
     }
 
-    addMessageToChat(messageData) {
+    addMessage(messageData) {
+        if (!this.chatBox) {
+            console.error('Chat box no encontrado');
+            return;
+        }
+
         this.messages.push(messageData);
         if (this.messages.length > this.maxMessages) {
             this.messages.shift();
@@ -106,9 +118,9 @@ export class ChatUI {
             messageDiv.className = `chat-message ${messageData.isEmote ? 'emote-message' : ''}`;
             const username = messageData.username || messageData.userId;
             if (messageData.isEmote) {
-                messageDiv.textContent = `* ${username} ${messageData.message}`;
+                messageDiv.innerHTML = `* <strong>${username}</strong> ${messageData.message}`;
             } else {
-                messageDiv.textContent = `${username}: ${messageData.message}`;
+                messageDiv.innerHTML = `<strong>${username}</strong> ${messageData.message}`;
             }
         }
 
@@ -117,6 +129,13 @@ export class ChatUI {
 
         while (this.chatBox.children.length > this.maxMessages) {
             this.chatBox.removeChild(this.chatBox.firstChild);
+        }
+
+        if (!messageData.isTaberna && window.game?.players?.players) {
+            const player = window.game.players.players.get(messageData.userId);
+            if (player) {
+                player.showChatBubble(messageData.message, messageData.isEmote, messageData.emoji);
+            }
         }
     }
 

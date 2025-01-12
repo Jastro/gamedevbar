@@ -3,9 +3,12 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export class ModelSelector {
     constructor() {
-        this.selectedModel = 'pj';
+        this.selectedModel = null;
         this.modelPreviews = new Map();
         this.onModelChangeCallbacks = new Set();
+        this.modelSelectedPromise = new Promise(resolve => {
+            this.resolveModelSelection = resolve;
+        });
     }
 
     init() {
@@ -25,17 +28,23 @@ export class ModelSelector {
                 option.classList.add('selected');
                 this.selectedModel = modelId;
                 
-                // Notificar el cambio de modelo
+                if (this.resolveModelSelection) {
+                    this.resolveModelSelection(modelId);
+                    this.resolveModelSelection = null;
+                }
+                
                 this.notifyModelChange(modelId);
+                
+                // Guardar el modelo seleccionado en localStorage
+                localStorage.setItem('selectedModel', modelId);
             });
-        });
 
-        // Seleccionar el primer modelo por defecto
-        if (options.length > 0) {
-            this.selectedModel = options[0].dataset.model;
-            options[0].classList.add('selected');
-            console.log('Default model selected:', this.selectedModel);
-        }
+            // Restaurar la selección previa si existe
+            const savedModel = localStorage.getItem('selectedModel');
+            if (savedModel === modelId) {
+                option.click();
+            }
+        });
     }
 
     createModelPreview(modelId, container) {
@@ -121,19 +130,32 @@ export class ModelSelector {
     }
 
     getSelectedModel() {
-        console.log('Getting selected model:', this.selectedModel);
         return this.selectedModel;
     }
 
+    async waitForModelSelection() {
+        return this.modelSelectedPromise;
+    }
 
     onModelChange(callback) {
         this.onModelChangeCallbacks.add(callback);
     }
 
     notifyModelChange(modelId) {
+        console.log('Model change notification:', modelId);
         this.onModelChangeCallbacks.forEach(callback => callback(modelId));
+        
+        // Si hay un jugador local, actualizar su modelo
+        if (this.game?.players?.localPlayer) {
+            this.game.players.localPlayer.setModel(modelId).then(() => {
+                // Notificar al servidor del cambio de modelo
+                this.game.network.send('setUsername', {
+                    username: this.game.players.localPlayer.username,
+                    selectedModel: modelId
+                });
+            });
+        }
     }
-
 
     cleanup() {
         this.modelPreviews.forEach(preview => {
@@ -146,5 +168,10 @@ export class ModelSelector {
             }
         });
         this.modelPreviews.clear();
+    }
+
+    // Añadir método para verificar si hay un modelo seleccionado
+    hasModelSelected() {
+        return this.selectedModel !== null;
     }
 }

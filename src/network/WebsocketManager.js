@@ -54,22 +54,34 @@ export class WebSocketManager extends EventEmitter {
         try {
             const data = JSON.parse(event.data);
             
+            // Asegurarse de que window.game existe
+            if (!window.game) {
+                console.error('window.game no está definido');
+                return;
+            }
+
             // Manejo especial para mensajes de chat
             if (data.type === 'userChat') {
-                // Enviar el mensaje al ChatUI
-                window.game.ui.chat.addMessage({
-                    userId: data.userId,
-                    username: data.username,
-                    message: data.message,
-                    isEmote: data.isEmote,
-                    isTaberna: data.isTaberna,
-                    timestamp: data.timestamp
-                });
+                if (window.game.ui?.chat?.addMessage) {
+                    const messageData = {
+                        userId: data.userId,
+                        username: data.username,
+                        message: data.message,
+                        isEmote: data.isEmote,
+                        isTaberna: data.isTaberna,
+                        emoji: data.emoji,
+                        timestamp: data.timestamp
+                    };
+                    window.game.ui.chat.addMessage(messageData);
+                } else {
+                    console.error('Chat UI no está inicializado correctamente', window.game.ui);
+                }
             }
             
             this.emit(data.type, data);
         } catch (error) {
             console.error('Error parsing message:', error);
+            console.error('Raw message:', event.data);
         }
     }
 

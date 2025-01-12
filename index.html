@@ -91,6 +91,18 @@
       letter-spacing: 0.5px;
     }
 
+    #username-dialog button:disabled {
+      background: #666;
+      cursor: not-allowed;
+      opacity: 0.7;
+      box-shadow: none;
+    }
+
+    #username-dialog button:disabled:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
     #username-dialog button:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(220, 90, 11, 0.4);
@@ -106,60 +118,71 @@
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      width: 400px;
+      width: 600px;
       z-index: 1001;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     #chat-input {
       position: relative;
       width: 100%;
-      padding: 12px 20px;
+      padding: 14px 20px;
       border: 2px solid rgba(220, 90, 11, 0.3);
-      border-radius: 8px;
-      font-size: 15px;
-      background: rgba(0, 0, 0, 0.7);
+      border-radius: 12px;
+      font-size: 16px;
+      background: rgba(0, 0, 0, 0.85);
       color: #fff;
       backdrop-filter: blur(10px);
       transition: all 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
       box-sizing: border-box;
+      letter-spacing: 0.3px;
     }
 
     #chat-input:focus {
       outline: none;
       border-color: #dc5a0b;
-      box-shadow: 0 0 0 3px rgba(220, 90, 11, 0.2);
+      box-shadow: 0 0 0 3px rgba(220, 90, 11, 0.2), 0 4px 20px rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.95);
     }
 
     #chat-input::placeholder {
-      color: rgba(255, 255, 255, 0.5);
+      color: rgba(255, 255, 255, 0.4);
+      font-style: italic;
     }
 
     #chat-box {
       position: fixed;
       left: 20px;
-      bottom: 80px;
-      width: 400px;
+      bottom: 90px;
+      width: 450px;
       height: 400px;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(0, 0, 0, 0.9);
       color: white;
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 15px;
       overflow-y: auto;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
       z-index: 1000;
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(220, 90, 11, 0.2);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      line-height: 1.2;
     }
 
     #chat-box::-webkit-scrollbar {
-      width: 6px;
+      width: 8px;
     }
 
     #chat-box::-webkit-scrollbar-track {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 4px;
+      margin: 4px;
     }
 
     #chat-box::-webkit-scrollbar-thumb {
@@ -173,25 +196,39 @@
     }
 
     .chat-message {
-      margin: 8px 0;
-      padding: 8px 12px;
+      margin: 1px 0;
+      padding: 6px 10px;
       word-wrap: break-word;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.03);
       border-radius: 8px;
       font-size: 14px;
-      line-height: 1.4;
+      line-height: 1.3;
       transition: all 0.2s ease;
+      border-left: 2px solid transparent;
+      letter-spacing: 0.2px;
     }
 
     .chat-message:hover {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateX(2px);
+    }
+
+    .chat-message strong {
+      color: #dc5a0b;
+      font-weight: 600;
+      margin-right: 6px;
     }
 
     .emote-message {
       color: #ff9d8f;
       font-style: italic;
-      background: rgba(255, 157, 143, 0.1);
-      border-left: 3px solid #ff9d8f;
+      background: rgba(255, 157, 143, 0.05);
+      border-left: 2px solid #ff9d8f;
+      padding-left: 12px;
+    }
+
+    .emote-message strong {
+      color: #ff9d8f;
     }
 
     .hidden {
@@ -202,7 +239,7 @@
     @keyframes fadeIn {
       from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(5px);
       }
 
       to {
@@ -212,74 +249,72 @@
     }
 
     .chat-message {
-      animation: fadeIn 0.3s ease forwards;
+      animation: fadeIn 0.2s ease forwards;
     }
 
     #emote-button {
       position: absolute;
-      right: -50px;
+      right: -60px;
       bottom: 0;
-      width: 40px;
-      height: 40px;
+      width: 45px;
+      height: 45px;
       border: none;
-      border-radius: 50%;
+      border-radius: 12px;
       background: rgba(220, 90, 11, 0.9);
       color: white;
-      font-size: 20px;
+      font-size: 22px;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
       z-index: 1002;
     }
 
     #emote-button:hover {
       background: rgba(220, 90, 11, 1);
-      transform: scale(1.1);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(220, 90, 11, 0.3);
     }
 
     #emotes-panel {
       position: absolute;
       bottom: 60px;
-      right: -50px;
-      width: 240px;
+      right: -60px;
+      width: 280px;
       background: rgba(0, 0, 0, 0.95);
-      border-radius: 12px;
-      padding: 10px;
+      border-radius: 16px;
+      padding: 15px;
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
+      gap: 10px;
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(220, 90, 11, 0.3);
+      border: 2px solid rgba(220, 90, 11, 0.3);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       z-index: 1002;
     }
 
     .emote-item {
-      width: 40px;
-      height: 40px;
+      width: 45px;
+      height: 45px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 26px;
       cursor: pointer;
-      border-radius: 8px;
+      border-radius: 10px;
       transition: all 0.2s ease;
       background: rgba(255, 255, 255, 0.05);
     }
 
     .emote-item:hover {
       background: rgba(220, 90, 11, 0.3);
-      transform: scale(1.1);
+      transform: scale(1.1) translateY(-2px);
+      box-shadow: 0 4px 12px rgba(220, 90, 11, 0.2);
     }
 
     /* Animación para el panel de emotes */
-    #emotes-panel:not(.hidden) {
-      animation: slideIn 0.3s ease forwards;
-    }
-
     @keyframes slideIn {
       from {
         opacity: 0;
@@ -292,14 +327,18 @@
       }
     }
 
+    #emotes-panel:not(.hidden) {
+      animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
     .taberna-message {
       color: #ffd700 !important;
-      font-weight: bold;
-      padding: 4px 8px;
-      border-radius: 4px;
+      font-weight: 500;
+      padding: 6px 10px;
+      border-radius: 8px;
       background-color: rgba(139, 69, 19, 0.1) !important;
-      margin: 4px 0;
-      border-left: 3px solid #8b4513 !important;
+      margin: 1px 0;
+      border-left: 2px solid #8b4513 !important;
     }
 
     .taberna-tag {
@@ -307,16 +346,18 @@
       color: #ffd700;
       padding: 2px 6px;
       border-radius: 4px;
-      margin-right: 8px;
-      font-weight: bold;
+      margin-right: 6px;
+      font-weight: 600;
       text-transform: uppercase;
-      font-size: 0.9em;
+      font-size: 0.8em;
       display: inline-block;
+      letter-spacing: 0.5px;
     }
 
     /* Sobreescribir el hover para mensajes de taberna */
     .taberna-message:hover {
-      background-color: rgba(139, 69, 19, 0.15) !important;
+      background-color: rgba(139, 69, 19, 0.2) !important;
+      transform: translateX(2px);
     }
 
     .model-selector {
@@ -457,6 +498,36 @@
   <script type="module" src="/src/ui/emotes.js"></script>
   <script type="module" src="/src/ui/emotesUI.js"></script>
   <script type="module" src="/src/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const startButton = document.getElementById('start-button');
+      const usernameInput = document.getElementById('username-input');
+      
+      // Deshabilitar el botón inicialmente
+      startButton.disabled = true;
+      
+      function checkEnableButton() {
+        const hasUsername = usernameInput.value.trim().length > 0;
+        const hasModel = document.querySelector('.model-option.selected') !== null;
+        startButton.disabled = !(hasUsername && hasModel);
+      }
+      
+      // Verificar cuando se escribe el nombre
+      usernameInput.addEventListener('input', checkEnableButton);
+      
+      // Verificar cuando se selecciona un modelo usando el evento personalizado
+      window.addEventListener('modelSelected', () => {
+        checkEnableButton();
+      });
+
+      // También verificar cuando se hace clic en las opciones de modelo
+      document.querySelectorAll('.model-option').forEach(option => {
+        option.addEventListener('click', () => {
+          setTimeout(checkEnableButton, 0); // Usar setTimeout para asegurar que se ejecute después de que el modelo se haya actualizado
+        });
+      });
+    });
+  </script>
 </body>
 
 </html>
