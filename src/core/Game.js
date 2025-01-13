@@ -5,7 +5,7 @@ import { Camera } from '../rendering/Camera';
 import { WebSocketManager } from '@network/WebSocketManager';
 import { PlayerManager } from '../entities/PlayerManager';
 import { Environment } from '../world/Environment';
-import { ChatUI } from '../ui/ChatUI';
+import { ChatUI } from '@/ui/ChatUI';
 import { ModelSelector } from '../ui/ModelSelector';
 import * as THREE from 'three';
 import { World } from '../world/World';

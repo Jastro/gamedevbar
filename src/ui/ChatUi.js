@@ -1,5 +1,4 @@
 import { EmotesUI } from './EmotesUI';
-import { Config } from '../core/Config';
 
 export class ChatUI {
     constructor() {
