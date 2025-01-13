@@ -6,7 +6,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/ws': {
-        target: 'wss://localhost:3000',
+        target: 'ws://localhost:3000',
         ws: true,
         changeOrigin: true
       }
@@ -16,5 +16,15 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        entryFileNames: `assets/[name].js`,
+        chunkFileNames: `assets/[name].js`,
+        assetFileNames: `assets/[name].[ext]`
+      }
+    },
+    resolve: {
+      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+    }
   }
 })
