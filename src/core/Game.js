@@ -2,7 +2,7 @@ import { Config } from './Config';
 import { Scene } from '../rendering/Scene';
 import { Renderer } from '../rendering/Renderer';
 import { Camera } from '../rendering/Camera';
-import { WebSocketManager } from '../network/WebSocketManager';
+import { WebSocketManager } from '@network/WebSocketManager';
 import { PlayerManager } from '../entities/PlayerManager';
 import { Environment } from '../world/Environment';
 import { ChatUI } from '../ui/ChatUI';
