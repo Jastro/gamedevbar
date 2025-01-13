@@ -54,7 +54,6 @@ export class WebSocketManager extends EventEmitter {
         try {
             const data = JSON.parse(event.data);
             
-            // Asegurarse de que window.game existe
             if (!window.game) {
                 console.error('window.game no está definido');
                 return;
