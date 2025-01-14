@@ -75,6 +75,10 @@ export class LocalPlayer extends Player {
     handleMovement() {
         if (this.game.chatActive) return;
 
+        if (this.game.environment.arcadePong.isPlayingGame(this.id)) {
+            return;
+        }
+        
         if (this.isSitting && (
             this.keysPressed["w"] ||
             this.keysPressed["a"] ||

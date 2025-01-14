@@ -19,10 +19,8 @@ export class PlayerManager {
     }
 
     handleInit(data) {
-        console.log('Inicializando jugador local');
         const initialPosition = new Vector3(0, 1, 0);
         const selectedModel = this.game.ui.modelSelector.getSelectedModel();
-        console.log('Selected model for local player:', selectedModel);
 
         // Crear el jugador local con el modelo seleccionado
         this.localPlayer = new LocalPlayer(data.userId, initialPosition, this.game);
@@ -51,16 +49,12 @@ export class PlayerManager {
     handleUserJoined(data) {
         // Si es el jugador local, ignorar ya que ya fue creado en handleInit
         if (data.userId === this.localPlayer?.id) {
-            console.log('Ignorando userJoined para jugador local:', data.userId);
             return;
         }
-        
-        console.log('Nuevo jugador conectado:', data);
         
         // Verificar si el jugador ya existe
         const existingPlayer = this.players.get(data.userId);
         if (existingPlayer) {
-            console.log('Jugador existente, actualizando:', data.userId);
             if (data.username) existingPlayer.setUsername(data.username);
             if (data.selectedModel && existingPlayer.selectedModel !== data.selectedModel) {
                 existingPlayer.setModel(data.selectedModel);
@@ -76,7 +70,6 @@ export class PlayerManager {
         );
 
         // Crear nuevo jugador remoto
-        console.log('Creando nuevo jugador remoto:', data.userId);
         const player = new RemotePlayer(data.userId, position, this.game);
         
         // Primero añadir al mapa de jugadores

@@ -5,6 +5,7 @@ const app = express();
 const { WebSocketServer } = require('ws');
 const http = require('http');
 const { v4: uuidv4 } = require('uuid');
+const cors = require("cors");
 
 // Crear servidor HTTP
 const server = http.createServer(app);
@@ -12,6 +13,7 @@ const server = http.createServer(app);
 // Crear servidor WebSocket usando el servidor HTTP
 const wss = new WebSocketServer({ server });
 
+app.use(cors());
 // Servir archivos estáticos desde la carpeta dist
 app.use(express.static(path.join(__dirname, 'dist')));
 
@@ -19,7 +21,15 @@ app.use(express.static(path.join(__dirname, 'dist')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
-
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept"
+    );
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+    next();
+});
 // Almacenar estado del servidor
 const users = new Map(); // Mapa de usuarios conectados
 const seats = new Map(); // Mapa de asientos ocupados
@@ -97,13 +107,75 @@ wss.on('connection', (ws, req) => {
         }
     });
 
+    app.get('/mv-proxy', async (req, res) => {
+        try {
+            const mvResponse = await fetch('https://www.mediavida.com/foro/gamedev/gamedev-taberna-ahora-nuestro-propio-habbo-gamedev-718219/live');
+            const html = await mvResponse.text();
+
+            // Configurar headers CORS
+            res.header('Access-Control-Allow-Origin', '*');
+            res.header('X-Frame-Options', 'ALLOWALL');
+            res.header('Content-Security-Policy', "frame-ancestors 'self' *");
+
+            res.send(html);
+        } catch (error) {
+            console.error('Error fetching MediaVida:', error);
+            res.status(500).send('Error fetching content');
+        }
+    });
+
     ws.on('message', (message) => {
         const data = JSON.parse(message);
         const user = users.get(ws);
 
         switch (data.type) {
+            case 'arcadeState':
+                const arcade = data;
+                broadcastAll({
+                    type: 'arcadeState',
+                    gameState: data.gameState,
+                    data: data.data
+                });
+                switch (arcade.type) {
+                    case 'startGame':
+                        broadcastAll({
+                            type: 'arcadeUpdate',
+                            action: 'startGame',
+                            playerId: arcade.playerId
+                        });
+                        break;
+
+                    case 'playerJoined':
+                        // Enviar mensaje de que se unió un jugador
+                        broadcastAll({
+                            type: 'arcadeUpdate',
+                            action: 'playerJoined',
+                            playerId: arcade.playerId
+                        });
+
+                        // Esperar 3 segundos y reiniciar el juego
+                        setTimeout(() => {
+                            broadcastAll({
+                                type: 'arcadeUpdate',
+                                action: 'startTwoPlayer',
+                                player1Id: data.currentPlayerId,
+                                player2Id: arcade.playerId
+                            });
+                        }, 3000);
+                        break;
+
+                    case 'gameState':
+                        // Actualizar estado del juego (posiciones, puntuaciones, etc)
+                        broadcastAll({
+                            type: 'arcadeUpdate',
+                            action: 'updateState',
+                            state: arcade.state
+                        });
+                        break;
+                }
+                break;
             case 'duelRequest':
-                const targetClient = [...wss.clients].find(client => 
+                const targetClient = [...wss.clients].find(client =>
                     users.get(client).id === data.targetId
                 );
                 const targetUser = users.get(targetClient);
@@ -114,7 +186,7 @@ wss.on('connection', (ws, req) => {
                         from: challengerUser.id,
                         to: targetUser.id
                     });
-                    
+
                     // Añadir mensaje al chat global
                     const duelRequestMessage = {
                         type: 'userChat',
@@ -124,7 +196,7 @@ wss.on('connection', (ws, req) => {
                         isEmote: true
                     };
                     broadcastAll(duelRequestMessage);
-                    
+
                     targetClient.send(JSON.stringify({
                         type: 'duelRequest',
                         targetId: data.targetId,
@@ -135,7 +207,7 @@ wss.on('connection', (ws, req) => {
                 break;
 
             case 'duelAccepted':
-                const challengerClient = [...wss.clients].find(client => 
+                const challengerClient = [...wss.clients].find(client =>
                     users.get(client).id === data.challengerId
                 );
                 if (challengerClient) {
@@ -154,7 +226,7 @@ wss.on('connection', (ws, req) => {
                 break;
 
             case 'duelRejected':
-                const rejectedClient = [...wss.clients].find(client => 
+                const rejectedClient = [...wss.clients].find(client =>
                     users.get(client).id === data.challengerId
                 );
                 if (rejectedClient) {
@@ -168,13 +240,13 @@ wss.on('connection', (ws, req) => {
             case 'duelChoice':
                 if (user.isInDuel && user.duelOpponent) {
                     user.duelChoice = data.choice;
-                    const opponentClient = [...wss.clients].find(client => 
+                    const opponentClient = [...wss.clients].find(client =>
                         users.get(client).id === user.duelOpponent
                     );
-                    
+
                     if (opponentClient) {
                         const opponent = users.get(opponentClient);
-                        
+
                         // Enviar la elección al oponente
                         opponentClient.send(JSON.stringify({
                             type: 'duelChoice',
@@ -220,7 +292,7 @@ wss.on('connection', (ws, req) => {
                                 },
                                 choiceEmojis: choiceEmojis
                             };
-                            
+
                             ws.send(JSON.stringify(result));
                             opponentClient.send(JSON.stringify(result));
 
@@ -229,9 +301,8 @@ wss.on('connection', (ws, req) => {
                                 type: 'userChat',
                                 userId: 'taberna',
                                 username: '',
-                                message: `${
-                                    user.duelChoice === opponent.duelChoice ? 
-                                        `¡${user.username} y ${opponent.username} han empatado como buenos bebedores!` :
+                                message: `${user.duelChoice === opponent.duelChoice ?
+                                    `¡${user.username} y ${opponent.username} han empatado como buenos bebedores!` :
                                     (
                                         (user.duelChoice === 'piedra' && opponent.duelChoice === 'tijera') ||
                                         (user.duelChoice === 'papel' && opponent.duelChoice === 'piedra') ||
@@ -239,7 +310,7 @@ wss.on('connection', (ws, req) => {
                                     ) ?
                                         `¡El borracho de ${user.username} ha ganado a ${opponent.username}!` :
                                         `¡El borracho de ${opponent.username} ha ganado a ${user.username}!`
-                                } (${choiceEmojis[user.duelChoice]}) vs (${choiceEmojis[opponent.duelChoice]}) ${resultEmoji}`,
+                                    } (${choiceEmojis[user.duelChoice]}) vs (${choiceEmojis[opponent.duelChoice]}) ${resultEmoji}`,
                                 isTaberna: true,
                                 timestamp: Date.now()
                             };
@@ -329,7 +400,7 @@ wss.on('connection', (ws, req) => {
                     message: data.message,
                     isEmote: data.isEmote,
                     emoji: data.emoji,
-                    timestamp: Date.now() 
+                    timestamp: Date.now()
                 };
 
                 // Añadir mensaje al historial
@@ -398,7 +469,7 @@ wss.on('connection', (ws, req) => {
 
     ws.on('close', () => {
         const user = users.get(ws);
-        
+
         // Añadir mensaje de despedida al chat
         if (user && user.username) {
             const goodbyeMessage = {
@@ -413,7 +484,7 @@ wss.on('connection', (ws, req) => {
         }
 
         if (user.isInDuel && user.duelOpponent) {
-            const opponentClient = [...wss.clients].find(client => 
+            const opponentClient = [...wss.clients].find(client =>
                 users.get(client).id === user.duelOpponent
             );
             if (opponentClient) {

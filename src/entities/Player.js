@@ -75,7 +75,6 @@ export class Player {
     async loadModel() {
         const loader = new GLTFLoader();
         try {
-            console.log('Loading model for player:', this.id, 'Model:', this.selectedModel);
             const modelPath = `/assets/models/${this.selectedModel}.glb`;
             
             const gltf = await loader.loadAsync(modelPath);
@@ -120,7 +119,6 @@ export class Player {
             this.animations.actions.clear();
 
             gltf.animations.forEach((clip) => {
-                console.log('Animación encontrada:', clip.name);
                 const cleanName = clip.name.toLowerCase().trim();
                 if (cleanName.includes('idle')) {
                     this.animations.actions.set('idle', this.animations.mixer.clipAction(clip));
@@ -141,10 +139,8 @@ export class Player {
                 this.nameSprite.material.opacity = 1;
             }
 
-            console.log('Modelo cargado exitosamente');
         } catch (error) {
             console.error('Error loading model:', error);
-            console.log('Ruta del modelo:', `/assets/models/${this.selectedModel}.glb`);
             throw error; // Re-lanzar el error para manejarlo en setModel
         }
     }
@@ -276,7 +272,6 @@ export class Player {
     }
 
     async setModel(modelId) {
-        console.log('Setting model:', modelId, 'for player:', this.id);
         if (this.selectedModel === modelId) return;
         
         this.selectedModel = modelId;
@@ -292,7 +287,6 @@ export class Player {
             // Esperar a que termine de cargar el modelo
             await this.loadModel();
             this.setupAnimations();
-            console.log('Model successfully set for player:', this.id, 'Model:', modelId);
         } catch (error) {
             console.error('Error setting model:', error);
         }

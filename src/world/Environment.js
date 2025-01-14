@@ -3,6 +3,7 @@ import { Furniture } from './Furniture';
 import { Radio } from './Radio';
 import { Paintings } from './Paintings';
 import { Bathroom } from './Bathroom';
+import { ArcadePong } from './ArcadePong';
 
 export class Environment {
     constructor(scene, world) {
@@ -13,6 +14,7 @@ export class Environment {
         this.radio = new Radio(scene);
         this.paintings = new Paintings(scene);
         this.bathroom = new Bathroom(scene);
+        this.arcadePong = new ArcadePong(scene);
     }
 
     create() {
@@ -20,7 +22,7 @@ export class Environment {
         this.furniture.create();
         this.radio.create();
         this.paintings.create();
-        //this.bathroom.create();
+        this.arcadePong.create({ x: -10, y: 2, z: -8 });
         this.loadPaintings();
     }
 

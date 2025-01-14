@@ -16,10 +16,10 @@ export class WebSocketManager extends EventEmitter {
         }
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const url = protocol === 'ws:' ? 
-            `${protocol}//${window.location.hostname}:3000` : 
+        const url = protocol === 'ws:' ?
+            `${protocol}//${window.location.hostname}:3000` :
             `${protocol}//${window.location.hostname}`;
-            
+
         this.socket = new WebSocket(url);
         this.setupSocketListeners();
     }
@@ -40,7 +40,7 @@ export class WebSocketManager extends EventEmitter {
     handleDisconnect() {
         this.isConnected = false;
         this.emit(NetworkEvents.DISCONNECT);
-    
+
         if (this.reconnectAttempts < NetworkConfig.RECONNECT_ATTEMPTS) {
             setTimeout(() => {
                 this.reconnectAttempts++;
@@ -53,10 +53,41 @@ export class WebSocketManager extends EventEmitter {
         this.lastMessageTime = Date.now();
         try {
             const data = JSON.parse(event.data);
-            
+
             if (!window.game) {
                 console.error('window.game no está definido');
                 return;
+            }
+
+            if (data.type === 'arcadeUpdate') {
+                const arcade = window.game?.environment?.arcadePong;
+                if (!arcade) return;
+        
+                switch(data.action) {
+                    case 'startGame':
+                        const player = window.game.players.players.get(data.playerId);
+                        arcade.startOnePlayerGame(player);
+                        break;
+        
+                    case 'playerJoined':
+                        const joiningPlayer = window.game.players.players.get(data.playerId);
+                        // Mostrar mensaje de jugador uniéndose
+                        window.game.ui.chat.addMessage({
+                            type: 'system',
+                            message: `${joiningPlayer.username} se ha unido al juego. La partida comenzará en 3 segundos...`
+                        });
+                        break;
+        
+                    case 'startTwoPlayer':
+                        const player1 = window.game.players.players.get(data.player1Id);
+                        const player2 = window.game.players.players.get(data.player2Id);
+                        arcade.startTwoPlayerGame(player1, player2);
+                        break;
+        
+                    case 'updateState':
+                        arcade.updateGameState(data.state);
+                        break;
+                }
             }
 
             // Manejo especial para mensajes de chat
@@ -76,7 +107,7 @@ export class WebSocketManager extends EventEmitter {
                     console.error('Chat UI no está inicializado correctamente', window.game.ui);
                 }
             }
-            
+
             this.emit(data.type, data);
         } catch (error) {
             console.error('Error parsing message:', error);
@@ -102,7 +133,7 @@ export class WebSocketManager extends EventEmitter {
 
     setupHeartbeat() {
         setInterval(() => {
-            if (this.isConnected && 
+            if (this.isConnected &&
                 Date.now() - this.lastMessageTime > NetworkConfig.WS_TIMEOUT) {
                 this.socket.close();
             }

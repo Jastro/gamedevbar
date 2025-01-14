@@ -23,7 +23,6 @@ export class ModelSelector {
             }
 
             option.addEventListener('click', () => {
-                console.log('Model selected:', modelId);
                 options.forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
                 this.selectedModel = modelId;
@@ -48,8 +47,6 @@ export class ModelSelector {
     }
 
     createModelPreview(modelId, container) {
-        console.log('Creating preview for model:', modelId);
-        
         // Crear escena
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
@@ -71,11 +68,9 @@ export class ModelSelector {
 
         // Cargar modelo
         const loader = new GLTFLoader();
-        console.log('Loading model for preview:', `/assets/models/${modelId}.glb`);
         
         loader.load(`/assets/models/${modelId}.glb`, 
             (gltf) => {
-                console.log('Model loaded successfully:', modelId);
                 const model = gltf.scene;
                 model.scale.set(0.8, 0.8, 0.8);
                 model.position.y = -1;
@@ -142,7 +137,6 @@ export class ModelSelector {
     }
 
     notifyModelChange(modelId) {
-        console.log('Model change notification:', modelId);
         this.onModelChangeCallbacks.forEach(callback => callback(modelId));
         
         // Si hay un jugador local, actualizar su modelo

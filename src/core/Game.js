@@ -21,7 +21,7 @@ export class Game {
         this.renderer = new Renderer(this.scene, this.camera);
         this.world = new World(this.scene);
         this.environment = new Environment(this.scene, this.world);
-        
+
         // Inicializar UI antes que network
         this.ui = {
             chat: new ChatUI(),
@@ -56,7 +56,7 @@ export class Game {
                 // Esperar a que se seleccione un modelo antes de continuar
                 const selectedModel = await this.ui.modelSelector.waitForModelSelection();
                 console.log('Selected model before starting game:', selectedModel);
-                
+
                 this.username = username;
                 usernameDialog.classList.add('hidden');
                 if (chatContainer) chatContainer.classList.remove('hidden');
@@ -117,45 +117,45 @@ export class Game {
 
     handleMouseMove(event) {
         if (this.chatActive) return;
-
+    
         this.raycaster = this.raycaster || new THREE.Raycaster();
         this.raycaster.setFromCamera(this.mouse, this.camera.getCamera());
         const intersects = this.raycaster.intersectObjects(this.scene.getScene().children, true);
-
+    
         // Restaurar highlight anterior
         if (this.highlightedObject) {
-            if (this.highlightedObject.userData?.type === "seat") {
+            if (this.highlightedObject.userData?.type === "seat" || 
+                this.highlightedObject.userData?.type === "radio" ||
+                this.highlightedObject.userData?.type === "arcade") {
+                    
                 this.highlightedObject.traverse((child) => {
                     if (child.isMesh && child.userData.originalMaterial) {
                         child.material = child.userData.originalMaterial;
                     }
                 });
-            } else if (this.highlightedObject.userData?.type === "radio") {
-                const body = this.highlightedObject.children[0];
-                body.material = this.highlightedObject.userData.originalMaterial;
-                this.highlightedObject.scale.set(1, 1, 1);
             }
         }
-
+    
         this.highlightedObject = null;
-
+    
         // Buscar nuevo objeto para highlight
         for (const intersect of intersects) {
-            const object = intersect.object.parent;
+            let object = intersect.object;
+            // Buscar el padre que tenga userData
+            while (object && !object.userData?.type) {
+                object = object.parent;
+            }
             
-            if (object.userData?.type === "seat" || object.userData?.type === "radio") {
+            if (object?.userData?.type === "seat" || 
+                object?.userData?.type === "radio" || 
+                object?.userData?.type === "arcade") {
+                    
                 this.highlightedObject = object;
-                if (object.userData.type === "seat") {
-                    object.traverse((child) => {
-                        if (child.isMesh && child.userData.highlightMaterial) {
-                            child.material = child.userData.highlightMaterial;
-                        }
-                    });
-                } else if (object.userData.type === "radio") {
-                    const body = object.children[0];
-                    body.material = object.userData.highlightMaterial;
-                    object.scale.set(1.1, 1.1, 1.1);
-                }
+                object.traverse((child) => {
+                    if (child.isMesh && child.userData.highlightMaterial) {
+                        child.material = child.userData.highlightMaterial;
+                    }
+                });
                 break;
             }
         }
@@ -165,17 +165,51 @@ export class Game {
         if (this.chatActive) return;
 
         // Verificar si el click fue en elementos de UI
-        const chatElements = ['chat-box', 'chat-input', 'emotes-panel'].map(
+        const uiElements = ['chat-box', 'chat-input', 'emotes-panel'].map(
             id => document.getElementById(id)
         );
 
         const clickedElement = document.elementFromPoint(event.clientX, event.clientY);
-        if (chatElements.some(el => el && el.contains(clickedElement))) {
+        if (uiElements.some(el => el && el.contains(clickedElement))) {
             return;
         }
 
         // Procesar interacciones con objetos 3D
         if (this.highlightedObject) {
+            if (this.highlightedObject.userData.type === "arcade") {
+                const arcade = this.environment.arcadePong;
+
+                // Verificar proximidad
+                if (arcade.checkPlayerProximity(this.players.localPlayer.position)) {
+                    if (arcade.gameState === 'title') {
+                        // Iniciar juego de un jugador
+                        arcade.startOnePlayerGame(this.players.localPlayer);
+                        // Sincronizar con otros jugadores
+                        this.network.send('arcadeState', {
+                            type: 'startGame',
+                            playerId: this.players.localPlayer.id
+                        });
+                    } else if (arcade.gameState === 'onePlayer' &&
+                        arcade.currentPlayer.id !== this.players.localPlayer.id) {
+                        // Unirse como segundo jugador
+                        arcade.startTwoPlayerGame(this.players.localPlayer);
+                        // Sincronizar
+                        this.network.send('arcadeState', {
+                            type: 'playerJoined',
+                            playerId: this.players.localPlayer.id
+                        });
+                    }
+                } else {
+                    // Mostrar mensaje de que está muy lejos
+                    if (this.ui.chat) {
+                        this.ui.chat.addMessage({
+                            type: 'system',
+                            message: '¡Acércate más al arcade para jugar!'
+                        });
+                    }
+                }
+            }
+
             if (this.highlightedObject.userData.type === "radio") {
                 const radioGroup = this.highlightedObject;
                 const sound = radioGroup.userData.sound;
@@ -193,7 +227,8 @@ export class Game {
                     indicator.material.emissiveIntensity = 0.5;
                 }
                 radioGroup.userData.isPlaying = !radioGroup.userData.isPlaying;
-            } else if (this.highlightedObject.userData.type === "seat") {
+            }
+            else if (this.highlightedObject.userData.type === "seat") {
                 // Manejar interacción con asientos
                 if (this.players.localPlayer) {
                     if (!this.players.localPlayer.isSitting) {
