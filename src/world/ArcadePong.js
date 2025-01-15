@@ -136,7 +136,7 @@ export class ArcadePong {
     playTitleSound() {
         if (this.sounds.title && !this.sounds.title.isPlaying && this.gameState === 'title') {
             this.sounds.title.play();
-            this.titleSoundTimeout = setTimeout(() => this.playTitleSound(), 8000);
+            this.titleSoundTimeout = setTimeout(() => this.playTitleSound(), 30000);
         }
     }
 
