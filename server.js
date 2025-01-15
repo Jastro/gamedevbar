@@ -5,7 +5,6 @@ const app = express();
 const { WebSocketServer } = require('ws');
 const http = require('http');
 const { v4: uuidv4 } = require('uuid');
-const cors = require("cors");
 
 // Crear servidor HTTP
 const server = http.createServer(app);
@@ -13,7 +12,6 @@ const server = http.createServer(app);
 // Crear servidor WebSocket usando el servidor HTTP
 const wss = new WebSocketServer({ server });
 
-app.use(cors());
 // Servir archivos estáticos desde la carpeta dist
 app.use(express.static(path.join(__dirname, 'dist')));
 
@@ -21,15 +19,7 @@ app.use(express.static(path.join(__dirname, 'dist')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
-app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept"
-    );
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-    next();
-});
+
 // Almacenar estado del servidor
 const users = new Map(); // Mapa de usuarios conectados
 const seats = new Map(); // Mapa de asientos ocupados
