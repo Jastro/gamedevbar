@@ -21,10 +21,10 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Build Docker Image
-        run: docker build -t mud-server:${{ env.COMMIT_SHA }} .
+        run: docker build -t jacobocaraballo-taberna:${{ env.COMMIT_SHA }} .
 
       - name: Save Docker Image to File
-        run: docker save mud-server:${{ env.COMMIT_SHA }} -o mud-server.tar
+        run: docker save jacobocaraballo-taberna:${{ env.COMMIT_SHA }} -o jacobocaraballo-taberna.tar
 
       - name: Transfer Docker Image to Server
         uses: appleboy/scp-action@v0.1.4
@@ -32,8 +32,8 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./mud-server.tar
-          target: ~/_docker/mud_server
+          source: ./jacobocaraballo-taberna.tar
+          target: ~/_docker/jacobocaraballo_taberna
 
       - name: Run Docker Container
         uses: appleboy/ssh-action@v0.1.4
@@ -42,8 +42,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd ~/_docker/mud_server
-            docker load -i ./mud-server.tar
+            cd ~/_docker/jacobocaraballo_taberna
+            docker load -i ./jacobocaraballo-taberna.tar
             export IMAGE_TAG=${{ env.COMMIT_SHA }}
             docker compose down
             docker compose up -d
