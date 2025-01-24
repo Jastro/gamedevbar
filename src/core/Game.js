@@ -177,39 +177,43 @@ export class Game {
         // Procesar interacciones con objetos 3D
         if (this.highlightedObject) {
             if (this.highlightedObject.userData.type === "arcade") {
-                const arcade = this.environment.arcadePong;
-
-                // Verificar proximidad
+                let arcade;
+                if (this.highlightedObject.position.x === -12) {
+                    arcade = this.environment.arcadeSnake;  // x: -12
+                } else {
+                    arcade = this.environment.arcadePong;   // z: -8
+                }
+            
                 if (arcade.checkPlayerProximity(this.players.localPlayer.position)) {
-                    if (arcade.gameState === 'title') {
-                        // Iniciar juego de un jugador
-                        arcade.startOnePlayerGame(this.players.localPlayer);
-                        // Sincronizar con otros jugadores
-                        this.network.send('arcadeState', {
-                            type: 'startGame',
-                            playerId: this.players.localPlayer.id
-                        });
-                    } else if (arcade.gameState === 'onePlayer' &&
-                        arcade.currentPlayer.id !== this.players.localPlayer.id) {
-                        // Unirse como segundo jugador
-                        arcade.startTwoPlayerGame(this.players.localPlayer);
-                        // Sincronizar
-                        this.network.send('arcadeState', {
-                            type: 'playerJoined',
-                            playerId: this.players.localPlayer.id
-                        });
+                    if (arcade === this.environment.arcadePong) {
+                        // Lógica específica para Pong
+                        if (arcade.gameState === 'title') {
+                            arcade.startOnePlayerGame(this.players.localPlayer);
+                            this.network.send('arcadeState', {
+                                type: 'startGame',
+                                playerId: this.players.localPlayer.id
+                            });
+                        } else if (arcade.gameState === 'onePlayer' &&
+                            arcade.currentPlayer.id !== this.players.localPlayer.id) {
+                            arcade.startTwoPlayerGame(this.players.localPlayer);
+                            this.network.send('arcadeState', {
+                                type: 'playerJoined',
+                                playerId: this.players.localPlayer.id
+                            });
+                        }
+                    } else {
+                        // Snake solo necesita startGame
+                        if (arcade.gameState === 'title') {
+                            arcade.startGame();
+                        }
                     }
                 } else {
-                    // Mostrar mensaje de que está muy lejos
-                    if (this.ui.chat) {
-                        this.ui.chat.addMessage({
-                            type: 'system',
-                            message: '¡Acércate más al arcade para jugar!'
-                        });
-                    }
+                    this.ui.chat?.addMessage({
+                        type: 'system',
+                        message: '¡Acércate más al arcade para jugar!'
+                    });
                 }
             }
-
             if (this.highlightedObject.userData.type === "radio") {
                 const radioGroup = this.highlightedObject;
                 const sound = radioGroup.userData.sound;
