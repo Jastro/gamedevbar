@@ -12,7 +12,7 @@ export class ArcadeSnake {
         this.isActive = false;
         this.titleSoundTimeout = null;
         this.sounds = {};
-        this.snakeSpeed = 15; // Velocidad configurable (frames por movimiento)
+        this.snakeSpeed = 7; // Velocidad configurable (frames por movimiento)
         this.frameCount = 0;
 
         // Estado del juego
