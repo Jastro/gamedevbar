@@ -21,11 +21,18 @@ export class ArcadeSnake {
         this.direction = 'right';
         this.nextDirection = 'right';
         this.score = 0;
-        this.highScores = JSON.parse(localStorage.getItem('snakeHighScores') || '[]');
+        this.highScores = []
 
         this.setupCanvas();
         this.setupControls();
         this.setupSounds();
+    }
+
+    updateHighScores(scores) {
+        this.highScores = scores;
+        if (this.gameState === 'title' || this.gameState === 'gameover') {
+            this.drawTitleScreen(this.gameState === 'title');
+        }
     }
 
     create(position = { x: 7, y: 2, z: -8 }) {
@@ -358,17 +365,17 @@ export class ArcadeSnake {
     gameOver() {
         this.gameState = 'gameover';
         if (this.sounds.die) this.sounds.die.play();
-
-        const playerName = window.game?.username || 'Player';
-        this.highScores.push({
-            name: playerName,
-            score: this.score
-        });
-        this.highScores.sort((a, b) => b.score - a.score);
-        localStorage.setItem('snakeHighScores', JSON.stringify(this.highScores));
-
+    
+        // Enviar puntuación al servidor
+        if (window.game?.network) {
+            window.game.network.send('snakeHighScore', {
+                username: window.game?.username || 'Player',
+                score: this.score
+            });
+        }
+    
         this.drawGameOver();
-
+        
         setTimeout(() => {
             this.gameState = 'title';
             this.isActive = false;

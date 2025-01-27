@@ -25,6 +25,7 @@ const users = new Map(); // Mapa de usuarios conectados
 const seats = new Map(); // Mapa de asientos ocupados
 const ChatLog = new Array(); // Historial de chat
 const CHAT_LOG_HISTORY_MAX_LENGTH = 50; // Máximo número de mensajes en el historial
+const snakeHighScores = [];
 
 class User {
     constructor(ws) {
@@ -119,6 +120,24 @@ wss.on('connection', (ws, req) => {
         const user = users.get(ws);
 
         switch (data.type) {
+            case 'snakeHighScore':
+                // Añadir nuevo high score
+                snakeHighScores.push({
+                    name: data.username,
+                    score: data.score
+                });
+                // Ordenar por puntuación
+                snakeHighScores.sort((a, b) => b.score - a.score);
+                // Mantener solo los top 10
+                if (snakeHighScores.length > 10) {
+                    snakeHighScores.length = 10;
+                }
+                // Broadcast a todos los jugadores
+                broadcastAll({
+                    type: 'snakeHighScores',
+                    scores: snakeHighScores
+                });
+                break;
             case 'arcadeState':
                 const arcade = data;
                 broadcastAll({
