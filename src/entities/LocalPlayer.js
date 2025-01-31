@@ -68,7 +68,6 @@ export class LocalPlayer extends Player {
             this.rotation = this.previousRotation;
         }
 
-        // Notificar al servidor
         this.game.network.send('userStood', {});
         this.isSitting = false;
     }
