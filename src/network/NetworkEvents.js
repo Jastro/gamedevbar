@@ -31,7 +31,13 @@ export const NetworkEvents = {
     
     // Eventos del servidor
     BALL_POSITION: 'ballPosition',
-    BALL_SYNC: 'ballSync'
+    BALL_SYNC: 'ballSync',
+
+    // Eventos de fútbol
+    START_SOCCER_GAME: 'startSoccerGame',
+    END_SOCCER_GAME: 'endSoccerGame',
+    SOCCER_BALL_UPDATE: 'soccerBallUpdate',
+    SOCCER_SCORE_UPDATE: 'soccerScoreUpdate'
 };
 
 // También podemos añadir algunas estructuras de datos comunes

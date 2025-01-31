@@ -55,12 +55,13 @@ export class ChatUI {
 
         // Prevent game controls while typing
         this.chatInput.addEventListener('keydown', (e) => {
-            if (e.key === ' ' || // Space (jump)
+            if (this.chatActive && (
+                e.key === ' ' || // Space (jump)
                 e.key.toLowerCase() === 'w' || // Movement
                 e.key.toLowerCase() === 'a' ||
                 e.key.toLowerCase() === 's' ||
-                e.key.toLowerCase() === 'd') {
-                e.stopPropagation(); // Prevent the event from bubbling up
+                e.key.toLowerCase() === 'd')) {
+                e.stopPropagation(); // Prevent movement while typing
             }
         });
 
@@ -71,6 +72,7 @@ export class ChatUI {
                     this.sendMessage(message);
                     this.chatInput.value = '';
                 }
+                this.chatInput.blur(); // Solo quitamos el foco cuando se envía el mensaje
             }
         });
     }

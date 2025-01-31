@@ -159,7 +159,7 @@
       bottom: 90px;
       width: 450px;
       height: 400px;
-      background: rgba(0, 0, 0, 0.9);
+      background: rgba(0, 0, 0, 0.65);
       color: white;
       border-radius: 16px;
       padding: 15px;
@@ -433,6 +433,37 @@
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 
+    @media (max-width: 1366px) {
+      #chat-box {
+        width: 420px;
+        height: 380px;
+        left: 20px;
+        bottom: 85px;
+      }
+
+      #chat-container {
+        width: 550px;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      #chat-box {
+        width: 380px;
+        height: 320px;
+        left: 15px;
+        bottom: 85px;
+      }
+
+      #chat-container {
+        width: 450px;
+      }
+
+      .chat-message {
+        font-size: 13.5px;
+        padding: 5px 10px;
+      }
+    }
+
     @media (max-width: 768px) {
       .model-options {
         grid-template-columns: repeat(2, 1fr);
@@ -440,6 +471,28 @@
 
       .model-preview {
         height: 160px;
+      }
+
+      #chat-box {
+        width: 320px;
+        height: 300px;
+        left: 10px;
+        bottom: 80px;
+      }
+
+      #chat-container {
+        width: 400px;
+      }
+
+      .chat-message {
+        font-size: 13px;
+        padding: 5px 8px;
+        line-height: 1.25;
+      }
+
+      #chat-input {
+        padding: 12px 18px;
+        font-size: 14px;
       }
     }
 
@@ -450,6 +503,29 @@
 
       .model-preview {
         height: 200px;
+      }
+
+      #chat-box {
+        width: calc(100% - 20px);
+        height: 250px;
+        left: 10px;
+        right: 10px;
+        bottom: 70px;
+      }
+
+      #chat-container {
+        width: calc(100% - 20px);
+      }
+
+      #chat-input {
+        padding: 10px 15px;
+        font-size: 13px;
+      }
+
+      .chat-message {
+        font-size: 12.5px;
+        padding: 4px 8px;
+        line-height: 1.2;
       }
     }
   </style>
@@ -499,31 +575,35 @@
   <script type="module" src="/src/ui/EmotesUI.js"></script>
   <script type="module" src="/src/main.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    // Esperar a que el DOM esté completamente cargado
+    window.addEventListener('DOMContentLoaded', () => {
       const startButton = document.getElementById('start-button');
       const usernameInput = document.getElementById('username-input');
+      const modelOptions = document.querySelectorAll('.model-option');
       
       // Deshabilitar el botón inicialmente
       startButton.disabled = true;
       
+      // Función para verificar si se puede habilitar el botón
       function checkEnableButton() {
-        const hasUsername = usernameInput.value.trim().length > 0;
-        const hasModel = document.querySelector('.model-option.selected') !== null;
-        startButton.disabled = !(hasUsername && hasModel);
+        const username = usernameInput.value.trim();
+        const selectedModel = document.querySelector('.model-option.selected');
+        startButton.disabled = username.length === 0 || !selectedModel;
       }
       
-      // Verificar cuando se escribe el nombre
-      usernameInput.addEventListener('input', checkEnableButton);
-      
-      // Verificar cuando se selecciona un modelo usando el evento personalizado
-      window.addEventListener('modelSelected', () => {
+      // Manejar la entrada de texto en el campo de nombre
+      usernameInput.addEventListener('input', () => {
         checkEnableButton();
       });
 
-      // También verificar cuando se hace clic en las opciones de modelo
-      document.querySelectorAll('.model-option').forEach(option => {
+      // Manejar la selección de modelo
+      modelOptions.forEach(option => {
         option.addEventListener('click', () => {
-          setTimeout(checkEnableButton, 0); // Usar setTimeout para asegurar que se ejecute después de que el modelo se haya actualizado
+          // Remover la selección previa
+          modelOptions.forEach(opt => opt.classList.remove('selected'));
+          // Seleccionar el nuevo modelo
+          option.classList.add('selected');
+          checkEnableButton();
         });
       });
     });

@@ -9,6 +9,7 @@ import { ChatUI } from '@/ui/ChatUI';
 import { ModelSelector } from '../ui/ModelSelector';
 import * as THREE from 'three';
 import { World } from '../world/World';
+import { SoccerGame } from '../world/SoccerGame';
 
 export class Game {
     constructor() {
@@ -21,6 +22,7 @@ export class Game {
         this.renderer = new Renderer(this.scene, this.camera);
         this.world = new World(this.scene);
         this.environment = new Environment(this.scene, this.world);
+        this.soccerGame = new SoccerGame(this.scene.getScene(), this.world);
 
         // Inicializar UI antes que network
         this.ui = {
@@ -86,6 +88,17 @@ export class Game {
         this.world.create();
         this.environment.create();
         this.ui.modelSelector.init();
+        await this.soccerGame.init();
+
+        // Escuchar eventos del juego de fútbol
+        this.network.on('startSoccerGame', (data) => {
+            this.soccerGame.startGame(this.players.players);
+            // Mostrar mensaje en el chat
+            this.ui.chat.addMessage({
+                type: 'system',
+                message: `¡${this.players.players.get(data.initiatorId).username} ha iniciado un partido de fútbol!`
+            });
+        });
     }
 
     setupEventListeners() {
@@ -174,6 +187,27 @@ export class Game {
             return;
         }
 
+        // Realizar raycasting para obtener las coordenadas 3D del punto de intersección
+        this.raycaster = this.raycaster || new THREE.Raycaster();
+        this.raycaster.setFromCamera(this.mouse, this.camera.getCamera());
+        const intersects = this.raycaster.intersectObjects(this.scene.getScene().children, true);
+
+        // Mostrar coordenadas en el chat si hay una intersección
+        if (intersects.length > 0) {
+            const point = intersects[0].point;
+            const roundedPoint = {
+                x: Math.round(point.x * 100) / 100,
+                y: Math.round(point.y * 100) / 100,
+                z: Math.round(point.z * 100) / 100
+            };
+            /*if (this.ui.chat) {
+                this.ui.chat.addMessage({
+                    type: 'system',
+                    message: `Debug - Click coordinates: x: ${roundedPoint.x}, y: ${roundedPoint.y}, z: ${roundedPoint.z}`
+                });
+            }*/
+        }
+
         // Procesar interacciones con objetos 3D
         if (this.highlightedObject) {
             if (this.highlightedObject.userData.type === "arcade") {
@@ -258,6 +292,7 @@ export class Game {
     update(deltaTime) {
         this.players.update(deltaTime);
         this.world.update(deltaTime);
+        this.soccerGame.update(deltaTime);
 
         // Actualizar posición de la cámara para seguir al jugador local
         if (this.players.localPlayer) {
