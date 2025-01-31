@@ -21,10 +21,17 @@ export default defineConfig({
     port: 5148,
     host: true,
     proxy: {
-      '/ws': {
-        target: 'ws://localhost:3000',
-        ws: true,
+      '/mv-proxy': {
+        target: 'http://localhost:3000',
         changeOrigin: true
+      },
+      '/proxy-image': {
+        target: 'http://localhost:3000',
+        changeOrigin: true
+      },
+      '/socket.io': {
+        target: 'http://localhost:3000',
+        ws: true
       }
     }
   },
