@@ -3,11 +3,11 @@
 ## Start here
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat, and a modular client/server layout. Branches on the `borjafac` fork:
-`feature/rooms-and-doors` (PR Jastro/gamedevbar#10) and `feature/voice-chat` stacked on top (voice +
-refactor, no PR yet). Docs: [Architecture](Docs/Architecture.md) (code map + how to add things),
+`feature/rooms-and-doors` (PR Jastro/gamedevbar#10, merged 2026-10-20) and `feature/voice-chat` (voice +
+refactor, PR Jastro/gamedevbar#11). Docs: [Architecture](Docs/Architecture.md) (code map + how to add things),
 [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 Next step: Borja tries voice with a real mic ([Docs/PendingUserChecks.md](Docs/PendingUserChecks.md)), then
-decide PR strategy for the voice branch.
+merge #11.
 
 ## Done
 - 2026-10-20 Modular refactor (behavior unchanged): server split into `server/` (Hub + one module per
