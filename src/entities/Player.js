@@ -86,6 +86,7 @@ export class Player {
             const nameSprite = this.nameSprite;
             const chatSprite = this.mesh.children.find(child => child.material?.map === this.chatTexture);
             const emojiSprite = this.mesh.children.find(child => child.material?.map === this.emojiTexture);
+            const talkSprite = this.talkSprite;
             
             // Limpiar TODOS los hijos del mesh, incluyendo modelos anteriores
             while(this.mesh.children.length > 0) {
@@ -109,6 +110,7 @@ export class Player {
             if (nameSprite) this.mesh.add(nameSprite);
             if (chatSprite) this.mesh.add(chatSprite);
             if (emojiSprite) this.mesh.add(emojiSprite);
+            if (talkSprite) this.mesh.add(talkSprite);
 
             // Configurar animaciones
             if (this.animations.mixer) {
@@ -169,6 +171,37 @@ export class Player {
         this.mesh.rotation.y = this.rotation;
     }
 
+
+    // Mic icon above the name while this player holds push to talk.
+    setTalking(isTalking) {
+        if (!this.talkSprite) {
+            if (!isTalking) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(220, 90, 11, 0.9)';
+            ctx.beginPath();
+            ctx.arc(64, 64, 60, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = '72px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🎙️', 64, 70);
+
+            this.talkSprite = new Sprite(new SpriteMaterial({
+                map: new CanvasTexture(canvas),
+                transparent: true,
+                depthTest: false,
+                depthWrite: false
+            }));
+            this.talkSprite.position.y = 1.75;
+            this.talkSprite.scale.set(0.45, 0.45, 1);
+            this.talkSprite.renderOrder = 999;
+            this.mesh.add(this.talkSprite);
+        }
+        this.talkSprite.visible = isTalking;
+    }
 
     setUsername(username) {
         this.username = username;

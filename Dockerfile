@@ -37,6 +37,7 @@ COPY --chown=appuser:appgroup package*.json ./
 RUN npm install --only=production --platform=linux --libc=musl
 COPY --chown=appuser:appgroup --from=builder /app/dist ./dist
 COPY --chown=appuser:appgroup server.js .
+COPY --chown=appuser:appgroup server ./server
 
 # Dar permisos necesarios
 RUN chown -R appuser:appgroup /app && \

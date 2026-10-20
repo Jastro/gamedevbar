@@ -2,9 +2,9 @@
 
 Last updated 2026-10-20. JSON text frames, one object per message, discriminated by `type`.
 Client sends with `network.send(type, data)` → `{ type, ...data }` (a `type` inside `data` wins; see
-Architecture.md known issues). Client listeners: `network.on(type, fn)`.
+Systems.md known issues). Client listeners: `network.on(type, fn)`.
 
-Server input handling (`server.js` `handleMessage`): frames that are not JSON objects with a string `type` are
+Server input handling (`server/hub/Hub.js` + each `server/features/*.js`): frames that are not JSON objects with a string `type` are
 dropped (logged); a throwing handler is logged, never fatal. Strings are trimmed and clamped: `username` to 24
 chars (empty/non-string → `Anónimo`), chat `message` to 200 (empty → dropped), `emoji` to 16; `selectedModel`
 must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `duelChoice` must be
@@ -20,6 +20,8 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `userChat` | `message`, `isEmote`, `emoji` | `/furbo` → `startSoccerGame` to all; else log + `userChat` to all |
 | `userSat` / `userStood` | `seatId` / – | seat bookkeeping, relayed to others (no client handler) |
 | `doorToggle` | `doorId` (`<roomId>:<door>`) | validate id, flip state, `doorState` to all |
+| `voiceSignal` | `targetId`, `signal` (`{description}` or `{candidate}`, ≤ 16 KB) | relayed only to `targetId` as `voiceSignal` with `fromId` |
+| `voiceTalking` | `talking` (bool) | `voiceTalking` to others |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
 | `arcadeState` | `gameState`, `data` | re-broadcast (see known issues: Pong sync broken) |
 | `soccerBallUpdate` | `position`, `velocity` | relayed to others |
@@ -29,13 +31,15 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 
 | type | Fields | Client handling |
 |---|---|---|
-| `init` | `userId` | create `LocalPlayer` at chosen room spawn, send `setUsername` + `initCompleted` |
+| `init` | `userId`, `iceServers` | create `LocalPlayer` at chosen room spawn, send `setUsername` + `initCompleted`; voice keeps id + ICE servers |
 | `userJoined` | `userId`, `username`, `position`, `rotation`, `selectedModel`, `seatId` | create/update `RemotePlayer` |
 | `userLeft` | `userId` | remove player |
 | `userMoved` | `userId`, `position`, `rotation` | remote player target |
 | `userUsername` | `userId`, `username`, `selectedModel` | update/create remote player |
 | `userChat` | `userId`, `username`, `message`, `isEmote`, `isTaberna`, `emoji`, `timestamp` | chat box + bubble |
 | `doorState` | `doorId`, `isOpen` | animate door |
+| `voiceSignal` | `fromId`, `signal` | WebRTC offer/answer/ICE candidate for that peer |
+| `voiceTalking` | `userId`, `talking` | 🎙️ sprite on that avatar |
 | `doorStates` | `doors: { doorId: isOpen }` | apply instantly (join snapshot) |
 | `snakeHighScores` | `scores` | all Snake machines |
 | `startSoccerGame` | `initiatorId` | start soccer for everyone |

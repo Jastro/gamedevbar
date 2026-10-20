@@ -1,6 +1,9 @@
 import { NetworkEvents, NetworkConfig } from './NetworkEvents';
 import { EventEmitter } from '../core/EventEmitter';
 
+// Transport only: JSON messages in, `emit(type, data)` out. Game code subscribes
+// with `network.on(type, handler)` (wiring lives in Game.bindNetwork and the
+// systems themselves); nothing game-specific belongs here.
 export class WebSocketManager extends EventEmitter {
     constructor() {
         super();
@@ -51,71 +54,17 @@ export class WebSocketManager extends EventEmitter {
 
     handleMessage(event) {
         this.lastMessageTime = Date.now();
+        let data;
         try {
-            const data = JSON.parse(event.data);
-
-            if (!window.game) {
-                console.error('window.game no está definido');
-                return;
-            }
-
-            if (data.type === 'snakeHighScores') {
-                window.game?.environment?.updateSnakeHighScores?.(data.scores);
-            }
-
-            if (data.type === 'arcadeUpdate') {
-                const arcade = window.game?.environment?.arcadePong;
-                if (!arcade) return;
-        
-                switch(data.action) {
-                    case 'startGame':
-                        const player = window.game.players.players.get(data.playerId);
-                        arcade.startOnePlayerGame(player);
-                        break;
-        
-                    case 'playerJoined':
-                        const joiningPlayer = window.game.players.players.get(data.playerId);
-                        // Mostrar mensaje de jugador uniéndose
-                        window.game.ui.chat.addMessage({
-                            type: 'system',
-                            message: `${joiningPlayer.username} se ha unido al juego. La partida comenzará en 3 segundos...`
-                        });
-                        break;
-        
-                    case 'startTwoPlayer':
-                        const player1 = window.game.players.players.get(data.player1Id);
-                        const player2 = window.game.players.players.get(data.player2Id);
-                        arcade.startTwoPlayerGame(player1, player2);
-                        break;
-        
-                    case 'updateState':
-                        arcade.updateGameState(data.state);
-                        break;
-                }
-            }
-
-            // Manejo especial para mensajes de chat
-            if (data.type === 'userChat') {
-                if (window.game.ui?.chat?.addMessage) {
-                    const messageData = {
-                        userId: data.userId,
-                        username: data.username,
-                        message: data.message,
-                        isEmote: data.isEmote,
-                        isTaberna: data.isTaberna,
-                        emoji: data.emoji,
-                        timestamp: data.timestamp
-                    };
-                    window.game.ui.chat.addMessage(messageData);
-                } else {
-                    console.error('Chat UI no está inicializado correctamente', window.game.ui);
-                }
-            }
-
+            data = JSON.parse(event.data);
+        } catch (error) {
+            console.error('Error parsing message:', error, event.data);
+            return;
+        }
+        try {
             this.emit(data.type, data);
         } catch (error) {
-            console.error('Error parsing message:', error);
-            console.error('Raw message:', event.data);
+            console.error(`Error handling '${data.type}':`, error);
         }
     }
 

@@ -1,23 +1,29 @@
+import * as THREE from 'three';
 import { Config } from './Config';
+import { InteractionSystem } from './InteractionSystem';
 import { Scene } from '../rendering/Scene';
 import { Renderer } from '../rendering/Renderer';
 import { Camera } from '../rendering/Camera';
 import { WebSocketManager } from '@network/WebSocketManager';
 import { PlayerManager } from '../entities/PlayerManager';
+import { World } from '../world/World';
 import { Environment } from '../world/Environment';
+import { DoorSync } from '../world/DoorSync';
+import { SoccerGame } from '../world/SoccerGame';
+import { getRoomDefinition } from '../world/RoomLayout';
+import { VoiceChat } from '../voice/VoiceChat';
 import { ChatUI } from '@/ui/ChatUI';
 import { ModelSelector } from '../ui/ModelSelector';
 import { RoomSelector } from '../ui/RoomSelector';
-import * as THREE from 'three';
-import { World } from '../world/World';
-import { SoccerGame } from '../world/SoccerGame';
-import { ArcadePong } from '../world/ArcadePong';
-import { DOOR_INTERACT_DISTANCE } from '../world/Door';
-import { getRoomDefinition } from '../world/RoomLayout';
+import { StartScreen } from '../ui/StartScreen';
+import { VoiceUI } from '../ui/VoiceUI';
+import { createDoorInteraction } from '../interactions/doorInteraction';
+import { createSeatInteraction } from '../interactions/seatInteraction';
+import { createRadioInteraction } from '../interactions/radioInteraction';
+import { createArcadeInteraction, bindArcadeNetwork } from '../interactions/arcadeInteraction';
 
-// Object types (userData.type) that glow on hover and react to clicks.
-const HIGHLIGHT_TYPES = new Set(['seat', 'radio', 'arcade', 'door']);
-
+// Composition root: builds every system, wires them together and runs the
+// main loop. Systems reach each other through this object (also window.game).
 export class Game {
     constructor() {
         // Asignar la instancia del juego a window.game primero
@@ -38,57 +44,44 @@ export class Game {
             roomSelector: new RoomSelector()
         };
 
-        // Inicializar network después de UI
         this.network = new WebSocketManager();
         this.players = new PlayerManager(this);
+        this.voice = new VoiceChat(this);
+        this.ui.voice = new VoiceUI(this.voice, this.ui.chat);
+        this.doorSync = new DoorSync(this);
 
-        this.ui.modelSelector.init();
-        this.ui.roomSelector.init();
-        this.setupInitialUI();
+        this.interactions = new InteractionSystem(this);
+        this.interactions.register(createSeatInteraction(this));
+        this.interactions.register(createRadioInteraction(this));
+        this.interactions.register(createArcadeInteraction(this));
+        this.interactions.register(createDoorInteraction(this));
+
+        this.startScreen = new StartScreen({
+            modelSelector: this.ui.modelSelector,
+            roomSelector: this.ui.roomSelector,
+            onStart: (choice) => this.start(choice)
+        });
+        this.startScreen.init();
         this.clock = new THREE.Clock();
     }
 
-    setupInitialUI() {
-        const usernameDialog = document.getElementById('username-dialog');
-        const usernameInput = document.getElementById('username-input');
-        const startButton = document.getElementById('start-button');
-        const chatInput = document.getElementById('chat-input');
-        const chatBox = document.getElementById('chat-box');
-        const chatContainer = document.getElementById('chat-container');
+    // Typing in the chat suspends movement and world input.
+    get chatActive() {
+        return this.ui.chat.isChatActive();
+    }
 
-        if (!startButton || !usernameInput || !usernameDialog) {
-            console.error('Required UI elements not found');
-            return;
-        }
+    async start({ username, roomId }) {
+        this.username = username;
+        this.selectedRoomId = roomId;
+        // Same view on entry in every room: camera on the entrance side, facing the bar.
+        this.camera.rotation.horizontal = getRoomDefinition(roomId).rotationY;
 
-        startButton.addEventListener('click', async () => {
-            const username = usernameInput.value.trim();
-            if (username) {
-                // Esperar a que se seleccione un modelo antes de continuar
-                const selectedModel = await this.ui.modelSelector.waitForModelSelection();
-                console.log('Selected model before starting game:', selectedModel);
+        await this.init();
+        this.setupInput();
+        this.animate();
 
-                this.username = username;
-                this.selectedRoomId = this.ui.roomSelector.getSelectedRoom();
-                // Same view on entry in every room: camera on the entrance side, facing the bar.
-                this.camera.rotation.horizontal = getRoomDefinition(this.selectedRoomId).rotationY;
-                usernameDialog.classList.add('hidden');
-                if (chatContainer) chatContainer.classList.remove('hidden');
-                if (chatBox) chatBox.classList.remove('hidden');
-
-                await this.init();
-                this.setupEventListeners();
-                this.animate();
-
-                this.environment.initializeAudio(this.camera.getCamera());
-            }
-        });
-
-        usernameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !startButton.disabled) {
-                startButton.click();
-            }
-        });
+        this.environment.initializeAudio(this.camera.getCamera());
+        this.ui.voice.showIntro();
     }
 
     async init() {
@@ -98,244 +91,44 @@ export class Game {
         this.world.create();
         this.environment.create();
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
-        this.setupDoorNetworking();
-        this.ui.modelSelector.init();
+        this.bindNetwork();
         await this.soccerGame.init();
+    }
+
+    // Network → systems wiring that doesn't belong to a single system.
+    bindNetwork() {
+        this.doorSync.bind();
+        bindArcadeNetwork(this);
+
+        this.network.on('userChat', (data) => this.ui.chat.addMessage({
+            userId: data.userId,
+            username: data.username,
+            message: data.message,
+            isEmote: data.isEmote,
+            isTaberna: data.isTaberna,
+            emoji: data.emoji,
+            timestamp: data.timestamp
+        }));
 
         // Escuchar eventos del juego de fútbol
         this.network.on('startSoccerGame', (data) => {
             this.soccerGame.startGame(this.players.players);
-            // Mostrar mensaje en el chat
             this.ui.chat.addMessage({
                 type: 'system',
-                message: `¡${this.players.players.get(data.initiatorId).username} ha iniciado un partido de fútbol!`
+                message: `¡${this.players.players.get(data.initiatorId)?.username} ha iniciado un partido de fútbol!`
             });
         });
     }
 
-    setupDoorNetworking() {
-        this.network.on('doorState', (data) => {
-            this.environment.setDoorState(data.doorId, data.isOpen);
-        });
-        // Snapshot sent on join: apply without animating.
-        this.network.on('doorStates', (data) => {
-            Object.entries(data.doors || {}).forEach(([doorId, isOpen]) => {
-                this.environment.setDoorState(doorId, isOpen, true);
-            });
-        });
-    }
-
-    // The server owns door state; offline (no server) we toggle locally.
-    toggleDoor(door) {
-        if (this.network.isConnected) {
-            this.network.send('doorToggle', { doorId: door.id });
-        } else {
-            door.setOpen(!door.isOpen);
-        }
-    }
-
-    tryToggleDoor(door) {
-        const player = this.players.localPlayer;
-        if (!player || player.isSitting) return;
-        if (door.distanceTo(player.position) <= DOOR_INTERACT_DISTANCE) {
-            this.toggleDoor(door);
-        } else {
-            this.ui.chat?.addMessage({
-                type: 'system',
-                message: '¡Acércate más a la puerta!'
-            });
-        }
-    }
-
-    updateInteractionHint() {
-        const player = this.players.localPlayer;
-        const door = player && !player.isSitting && !this.chatActive
-            ? this.environment.getNearestDoor(player.position)
-            : null;
-        const text = door ? `E · ${door.isOpen ? 'Cerrar' : 'Abrir'} puerta` : '';
-        if (text === this.interactionHintText) return;
-
-        this.interactionHintText = text;
-        const hint = document.getElementById('interaction-hint');
-        if (!hint) return;
-        hint.textContent = text;
-        hint.classList.toggle('hidden', !text);
-    }
-
-    setupEventListeners() {
+    setupInput() {
         window.addEventListener('resize', () => this.handleResize());
-
-        // Manejo de mouse y raycasting
-        window.addEventListener('mousemove', (e) => {
-            this.mouse = new THREE.Vector2(
-                (e.clientX / window.innerWidth) * 2 - 1,
-                -(e.clientY / window.innerHeight) * 2 + 1
-            );
-            this.handleMouseMove(e);
-        });
-
-        window.addEventListener('click', (e) => this.handleClick(e));
-        window.addEventListener('keydown', (e) => {
-            if (this.chatActive || e.repeat || e.key.toLowerCase() !== 'e') return;
-            const player = this.players.localPlayer;
-            const door = player && this.environment.getNearestDoor(player.position);
-            if (door) this.tryToggleDoor(door);
-        });
         window.addEventListener('contextmenu', (e) => e.preventDefault());
+        this.interactions.attach();
 
-        // Prevenir comportamiento por defecto en el chat
-        const chatInput = document.getElementById('chat-input');
-        if (chatInput) {
-            chatInput.addEventListener('focus', () => {
-                this.chatActive = true;
-            });
-            chatInput.addEventListener('blur', () => {
-                this.chatActive = false;
-            });
-        }
-    }
-
-    handleMouseMove(event) {
-        if (this.chatActive) return;
-    
-        this.raycaster = this.raycaster || new THREE.Raycaster();
-        this.raycaster.setFromCamera(this.mouse, this.camera.getCamera());
-        const intersects = this.raycaster.intersectObjects(this.scene.getScene().children, true);
-    
-        // Restaurar highlight anterior
-        if (this.highlightedObject) {
-            if (HIGHLIGHT_TYPES.has(this.highlightedObject.userData?.type)) {
-                    
-                this.highlightedObject.traverse((child) => {
-                    if (child.isMesh && child.userData.originalMaterial) {
-                        child.material = child.userData.originalMaterial;
-                    }
-                });
-            }
-        }
-    
-        this.highlightedObject = null;
-    
-        // Buscar nuevo objeto para highlight
-        for (const intersect of intersects) {
-            let object = intersect.object;
-            // Buscar el padre que tenga userData
-            while (object && !object.userData?.type) {
-                object = object.parent;
-            }
-            
-            if (HIGHLIGHT_TYPES.has(object?.userData?.type)) {
-                    
-                this.highlightedObject = object;
-                object.traverse((child) => {
-                    if (child.isMesh && child.userData.highlightMaterial) {
-                        child.material = child.userData.highlightMaterial;
-                    }
-                });
-                break;
-            }
-        }
-    }
-
-    handleClick(event) {
-        if (this.chatActive) return;
-
-        // Verificar si el click fue en elementos de UI
-        const uiElements = ['chat-box', 'chat-input', 'emotes-panel'].map(
-            id => document.getElementById(id)
-        );
-
-        const clickedElement = document.elementFromPoint(event.clientX, event.clientY);
-        if (uiElements.some(el => el && el.contains(clickedElement))) {
-            return;
-        }
-
-        // Realizar raycasting para obtener las coordenadas 3D del punto de intersección
-        this.raycaster = this.raycaster || new THREE.Raycaster();
-        this.raycaster.setFromCamera(this.mouse, this.camera.getCamera());
-        const intersects = this.raycaster.intersectObjects(this.scene.getScene().children, true);
-
-        // Mostrar coordenadas en el chat si hay una intersección
-        if (intersects.length > 0) {
-            const point = intersects[0].point;
-            const roundedPoint = {
-                x: Math.round(point.x * 100) / 100,
-                y: Math.round(point.y * 100) / 100,
-                z: Math.round(point.z * 100) / 100
-            };
-            /*if (this.ui.chat) {
-                this.ui.chat.addMessage({
-                    type: 'system',
-                    message: `Debug - Click coordinates: x: ${roundedPoint.x}, y: ${roundedPoint.y}, z: ${roundedPoint.z}`
-                });
-            }*/
-        }
-
-        // Procesar interacciones con objetos 3D
-        if (this.highlightedObject) {
-            if (this.highlightedObject.userData.type === "door") {
-                this.tryToggleDoor(this.highlightedObject.userData.door);
-            }
-            if (this.highlightedObject.userData.type === "arcade") {
-                const arcade = this.highlightedObject.userData.arcade;
-            
-                if (arcade.checkPlayerProximity(this.players.localPlayer.position)) {
-                    if (arcade instanceof ArcadePong) {
-                        // Lógica específica para Pong
-                        if (arcade.gameState === 'title') {
-                            arcade.startOnePlayerGame(this.players.localPlayer);
-                            this.network.send('arcadeState', {
-                                type: 'startGame',
-                                playerId: this.players.localPlayer.id
-                            });
-                        } else if (arcade.gameState === 'onePlayer' &&
-                            arcade.currentPlayer.id !== this.players.localPlayer.id) {
-                            arcade.startTwoPlayerGame(this.players.localPlayer);
-                            this.network.send('arcadeState', {
-                                type: 'playerJoined',
-                                playerId: this.players.localPlayer.id
-                            });
-                        }
-                    } else {
-                        // Snake solo necesita startGame
-                        if (arcade.gameState === 'title') {
-                            arcade.startGame();
-                        }
-                    }
-                } else {
-                    this.ui.chat?.addMessage({
-                        type: 'system',
-                        message: '¡Acércate más al arcade para jugar!'
-                    });
-                }
-            }
-            if (this.highlightedObject.userData.type === "radio") {
-                const radioGroup = this.highlightedObject;
-                const sound = radioGroup.userData.sound;
-                const indicator = radioGroup.userData.indicator;
-
-                if (radioGroup.userData.isPlaying) {
-                    sound.pause();
-                    indicator.material.emissive.setHex(0x696969);
-                    indicator.material.color.setHex(0x696969);
-                    indicator.material.emissiveIntensity = 0.1;
-                } else {
-                    sound.play();
-                    indicator.material.emissive.setHex(radioGroup.userData.originalIndicatorColor);
-                    indicator.material.color.setHex(radioGroup.userData.originalIndicatorColor);
-                    indicator.material.emissiveIntensity = 0.5;
-                }
-                radioGroup.userData.isPlaying = !radioGroup.userData.isPlaying;
-            }
-            else if (this.highlightedObject.userData.type === "seat") {
-                // Manejar interacción con asientos
-                if (this.players.localPlayer) {
-                    if (!this.players.localPlayer.isSitting) {
-                        this.players.localPlayer.sitDown(this.highlightedObject);
-                    }
-                }
-            }
-        }
+        window.addEventListener('keydown', (e) => this.ui.voice.handleKey(e, true, this.chatActive));
+        window.addEventListener('keyup', (e) => this.ui.voice.handleKey(e, false, this.chatActive));
+        // Releasing the key in another window never reaches us.
+        window.addEventListener('blur', () => this.voice.stopTalking());
     }
 
     handleResize() {
@@ -351,11 +144,14 @@ export class Game {
     }
 
     update(deltaTime) {
+        const playerPosition = this.players.localPlayer?.position;
+
         this.players.update(deltaTime);
         this.world.update(deltaTime);
         this.soccerGame.update(deltaTime);
-        this.environment.update(deltaTime, this.players.localPlayer?.position);
-        this.updateInteractionHint();
+        this.environment.update(deltaTime, playerPosition);
+        this.voice.update(playerPosition);
+        this.interactions.update();
 
         // Actualizar posición de la cámara para seguir al jugador local
         if (this.players.localPlayer) {

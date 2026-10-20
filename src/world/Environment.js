@@ -72,18 +72,20 @@ export class Environment {
         if (listenerPosition) this.updateAudioOcclusion(listenerPosition);
     }
 
-    // Music from a room is clear inside it, muffled through its walls, and
-    // less muffled when there is an open path through its door.
+    // Occlusion between two spaces (a Room, or null for the street): clear in
+    // the same space, else muffled unless every door in between is open.
+    getOcclusionLevel(sourceRoom, listenerRoom) {
+        if (sourceRoom === listenerRoom) return 'none';
+        const doorsInBetween = [sourceRoom, listenerRoom]
+            .filter(Boolean)
+            .map(room => this.rooms.get(room.id).door);
+        return doorsInBetween.every(door => door.isOpen) ? 'doorOpen' : 'closed';
+    }
+
     updateAudioOcclusion(listenerPosition) {
         const listenerRoom = this.world.getRoomAt(listenerPosition);
-        const listenerDoorOpen = !listenerRoom || this.rooms.get(listenerRoom.id).door.isOpen;
-
-        this.rooms.forEach(({ room, radio, door }) => {
-            let level = 'none';
-            if (room !== listenerRoom) {
-                level = door.isOpen && listenerDoorOpen ? 'doorOpen' : 'closed';
-            }
-            radio.setOcclusion(level);
+        this.rooms.forEach(({ room, radio }) => {
+            radio.setOcclusion(this.getOcclusionLevel(room, listenerRoom));
         });
     }
 

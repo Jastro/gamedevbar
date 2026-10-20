@@ -1,11 +1,12 @@
 # Taberna Virtual (gamedevbar)
 
 Multiplayer Three.js hangout for the Mediavida /gamedev/ community. Client in `src/` (Vite), Node server in
-`server.js` (Express + `ws` + Puppeteer forum scraper). UI text is Spanish.
+`server/` (Express + `ws` + Puppeteer forum scraper; `server.js` is just the entry). UI text is Spanish.
 
 ## Read first
 - `HANDOVER.md` – current state and next steps.
-- `Docs/Architecture.md` – modules, world layout / rooms, doors, audio, known issues.
+- `Docs/Architecture.md` – code map and "how to add a room / clickable / message / server feature".
+- `Docs/Systems.md` – rooms layout, doors, audio occlusion, voice chat, known issues.
 - `Docs/Protocol.md` – WebSocket messages.
 
 ## Run
@@ -17,7 +18,8 @@ Multiplayer Three.js hangout for the Mediavida /gamedev/ community. Client in `s
 ## Conventions
 - Room content is authored in room-local coordinates; placement lives only in `src/world/RoomLayout.js`.
   Compare positions in world space (`Room.toWorld`, `World.getRoomAt`, `getWorldPosition`).
-- Anything clickable: put `userData.type` on the root group and add the type to `HIGHLIGHT_TYPES` in `Game.js`.
-- New shared state goes through the server (see doors: `doorToggle` → `doorState`, snapshot on join).
+- Anything clickable: `userData.type` on the root group + an interaction in `src/interactions/` (see Architecture.md).
+- New shared state goes through the server (see doors: `doorToggle` → `doorState`, snapshot on join), one
+  module per feature in `server/features/`.
 - New code and comments in US English; keep UI strings in Spanish.
 - Deploy is automatic on push to `main` (GitHub Action → Docker over SSH).

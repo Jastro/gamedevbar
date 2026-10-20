@@ -1,13 +1,25 @@
 # Handover
 
 ## Start here
-2026-10-20. Two bars (Gamedev, Desarrollo) facing each other across a street, room selector on the start
-screen, interactive server-synced front doors, muffled music from outside. Work is on branch
-`feature/rooms-and-doors` (PR to `Jastro/gamedevbar` from the `borjafac` fork). Docs:
-[Docs/Architecture.md](Docs/Architecture.md), [Docs/Protocol.md](Docs/Protocol.md).
-Next step: Borja runs through [Docs/PendingUserChecks.md](Docs/PendingUserChecks.md), then merge.
+2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
+proximity voice chat, and a modular client/server layout. Branches on the `borjafac` fork:
+`feature/rooms-and-doors` (PR Jastro/gamedevbar#10, merged 2026-10-20) and `feature/voice-chat` (voice +
+refactor, PR Jastro/gamedevbar#11). Docs: [Architecture](Docs/Architecture.md) (code map + how to add things),
+[Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
+Next step: Borja tries voice with a real mic ([Docs/PendingUserChecks.md](Docs/PendingUserChecks.md)), then
+merge #11.
 
 ## Done
+- 2026-10-20 Modular refactor (behavior unchanged): server split into `server/` (Hub + one module per
+  feature), client gets `InteractionSystem` + `src/interactions/`, `StartScreen`, `DoorSync`, transport-only
+  `WebSocketManager`. Fixed on the way: `ModelSelector.init()` ran twice (12 preview WebGL contexts instead
+  of 6). Docs: Architecture.md rewritten short, details moved to Systems.md. Verified: build; server smoke
+  test over ws; two in-app browser clients: join, chat both ways, door via E + hint + sync, sit, radio,
+  arcade range message, voice connect + PTT tone received/stopped, no console errors.
+- 2026-10-20 Push-to-talk proximity voice chat (WebRTC mesh, signaling over the game WS), plan
+  `Docs/Plans done/2026-10-20-voice-chat.md`. Verified with two in-app browser clients and a fake mic (a
+  440 Hz tone): peers connect, the tone reaches the listener's audio graph only while PTT is held, 🎙️ sprite
+  follows, occlusion levels for 6 positions/door combos, peers cleaned up on leave. Real mic not tested.
 - 2026-10-20 Security: WS handler no longer crashes on malformed/partial frames (try/catch, field checks,
   safe user lookups), usernames/chat/emoji clamped server-side, chat history capped on join/leave too, chat
   XSS fixed (`textContent`). Verified: `npm run build`; ws script sending 17 bad frames (old server dies on

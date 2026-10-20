@@ -1,13 +1,5 @@
 import * as THREE from 'three';
-
-// Filter cutoff (Hz) and extra gain applied to a room's music depending on
-// where the listener is. Tuned by ear; see Docs/PendingUserChecks.md.
-const OCCLUSION_LEVELS = {
-    none: { frequency: 20000, gain: 1 },
-    doorOpen: { frequency: 2500, gain: 0.8 },
-    closed: { frequency: 450, gain: 0.55 }
-};
-const OCCLUSION_SMOOTHING = 0.15; // seconds (time constant)
+import { OcclusionChain } from '../audio/Occlusion';
 
 export class Radio {
     constructor(scene) {
@@ -116,6 +108,7 @@ export class Radio {
         // Añadir propiedades para interactividad
         radioGroup.userData = {
             type: "radio",
+            radio: this,
             isPlaying: true,
             indicator: indicator,
             originalIndicatorColor: 0x32CD32,
@@ -139,14 +132,10 @@ export class Radio {
 
         this.sound = new THREE.PositionalAudio(this.audioListener);
 
-        // Low-pass + gain driven by setOcclusion(): heard through a wall, the
-        // music loses its highs and some volume on top of distance attenuation.
-        this.occlusionFilter = this.audioListener.context.createBiquadFilter();
-        this.occlusionFilter.type = 'lowpass';
-        this.occlusionFilter.frequency.value = OCCLUSION_LEVELS.none.frequency;
-        this.occlusionGain = this.audioListener.context.createGain();
-        this.sound.setFilters([this.occlusionFilter, this.occlusionGain]);
-        this.occlusion = 'none';
+        // Heard through a wall, the music loses its highs and some volume on
+        // top of distance attenuation (see setOcclusion).
+        this.occlusionChain = new OcclusionChain(this.audioListener.context);
+        this.sound.setFilters(this.occlusionChain.nodes);
         
         const audioLoader = new THREE.AudioLoader();
         audioLoader.load('assets/sound/ElFary_LaMandanga.mp3', (buffer) => {
@@ -162,15 +151,13 @@ export class Radio {
         }
     }
 
-    // level: 'none' (listener inside this room), 'doorOpen' or 'closed'.
+    // level: see OCCLUSION_LEVELS in src/audio/Occlusion.js.
     setOcclusion(level) {
-        if (!this.occlusionFilter || this.occlusion === level) return;
-        this.occlusion = level;
+        this.occlusionChain?.setLevel(level);
+    }
 
-        const target = OCCLUSION_LEVELS[level];
-        const now = this.audioListener.context.currentTime;
-        this.occlusionFilter.frequency.setTargetAtTime(target.frequency, now, OCCLUSION_SMOOTHING);
-        this.occlusionGain.gain.setTargetAtTime(target.gain, now, OCCLUSION_SMOOTHING);
+    get occlusion() {
+        return this.occlusionChain?.level;
     }
 
     toggleSound() {
