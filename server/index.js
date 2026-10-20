@@ -14,6 +14,8 @@ const { registerArcade } = require('./features/arcade');
 const { registerDuel } = require('./features/duel');
 const { registerSoccer } = require('./features/soccer');
 const { registerVoice } = require('./features/voice');
+const { registerRadio } = require('./features/radio');
+const { registerProjector } = require('./features/projector');
 
 const DIST_DIR = path.join(__dirname, '..', 'dist');
 
@@ -31,6 +33,8 @@ const hub = new Hub(server);
 // (userLeft) goes out last.
 registerPresence(hub);
 registerDoors(hub);
+registerRadio(hub);
+registerProjector(hub);
 registerSeats(hub);
 registerChat(hub);
 registerArcade(hub);

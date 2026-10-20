@@ -1,46 +1,29 @@
 import * as THREE from 'three';
 import { OcclusionChain } from '../audio/Occlusion';
+import { getStation } from '../audio/radioStations';
 
+const RADIO_VOLUME = 0.5;
+const RETRY_DELAY = 5000; // ms before reconnecting a dropped live stream
+const INDICATOR_ON = 0x32CD32;
+const INDICATOR_OFF = 0x696969;
+
+// A room's radio: a positional speaker on the bar that plays the room's
+// shared station (set through RadioSync). Live streams play through a media
+// element routed into Web Audio, so distance and wall muffling still apply.
 export class Radio {
     constructor(scene) {
         this.scene = scene;
         this.audioListener = null;
         this.sound = null;
+        this.element = null;
         this.radio = null;
-        this.isInitialized = false;
+        this.stationId = null;
+        this.mutedLocally = false;
+        this.serverClock = null;
     }
 
     create() {
         this.createRadioModel();
-    }
-
-    initializeAudio(listener) {
-        if (this.isInitialized) return;
-        
-        this.setupAudio(listener);
-        this.isInitialized = true;
-    }
-
-    handleClick() {
-        if (!this.sound) return;
-        
-        if (this.userData.isPlaying) {
-            this.sound.pause();
-            if (this.indicator) {
-                this.indicator.material.emissive.setHex(0x696969);
-                this.indicator.material.color.setHex(0x696969);
-                this.indicator.material.emissiveIntensity = 0.1;
-            }
-        } else {
-            this.sound.play();
-            if (this.indicator) {
-                this.indicator.material.emissive.setHex(this.userData.originalIndicatorColor);
-                this.indicator.material.color.setHex(this.userData.originalIndicatorColor);
-                this.indicator.material.emissiveIntensity = 0.5;
-            }
-        }
-        
-        this.userData.isPlaying = !this.userData.isPlaying;
     }
 
     createRadioModel() {
@@ -106,12 +89,10 @@ export class Radio {
         radioGroup.position.set(-5, 1.5, -3);
 
         // Añadir propiedades para interactividad
+        this.indicator = indicator;
         radioGroup.userData = {
             type: "radio",
             radio: this,
-            isPlaying: true,
-            indicator: indicator,
-            originalIndicatorColor: 0x32CD32,
             originalMaterial: bodyMaterial,
             highlightMaterial: new THREE.MeshStandardMaterial({
                 color: 0xB87333,
@@ -126,29 +107,85 @@ export class Radio {
         this.scene.add(radioGroup);
     }
 
-    setupAudio(listener) {
-        // All rooms share one listener (on the camera) so their radios mix correctly.
+    // Called once the player has entered (audio needs that click).
+    initializeAudio(listener, serverClock) {
+        if (this.sound) return;
         this.audioListener = listener;
+        this.serverClock = serverClock;
 
-        this.sound = new THREE.PositionalAudio(this.audioListener);
+        this.element = new Audio();
+        // Required for Web Audio to get the samples of a cross-origin stream.
+        this.element.crossOrigin = 'anonymous';
+        this.element.preload = 'none';
+        this.element.addEventListener('error', () => this.scheduleRetry());
+        this.element.addEventListener('ended', () => this.scheduleRetry());
+        this.element.addEventListener('loadedmetadata', () => this.alignLoop());
 
+        this.sound = new THREE.PositionalAudio(listener);
+        this.sound.setVolume(this.mutedLocally ? 0 : RADIO_VOLUME);
         // Heard through a wall, the music loses its highs and some volume on
         // top of distance attenuation (see setOcclusion).
-        this.occlusionChain = new OcclusionChain(this.audioListener.context);
+        this.occlusionChain = new OcclusionChain(listener.context);
         this.sound.setFilters(this.occlusionChain.nodes);
-        
-        const audioLoader = new THREE.AudioLoader();
-        audioLoader.load('assets/sound/ElFary_LaMandanga.mp3', (buffer) => {
-            this.sound.setBuffer(buffer);
-            this.sound.setLoop(true);
-            this.sound.setVolume(0.5);
-            this.sound.play();
-        });
+        this.sound.setMediaElementSource(this.element);
+        this.radio.add(this.sound);
 
-        if (this.radio) {
-            this.radio.add(this.sound);
-            this.radio.userData.sound = this.sound;
+        this.playCurrent();
+    }
+
+    // stationId: an id from radioStations.js, or null for off.
+    setStation(stationId) {
+        if (stationId === this.stationId) return;
+        this.stationId = getStation(stationId) ? stationId : null;
+        this.updateIndicator();
+        this.playCurrent();
+    }
+
+    get station() {
+        return getStation(this.stationId);
+    }
+
+    playCurrent() {
+        if (!this.element) return;
+        clearTimeout(this.retryTimer);
+        const station = this.station;
+        if (!station) {
+            this.element.pause();
+            this.element.removeAttribute('src');
+            this.element.load();
+            return;
         }
+        this.element.loop = Boolean(station.loop);
+        this.element.src = station.url;
+        this.element.play().catch(error => console.warn(`Radio: can't play ${station.id}`, error));
+    }
+
+    // Taberna FM is a file, not a broadcast: start it where the server clock
+    // says, so the whole bar hears the same bit of the song.
+    alignLoop() {
+        const duration = this.element.duration;
+        if (!this.station?.loop || !Number.isFinite(duration) || duration <= 0) return;
+        this.element.currentTime = (this.serverClock.now() / 1000) % duration;
+    }
+
+    // Live streams drop now and then; reconnect to the same station.
+    scheduleRetry() {
+        if (!this.station || this.station.loop) return;
+        clearTimeout(this.retryTimer);
+        this.retryTimer = setTimeout(() => this.playCurrent(), RETRY_DELAY);
+    }
+
+    // Per player: only this listener stops hearing it.
+    setMutedLocally(muted) {
+        this.mutedLocally = muted;
+        this.sound?.setVolume(muted ? 0 : RADIO_VOLUME);
+    }
+
+    updateIndicator() {
+        const color = this.stationId ? INDICATOR_ON : INDICATOR_OFF;
+        this.indicator.material.color.setHex(color);
+        this.indicator.material.emissive.setHex(color);
+        this.indicator.material.emissiveIntensity = this.stationId ? 0.5 : 0.1;
     }
 
     // level: see OCCLUSION_LEVELS in src/audio/Occlusion.js.
@@ -160,32 +197,9 @@ export class Radio {
         return this.occlusionChain?.level;
     }
 
-    toggleSound() {
-        if (!this.sound) return;
-
-        if (this.radio.userData.isPlaying) {
-            this.sound.pause();
-            if (this.radio.userData.indicator) {
-                this.radio.userData.indicator.material.emissive.setHex(0x696969);
-                this.radio.userData.indicator.material.color.setHex(0x696969);
-                this.radio.userData.indicator.material.emissiveIntensity = 0.1;
-            }
-        } else {
-            this.sound.play();
-            if (this.radio.userData.indicator) {
-                this.radio.userData.indicator.material.emissive.setHex(this.radio.userData.originalIndicatorColor);
-                this.radio.userData.indicator.material.color.setHex(this.radio.userData.originalIndicatorColor);
-                this.radio.userData.indicator.material.emissiveIntensity = 0.5;
-            }
-        }
-        
-        this.radio.userData.isPlaying = !this.radio.userData.isPlaying;
-    }
-
     cleanup() {
-        if (this.sound) {
-            this.sound.stop();
-        }
+        clearTimeout(this.retryTimer);
+        this.element?.pause();
         if (this.radio) {
             this.scene.remove(this.radio);
         }

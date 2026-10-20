@@ -421,6 +421,165 @@
       background: rgba(255, 255, 255, 0.1);
     }
 
+    /* CSS3D layer (projector iframes) sits under the transparent WebGL canvas. */
+    #css3d-layer,
+    #webgl-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    #css3d-layer {
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    #webgl-layer {
+      z-index: 1;
+    }
+
+    .projector-video {
+      background: #000;
+      pointer-events: none;
+    }
+
+    .projector-video iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      pointer-events: none;
+    }
+
+    .floating-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(360px, calc(100% - 32px));
+      max-height: calc(100% - 32px);
+      overflow-y: auto;
+      box-sizing: border-box;
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.92);
+      border: 2px solid rgba(220, 90, 11, 0.4);
+      border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      color: #fff;
+      font-size: 14px;
+      z-index: 1500;
+    }
+
+    .floating-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .floating-panel-close {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .floating-panel-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .floating-panel-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .floating-panel-actions .floating-panel-button {
+      flex: 1;
+    }
+
+    .floating-panel-button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      background: #dc5a0b;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .floating-panel-button.secondary {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .floating-panel-button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    .floating-panel-note {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+    }
+
+    .radio-stations {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .radio-station {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      padding: 8px 10px;
+      border: 1px solid rgba(220, 90, 11, 0.25);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .radio-station:hover {
+      background: rgba(220, 90, 11, 0.15);
+    }
+
+    .radio-station.active {
+      border-color: #dc5a0b;
+      background: rgba(220, 90, 11, 0.25);
+    }
+
+    .radio-station-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .radio-station-genre {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .projector-form {
+      display: flex;
+      gap: 8px;
+    }
+
+    .projector-form input {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(220, 90, 11, 0.4);
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 13px;
+    }
+
     #voice-button.talking {
       background: #d93025;
       box-shadow: 0 0 0 4px rgba(217, 48, 37, 0.35), 0 0 20px rgba(217, 48, 37, 0.6);

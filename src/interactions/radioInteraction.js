@@ -1,9 +1,10 @@
-// Room radios: click to pause/resume the music (local to this player).
-export function createRadioInteraction() {
+// Room radios: click to open the station picker (the station is shared by the room).
+export function createRadioInteraction(game) {
     return {
         type: 'radio',
         use(object) {
-            object.userData.radio?.toggleSound();
+            const room = game.world.getRoomForObject(object);
+            if (room) game.ui.radio.open(room.id);
         }
     };
 }

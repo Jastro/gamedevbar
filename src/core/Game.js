@@ -9,6 +9,9 @@ import { PlayerManager } from '../entities/PlayerManager';
 import { World } from '../world/World';
 import { Environment } from '../world/Environment';
 import { DoorSync } from '../world/DoorSync';
+import { RadioSync } from '../world/RadioSync';
+import { ProjectorSync } from '../world/ProjectorSync';
+import { ServerClock } from '../network/ServerClock';
 import { SoccerGame } from '../world/SoccerGame';
 import { getRoomDefinition } from '../world/RoomLayout';
 import { VoiceChat } from '../voice/VoiceChat';
@@ -18,10 +21,13 @@ import { RoomSelector } from '../ui/RoomSelector';
 import { StartScreen } from '../ui/StartScreen';
 import { VoiceUI } from '../ui/VoiceUI';
 import { VoiceSettingsUI } from '../ui/VoiceSettingsUI';
+import { RadioUI } from '../ui/RadioUI';
+import { ProjectorUI } from '../ui/ProjectorUI';
 import { createDoorInteraction } from '../interactions/doorInteraction';
 import { createSeatInteraction } from '../interactions/seatInteraction';
 import { createRadioInteraction } from '../interactions/radioInteraction';
 import { createArcadeInteraction, bindArcadeNetwork } from '../interactions/arcadeInteraction';
+import { createProjectorInteraction } from '../interactions/projectorInteraction';
 
 // Composition root: builds every system, wires them together and runs the
 // main loop. Systems reach each other through this object (also window.game).
@@ -35,7 +41,8 @@ export class Game {
         this.camera = new Camera(this.scene.getScene());
         this.renderer = new Renderer(this.scene, this.camera);
         this.world = new World(this.scene);
-        this.environment = new Environment(this.scene, this.world);
+        this.serverClock = new ServerClock();
+        this.environment = new Environment(this.scene, this.world, this.serverClock);
         this.soccerGame = new SoccerGame(this.scene.getScene(), this.world);
 
         // Inicializar UI antes que network
@@ -51,12 +58,17 @@ export class Game {
         this.ui.voice = new VoiceUI(this.voice, this.ui.chat);
         this.ui.voiceSettings = new VoiceSettingsUI(this.voice);
         this.doorSync = new DoorSync(this);
+        this.radioSync = new RadioSync(this);
+        this.projectorSync = new ProjectorSync(this);
+        this.ui.radio = new RadioUI(this);
+        this.ui.projector = new ProjectorUI(this);
 
         this.interactions = new InteractionSystem(this);
         this.interactions.register(createSeatInteraction(this));
         this.interactions.register(createRadioInteraction(this));
         this.interactions.register(createArcadeInteraction(this));
         this.interactions.register(createDoorInteraction(this));
+        this.interactions.register(createProjectorInteraction(this));
 
         this.startScreen = new StartScreen({
             modelSelector: this.ui.modelSelector,
@@ -67,9 +79,11 @@ export class Game {
         this.clock = new THREE.Clock();
     }
 
-    // Typing in the chat suspends movement and world input.
+    // Typing (chat, or any text field/dropdown in a panel) suspends movement
+    // and world keys.
     get chatActive() {
-        return this.ui.chat.isChatActive();
+        const focused = document.activeElement?.tagName;
+        return this.ui.chat.isChatActive() || ['INPUT', 'TEXTAREA', 'SELECT'].includes(focused);
     }
 
     async start({ username, roomId }) {
@@ -92,6 +106,7 @@ export class Game {
         this.network.connect();
         this.world.create();
         this.environment.create();
+        this.radioSync.applyDefaults();
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
         this.bindNetwork();
         await this.soccerGame.init();
@@ -99,7 +114,10 @@ export class Game {
 
     // Network → systems wiring that doesn't belong to a single system.
     bindNetwork() {
+        this.network.on('init', (data) => this.serverClock.sync(data.serverTime));
         this.doorSync.bind();
+        this.radioSync.bind();
+        this.projectorSync.bind();
         bindArcadeNetwork(this);
 
         this.network.on('userChat', (data) => this.ui.chat.addMessage({
@@ -129,6 +147,10 @@ export class Game {
 
         window.addEventListener('keydown', (e) => this.ui.voice.handleKey(e, true, this.chatActive));
         window.addEventListener('keyup', (e) => this.ui.voice.handleKey(e, false, this.chatActive));
+        // A projector whose autoplay with sound was blocked starts on the next click.
+        document.addEventListener('pointerdown', () => {
+            this.environment.rooms.forEach(({ projector }) => projector.kick());
+        });
         // Releasing the key in another window never reaches us.
         window.addEventListener('blur', () => this.voice.stopTalking());
     }

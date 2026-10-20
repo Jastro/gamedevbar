@@ -29,3 +29,11 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Mic settings (⚙️).** With 2+ real mics (e.g. webcam + headset): the dropdown lists them by name
       after permission, the meter moves when you speak, switching while someone listens changes what they
       hear without dropping, *Desactivar micrófono* turns off the browser's mic indicator, choice survives reload.
+- [ ] **Shared radio.** Two players in the same bar: click the radio, pick a station; both hear it
+      switch (📻 line in chat). Check each station plays (list in `src/audio/radioStations.js`), volume vs.
+      voices, muffling from the street, "Silenciar para mí", Taberna FM at the same point for both.
+- [ ] **Projector.** Click the right-wall screen, paste a YouTube link: everyone in the bar sees it at the
+      same moment (±1-2 s), pause/resume/off from either side, a late joiner jumps to the right spot.
+      Check: the video looks right on the wall from different angles, players walking in front cover it,
+      volume drops with distance and closed doors, a non-embeddable video shows an error in chat.
+- [ ] **Front-wall paintings.** The 4 paintings from the right wall are now left of the door. OK there?
