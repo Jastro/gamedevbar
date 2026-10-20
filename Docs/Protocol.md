@@ -20,6 +20,8 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `userChat` | `message`, `isEmote`, `emoji` | `/furbo` → `startSoccerGame` to all; else log + `userChat` to all |
 | `userSat` / `userStood` | `seatId` / – | seat bookkeeping, relayed to others (no client handler) |
 | `doorToggle` | `doorId` (`<roomId>:<door>`) | validate id, flip state, `doorState` to all |
+| `voiceSignal` | `targetId`, `signal` (`{description}` or `{candidate}`, ≤ 16 KB) | relayed only to `targetId` as `voiceSignal` with `fromId` |
+| `voiceTalking` | `talking` (bool) | `voiceTalking` to others |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
 | `arcadeState` | `gameState`, `data` | re-broadcast (see known issues: Pong sync broken) |
 | `soccerBallUpdate` | `position`, `velocity` | relayed to others |
@@ -29,13 +31,15 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 
 | type | Fields | Client handling |
 |---|---|---|
-| `init` | `userId` | create `LocalPlayer` at chosen room spawn, send `setUsername` + `initCompleted` |
+| `init` | `userId`, `iceServers` | create `LocalPlayer` at chosen room spawn, send `setUsername` + `initCompleted`; voice keeps id + ICE servers |
 | `userJoined` | `userId`, `username`, `position`, `rotation`, `selectedModel`, `seatId` | create/update `RemotePlayer` |
 | `userLeft` | `userId` | remove player |
 | `userMoved` | `userId`, `position`, `rotation` | remote player target |
 | `userUsername` | `userId`, `username`, `selectedModel` | update/create remote player |
 | `userChat` | `userId`, `username`, `message`, `isEmote`, `isTaberna`, `emoji`, `timestamp` | chat box + bubble |
 | `doorState` | `doorId`, `isOpen` | animate door |
+| `voiceSignal` | `fromId`, `signal` | WebRTC offer/answer/ICE candidate for that peer |
+| `voiceTalking` | `userId`, `talking` | 🎙️ sprite on that avatar |
 | `doorStates` | `doors: { doorId: isOpen }` | apply instantly (join snapshot) |
 | `snakeHighScores` | `scores` | all Snake machines |
 | `startSoccerGame` | `initiatorId` | start soccer for everyone |

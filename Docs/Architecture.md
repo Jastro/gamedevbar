@@ -95,9 +95,9 @@ Offline (no WS) the client toggles locally.
 
 ## Audio
 
-One `AudioListener` on the camera (`Environment.initializeAudio`). Each room's radio is a `PositionalAudio`
-(default inverse distance model) with a chain *low-pass filter → gain* that `Environment.updateAudioOcclusion`
-drives every frame from the local player's position:
+One `AudioListener` on the camera (`Environment.initializeAudio`). Each room's radio (and each remote voice)
+is a `PositionalAudio` with an `OcclusionChain` (*low-pass filter → gain*, `src/audio/Occlusion.js`) whose
+level `Environment.getOcclusionLevel(sourceRoom, listenerRoom)` picks every frame:
 
 | Listener | Filter cutoff | Extra gain |
 |---|---|---|
@@ -105,8 +105,24 @@ drives every frame from the local player's position:
 | Outside, door path open (its door open, and listener's own door open or listener in the street) | 2.5 kHz | 0.8 |
 | Outside, any closed door in between | 450 Hz | 0.55 |
 
-Changes are smoothed with `setTargetAtTime` (0.15 s). Values live in `OCCLUSION_LEVELS` in `Radio.js`.
+Changes are smoothed with `setTargetAtTime` (0.15 s). Values live in `OCCLUSION_LEVELS` in `Occlusion.js`.
 Arcade sounds are plain `THREE.Audio` (not positional, not occluded).
+
+## Voice chat (push to talk)
+
+`src/voice/VoiceChat.js` + `VoicePeer.js`, UI in `src/ui/VoiceUI.js`. WebRTC full mesh: every pair of
+players has one audio-only `RTCPeerConnection`; the WebSocket server only relays signaling (`voiceSignal`)
+and the talking flag (`voiceTalking`). The lower user id of a pair sends the offer. Each connection starts
+with one `sendrecv` transceiver; the mic is attached later with `replaceTrack`, so there is no
+renegotiation. Hold `V` (or the 🎙️ button) to talk: the first press asks for the mic (HTTPS or localhost
+only), later presses just toggle `track.enabled`. Remote voices play as `THREE.PositionalAudio` on the
+speaker's avatar through the same `OcclusionChain` as the radios
+(`Environment.getOcclusionLevel(speakerRoom, listenerRoom)`). Avatars show a 🎙️ sprite while talking.
+
+Limits: a mesh costs N-1 connections per player (fine for a bar of ~20); bigger rooms need an SFU. ICE
+servers come from the server (`ICE_SERVERS` env, JSON array; default Google STUN). Without a TURN server,
+some players behind strict NATs won't connect. Embedding in a forum thread needs
+`<iframe allow="microphone">` on the embedding page.
 
 ## Server state (`server.js`)
 

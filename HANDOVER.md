@@ -8,6 +8,10 @@ screen, interactive server-synced front doors, muffled music from outside. Work 
 Next step: Borja runs through [Docs/PendingUserChecks.md](Docs/PendingUserChecks.md), then merge.
 
 ## Done
+- 2026-10-20 Push-to-talk proximity voice chat (WebRTC mesh, signaling over the game WS), plan
+  `Docs/Plans done/2026-10-20-voice-chat.md`. Verified with two in-app browser clients and a fake mic (a
+  440 Hz tone): peers connect, the tone reaches the listener's audio graph only while PTT is held, 🎙️ sprite
+  follows, occlusion levels for 6 positions/door combos, peers cleaned up on leave. Real mic not tested.
 - 2026-10-20 Security: WS handler no longer crashes on malformed/partial frames (try/catch, field checks,
   safe user lookups), usernames/chat/emoji clamped server-side, chat history capped on join/leave too, chat
   XSS fixed (`textContent`). Verified: `npm run build`; ws script sending 17 bad frames (old server dies on

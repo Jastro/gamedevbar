@@ -274,6 +274,34 @@
       z-index: 1002;
     }
 
+    #voice-button {
+      position: absolute;
+      right: -115px;
+      bottom: 0;
+      width: 45px;
+      height: 45px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(40, 40, 40, 0.9);
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      z-index: 1002;
+      touch-action: none;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    #voice-button.talking {
+      background: #d93025;
+      box-shadow: 0 0 0 4px rgba(217, 48, 37, 0.35), 0 0 20px rgba(217, 48, 37, 0.6);
+      transform: scale(1.08);
+    }
+
     #emote-button:hover {
       background: rgba(220, 90, 11, 1);
       transform: translateY(-2px);

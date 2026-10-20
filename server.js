@@ -271,6 +271,23 @@ const MAX_CHAT_LENGTH = 200;
 const MAX_EMOJI_LENGTH = 16;
 const MODEL_ID_PATTERN = /^[a-z0-9_-]{1,32}$/i;
 const DUEL_CHOICES = ['piedra', 'papel', 'tijera'];
+// WebRTC signaling (SDP + ICE candidates) is relayed as-is; an SDP is a few KB.
+const MAX_VOICE_SIGNAL_BYTES = 16 * 1024;
+
+// ICE servers handed to clients for voice chat. Set ICE_SERVERS to a JSON array
+// (e.g. with a TURN server) for players behind strict NATs.
+function loadIceServers() {
+    const fallback = [{ urls: 'stun:stun.l.google.com:19302' }];
+    if (!process.env.ICE_SERVERS) return fallback;
+    try {
+        const parsed = JSON.parse(process.env.ICE_SERVERS);
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed : fallback;
+    } catch (error) {
+        console.error('Invalid ICE_SERVERS, using default STUN:', error.message);
+        return fallback;
+    }
+}
+const ICE_SERVERS = loadIceServers();
 
 function cleanString(value, maxLength) {
     if (typeof value !== 'string') return null;
@@ -708,6 +725,28 @@ function handleMessage(ws, user, data) {
             broadcastAll(welcomeMessage);
             break;
 
+        case 'voiceSignal': {
+            // Relay only to the addressed peer; the server never inspects media.
+            if (typeof data.targetId !== 'string' || !data.signal || typeof data.signal !== 'object') break;
+            if (JSON.stringify(data.signal).length > MAX_VOICE_SIGNAL_BYTES) break;
+            const targetClient = findClientByUserId(data.targetId);
+            if (!targetClient) break;
+            targetClient.send(JSON.stringify({
+                type: 'voiceSignal',
+                fromId: user.id,
+                signal: data.signal
+            }));
+            break;
+        }
+
+        case 'voiceTalking':
+            broadcast(ws, {
+                type: 'voiceTalking',
+                userId: user.id,
+                talking: data.talking === true
+            });
+            break;
+
         case 'soccerBallUpdate':
             // Reenviar la actualización de la pelota a todos los clientes excepto al remitente
             broadcast(ws, {
@@ -727,7 +766,8 @@ wss.on('connection', (ws, req) => {
     // Enviar ID al nuevo usuario
     ws.send(JSON.stringify({
         type: 'init',
-        userId: user.id
+        userId: user.id,
+        iceServers: ICE_SERVERS
     }));
 
     // Informar a todos los demás usuarios sobre el nuevo usuario

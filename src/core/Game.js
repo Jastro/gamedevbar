@@ -8,6 +8,8 @@ import { Environment } from '../world/Environment';
 import { ChatUI } from '@/ui/ChatUI';
 import { ModelSelector } from '../ui/ModelSelector';
 import { RoomSelector } from '../ui/RoomSelector';
+import { VoiceUI } from '../ui/VoiceUI';
+import { VoiceChat } from '../voice/VoiceChat';
 import * as THREE from 'three';
 import { World } from '../world/World';
 import { SoccerGame } from '../world/SoccerGame';
@@ -41,6 +43,8 @@ export class Game {
         // Inicializar network después de UI
         this.network = new WebSocketManager();
         this.players = new PlayerManager(this);
+        this.voice = new VoiceChat(this);
+        this.ui.voice = new VoiceUI(this.voice, this.ui.chat);
 
         this.ui.modelSelector.init();
         this.ui.roomSelector.init();
@@ -81,6 +85,7 @@ export class Game {
                 this.animate();
 
                 this.environment.initializeAudio(this.camera.getCamera());
+                this.ui.voice.showIntro();
             }
         });
 
@@ -176,11 +181,15 @@ export class Game {
 
         window.addEventListener('click', (e) => this.handleClick(e));
         window.addEventListener('keydown', (e) => {
+            if (this.ui.voice.handleKey(e, true, this.chatActive)) return;
             if (this.chatActive || e.repeat || e.key.toLowerCase() !== 'e') return;
             const player = this.players.localPlayer;
             const door = player && this.environment.getNearestDoor(player.position);
             if (door) this.tryToggleDoor(door);
         });
+        window.addEventListener('keyup', (e) => this.ui.voice.handleKey(e, false, this.chatActive));
+        // Releasing the key in another window never reaches us.
+        window.addEventListener('blur', () => this.voice.stopTalking());
         window.addEventListener('contextmenu', (e) => e.preventDefault());
 
         // Prevenir comportamiento por defecto en el chat
@@ -241,7 +250,7 @@ export class Game {
         if (this.chatActive) return;
 
         // Verificar si el click fue en elementos de UI
-        const uiElements = ['chat-box', 'chat-input', 'emotes-panel'].map(
+        const uiElements = ['chat-box', 'chat-container', 'emotes-panel'].map(
             id => document.getElementById(id)
         );
 
@@ -355,6 +364,7 @@ export class Game {
         this.world.update(deltaTime);
         this.soccerGame.update(deltaTime);
         this.environment.update(deltaTime, this.players.localPlayer?.position);
+        this.voice.update(this.players.localPlayer?.position);
         this.updateInteractionHint();
 
         // Actualizar posición de la cámara para seguir al jugador local

@@ -18,3 +18,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Room selector.** Layout on desktop and phone width; choice remembered after reload.
 - [ ] **Forum TV position.** It moved beside the door (x = 7 on the front wall). Still easy to read?
 - [ ] **Street look.** Exterior is plain (dark ground, fences, neon name signs, no roof). Good enough for now?
+- [ ] **Voice with a real mic.** Two machines (or two browsers with headphones). Hold `V`: first press asks
+      for the mic; the other player hears you from your avatar's position and sees 🎙️ over your head.
+      Check: latency, volume vs. the radio (`VOICE_REF_DISTANCE`/`VOICE_ROLLOFF` in `VoiceChat.js`),
+      echo without headphones, muffling when one of you is outside / behind a closed door.
+- [ ] **Voice over the internet.** Two different networks (e.g. phone hotspot). If it never connects, a
+      TURN server is needed (`ICE_SERVERS`).
+- [ ] **🎙️ button.** Hold it with mouse and touch; releasing anywhere stops talking.
