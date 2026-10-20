@@ -2,13 +2,19 @@
 // Created with a single sendrecv transceiver so the mic can be attached or
 // swapped later with replaceTrack, without renegotiating. Exactly one side
 // of each pair (the initiator) sends the offer, so offers never collide.
+
+// ICE can sit in "checking" for a long time when no path exists (e.g. both
+// behind strict NATs without TURN); give up and report a failure instead.
+const CONNECT_TIMEOUT = 15000; // ms
+
 export class VoicePeer {
-    constructor({ remoteId, isInitiator, iceServers, sendSignal, onTrack, onFailed }) {
+    constructor({ remoteId, isInitiator, iceServers, sendSignal, onTrack, onFailed, onConnected }) {
         this.remoteId = remoteId;
         this.isInitiator = isInitiator;
         this.sendSignal = sendSignal;
         this.onTrack = onTrack;
         this.onFailed = onFailed;
+        this.onConnected = onConnected;
         this.pendingCandidates = [];
         this.localTrack = null;
         this.closed = false;
@@ -22,8 +28,15 @@ export class VoicePeer {
             this.onTrack(event.streams[0] ?? new MediaStream([event.track]));
         };
         this.pc.onconnectionstatechange = () => {
-            if (this.pc.connectionState === 'failed' && !this.closed) this.onFailed?.();
+            if (this.closed) return;
+            if (this.pc.connectionState === 'connected') {
+                clearTimeout(this.connectTimer);
+                this.onConnected?.();
+            } else if (this.pc.connectionState === 'failed') {
+                this.fail();
+            }
         };
+        this.connectTimer = setTimeout(() => this.fail(), CONNECT_TIMEOUT);
 
         if (isInitiator) {
             this.transceiver = this.pc.addTransceiver('audio', { direction: 'sendrecv' });
@@ -75,8 +88,15 @@ export class VoicePeer {
         });
     }
 
+    fail() {
+        if (this.closed || this.pc.connectionState === 'connected') return;
+        clearTimeout(this.connectTimer);
+        this.onFailed?.();
+    }
+
     close() {
         this.closed = true;
+        clearTimeout(this.connectTimer);
         this.pc.close();
     }
 }

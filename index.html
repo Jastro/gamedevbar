@@ -375,6 +375,38 @@
       font-size: 12px;
     }
 
+    #voice-settings .voice-peers {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 120px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+
+    #voice-settings .voice-peer {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 3px 0;
+    }
+
+    #voice-settings .voice-peer-status {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    #voice-settings .voice-peer.connected .voice-peer-status {
+      color: #4caf50;
+    }
+
+    #voice-settings .voice-peer.failed .voice-peer-status {
+      color: #f44336;
+    }
+
+    #voice-settings .voice-peer-empty {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
     #voice-settings .voice-settings-action {
       padding: 8px;
       border: none;

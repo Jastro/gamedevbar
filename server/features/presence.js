@@ -1,11 +1,11 @@
-const { ICE_SERVERS } = require('../config');
+const { getIceServers } = require('../config');
 const { cleanUsername, cleanModelId } = require('../validation');
 
 // Who is connected, their name/model and position.
 function registerPresence(hub) {
     hub.onConnect(({ ws, user }) => {
         // Enviar ID al nuevo usuario
-        hub.send(ws, { type: 'init', userId: user.id, iceServers: ICE_SERVERS });
+        hub.send(ws, { type: 'init', userId: user.id, iceServers: getIceServers(user.id) });
 
         // Early announcement without the model (it isn't chosen yet); the full
         // one follows on initCompleted.
