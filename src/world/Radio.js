@@ -1,9 +1,16 @@
 import * as THREE from 'three';
-import { OcclusionChain } from '../audio/Occlusion';
+import { OcclusionChain, OCCLUSION_LEVELS } from '../audio/Occlusion';
 import { getStation } from '../audio/radioStations';
 
 const RADIO_VOLUME = 0.5;
 const RETRY_DELAY = 5000; // ms before reconnecting a dropped live stream
+
+// Below this effective gain (-40 dB: distance x walls x volume x slider) the
+// radio can't be heard, so the stream stops downloading. It must stay that
+// quiet for a while first, so walking past a door doesn't restart it.
+const INAUDIBLE_GAIN = 0.01;
+const INAUDIBLE_DELAY = 3000; // ms
+const AUDIBILITY_INTERVAL = 250; // ms between checks
 const INDICATOR_ON = 0x32CD32;
 const INDICATOR_OFF = 0x696969;
 
@@ -19,6 +26,10 @@ export class Radio {
         this.radio = null;
         this.stationId = null;
         this.mutedLocally = false;
+        this.settings = null;    // AudioSettings (radio slider)
+        this.suspended = false;  // stream stopped because nobody here can hear it
+        this.quietSince = null;
+        this.lastAudibilityCheck = 0;
     }
 
     create() {
@@ -107,9 +118,11 @@ export class Radio {
     }
 
     // Called once the player has entered (audio needs that click).
-    initializeAudio(listener) {
+    initializeAudio(listener, settings) {
         if (this.sound) return;
         this.audioListener = listener;
+        this.settings = settings;
+        settings?.on('change', ({ category }) => category === 'radio' && this.applyVolume());
 
         this.element = new Audio();
         // Required for Web Audio to get the samples of a cross-origin stream.
@@ -119,7 +132,7 @@ export class Radio {
         this.element.addEventListener('ended', () => this.scheduleRetry());
 
         this.sound = new THREE.PositionalAudio(listener);
-        this.sound.setVolume(this.mutedLocally ? 0 : RADIO_VOLUME);
+        this.applyVolume();
         // Heard through a wall, the music loses its highs and some volume on
         // top of distance attenuation (see setOcclusion).
         this.occlusionChain = new OcclusionChain(listener.context);
@@ -142,23 +155,25 @@ export class Radio {
         return getStation(this.stationId);
     }
 
+    // (Re)connects to the live stream, or stops downloading when off or suspended.
     playCurrent() {
         if (!this.element) return;
         clearTimeout(this.retryTimer);
         const station = this.station;
-        if (!station) {
+        if (!station || this.suspended) {
             this.element.pause();
             this.element.removeAttribute('src');
             this.element.load();
             return;
         }
+        // Setting src again joins the broadcast at its live point.
         this.element.src = station.url;
         this.element.play().catch(error => console.warn(`Radio: can't play ${station.id}`, error));
     }
 
     // Live streams drop now and then; reconnect to the same station.
     scheduleRetry() {
-        if (!this.station) return;
+        if (!this.station || this.suspended) return;
         clearTimeout(this.retryTimer);
         this.retryTimer = setTimeout(() => this.playCurrent(), RETRY_DELAY);
     }
@@ -166,7 +181,56 @@ export class Radio {
     // Per player: only this listener stops hearing it.
     setMutedLocally(muted) {
         this.mutedLocally = muted;
-        this.sound?.setVolume(muted ? 0 : RADIO_VOLUME);
+        this.applyVolume();
+    }
+
+    get volume() {
+        if (this.mutedLocally) return 0;
+        return RADIO_VOLUME * (this.settings?.get('radio') ?? 1);
+    }
+
+    applyVolume() {
+        this.sound?.setVolume(this.volume);
+    }
+
+    // What this listener would actually hear, as a gain: the panner's inverse
+    // distance falloff x the wall/door muffling x volume. Suspends the stream
+    // once it has been inaudible for INAUDIBLE_DELAY, resumes (live) as soon
+    // as it isn't.
+    updateAudibility(occlusionLevel) {
+        if (!this.sound || !this.station) return;
+        const now = performance.now();
+        if (now - this.lastAudibilityCheck < AUDIBILITY_INTERVAL) return;
+        this.lastAudibilityCheck = now;
+
+        const gain = this.estimateGain(occlusionLevel);
+        if (gain >= INAUDIBLE_GAIN) {
+            this.firstCheckDone = true;
+            this.quietSince = null;
+            if (this.suspended) {
+                this.suspended = false;
+                this.playCurrent();
+            }
+            return;
+        }
+        // The very first check decides at once, so a radio nobody can hear
+        // never starts downloading.
+        if (this.quietSince === null) this.quietSince = this.firstCheckDone ? now : now - INAUDIBLE_DELAY;
+        if (!this.suspended && now - this.quietSince >= INAUDIBLE_DELAY) {
+            this.suspended = true;
+            this.playCurrent();
+        }
+        this.firstCheckDone = true;
+    }
+
+    estimateGain(occlusionLevel) {
+        const listenerPosition = this.audioListener.getWorldPosition(new THREE.Vector3());
+        const distance = this.sound.getWorldPosition(new THREE.Vector3()).distanceTo(listenerPosition);
+        // Same formula as the PannerNode's 'inverse' model.
+        const ref = this.sound.getRefDistance();
+        const rolloff = this.sound.getRolloffFactor();
+        const distanceGain = ref / (ref + rolloff * (Math.max(distance, ref) - ref));
+        return distanceGain * (OCCLUSION_LEVELS[occlusionLevel]?.gain ?? 1) * this.volume;
     }
 
     updateIndicator() {

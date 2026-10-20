@@ -321,7 +321,9 @@
       position: absolute;
       bottom: 60px;
       right: -170px;
-      width: 280px;
+      width: 300px;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
       padding: 14px;
       box-sizing: border-box;
       background: rgba(0, 0, 0, 0.92);
@@ -354,6 +356,31 @@
       background: #1a1a1a;
       color: #fff;
       font-size: 13px;
+    }
+
+    #voice-settings .volume-sliders {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    #voice-settings .volume-row {
+      display: grid;
+      grid-template-columns: 92px 1fr 40px;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    #voice-settings .volume-row input {
+      width: 100%;
+      accent-color: #dc5a0b;
+    }
+
+    #voice-settings .volume-value {
+      text-align: right;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
     }
 
     #voice-settings .voice-meter {

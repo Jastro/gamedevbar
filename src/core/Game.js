@@ -12,6 +12,7 @@ import { DoorSync } from '../world/DoorSync';
 import { RadioSync } from '../world/RadioSync';
 import { ProjectorSync } from '../world/ProjectorSync';
 import { ServerClock } from '../network/ServerClock';
+import { AudioSettings } from '../audio/AudioSettings';
 import { SoccerGame } from '../world/SoccerGame';
 import { getRoomDefinition } from '../world/RoomLayout';
 import { VoiceChat } from '../voice/VoiceChat';
@@ -42,7 +43,8 @@ export class Game {
         this.renderer = new Renderer(this.scene, this.camera);
         this.world = new World(this.scene);
         this.serverClock = new ServerClock();
-        this.environment = new Environment(this.scene, this.world, this.serverClock);
+        this.audioSettings = new AudioSettings();
+        this.environment = new Environment(this.scene, this.world, this.serverClock, this.audioSettings);
         this.soccerGame = new SoccerGame(this.scene.getScene(), this.world);
 
         // Inicializar UI antes que network
@@ -56,7 +58,7 @@ export class Game {
         this.players = new PlayerManager(this);
         this.voice = new VoiceChat(this);
         this.ui.voice = new VoiceUI(this.voice, this.ui.chat);
-        this.ui.voiceSettings = new VoiceSettingsUI(this.voice);
+        this.ui.voiceSettings = new VoiceSettingsUI(this.voice, this.audioSettings);
         this.doorSync = new DoorSync(this);
         this.radioSync = new RadioSync(this);
         this.projectorSync = new ProjectorSync(this);

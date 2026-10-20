@@ -12,10 +12,11 @@ import { DEFAULT_ROOM_ID } from './RoomLayout';
 // Props and interactive objects. Every room gets its own full set, built in
 // room-local coordinates (see RoomLayout.js).
 export class Environment {
-    constructor(scene, world, serverClock) {
+    constructor(scene, world, serverClock, audioSettings) {
         this.scene = scene;
         this.world = world;
         this.serverClock = serverClock;
+        this.audioSettings = audioSettings;
         this.rooms = new Map();  // roomId -> { room, bar, furniture, radio, paintings, arcadePong, arcadeSnake, door, projector }
         this.doors = new Map();  // doorId -> Door
     }
@@ -32,7 +33,7 @@ export class Environment {
                 arcadePong: new ArcadePong(room),
                 arcadeSnake: new ArcadeSnake(room),
                 door: new Door(room, this.world.collisionManager),
-                projector: new Projector(room, this.serverClock)
+                projector: new Projector(room, this.serverClock, this.audioSettings)
             };
 
             contents.bar.create();
@@ -68,7 +69,7 @@ export class Environment {
         if (this.audioListener) return;
         this.audioListener = new THREE.AudioListener();
         camera.add(this.audioListener);
-        this.rooms.forEach(({ radio }) => radio.initializeAudio(this.audioListener));
+        this.rooms.forEach(({ radio }) => radio.initializeAudio(this.audioListener, this.audioSettings));
     }
 
     update(deltaTime, listenerPosition) {
@@ -90,7 +91,9 @@ export class Environment {
     updateAudioOcclusion(listenerPosition) {
         const listenerRoom = this.world.getRoomAt(listenerPosition);
         this.rooms.forEach(({ room, radio }) => {
-            radio.setOcclusion(this.getOcclusionLevel(room, listenerRoom));
+            const level = this.getOcclusionLevel(room, listenerRoom);
+            radio.setOcclusion(level);
+            radio.updateAudibility(level);
         });
     }
 

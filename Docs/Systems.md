@@ -71,6 +71,20 @@ same `OcclusionChain` as before, so distance and wall muffling still work. **Eve
 CORS headers**, or Web Audio gets silence. The list was checked with curl on 2026-10-20; re-check a station
 that goes quiet. Dropped live streams reconnect after 5 s.
 
+**Inaudible radios stop downloading.** Every 250 ms each radio estimates what this player would hear:
+the panner's inverse distance falloff (from the camera's `AudioListener`) × the wall/door occlusion gain
+× radio volume × the player's radio slider (0 when *Silenciar para mí*). Below 0.01 (-40 dB) for 3 s,
+the stream is unloaded. The first check decides at once, so the other bar's radio never starts if you
+can't hear it. When it's audible again, it reconnects at the live point. Typical values: own bar ~0.05,
+street ~0.011-0.024, the other bar with closed doors ~0.008 (stopped). Each stream is ~128 kbps.
+
+## Volume settings
+
+⚙️ (next to the mic button) also has per-player volume sliders: 📻 radio, 📽️ projector, 🗣️ voices
+(`src/audio/AudioSettings.js`, saved in `localStorage` `audioVolumes`, 0-100 %). Radios multiply their
+`PositionalAudio` volume, projectors their YouTube volume, and voices their `PositionalAudio` gain. A
+slider releases focus when let go, so movement keys work right away.
+
 ## Projector (shared YouTube)
 
 A 16:9 screen on each room's right wall (`src/world/Projector.js`), with a projector box hanging in

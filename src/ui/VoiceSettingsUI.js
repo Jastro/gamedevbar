@@ -1,11 +1,16 @@
 import { PTT_KEY } from './VoiceUI';
 
-// Mic settings panel, opened with the ⚙️ button next to the mic button:
-// input device picker (remembered), live input level meter, and a button to
-// release the mic so the browser's recording indicator goes away.
+const VOLUME_LABELS = { radio: '📻 Radio', video: '📽️ Proyector', voice: '🗣️ Voces' };
+
+// Sound settings panel, opened with the ⚙️ button next to the mic button:
+// volume sliders (radio, projector, voices; remembered per player), input
+// device picker (remembered), live input level meter, a button to release
+// the mic so the browser's recording indicator goes away, and voice
+// connection status.
 export class VoiceSettingsUI {
-    constructor(voice) {
+    constructor(voice, audioSettings) {
         this.voice = voice;
+        this.audioSettings = audioSettings;
         this.isOpen = false;
         this.meter = null;
         this.createElements();
@@ -26,8 +31,8 @@ export class VoiceSettingsUI {
         this.toggleButton.id = 'voice-settings-button';
         this.toggleButton.type = 'button';
         this.toggleButton.textContent = '⚙️';
-        this.toggleButton.title = 'Ajustes del micrófono';
-        this.toggleButton.setAttribute('aria-label', 'Ajustes del micrófono');
+        this.toggleButton.title = 'Ajustes de sonido';
+        this.toggleButton.setAttribute('aria-label', 'Ajustes de sonido');
         this.toggleButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.isOpen ? this.close() : this.open();
@@ -38,6 +43,8 @@ export class VoiceSettingsUI {
         this.panel.id = 'voice-settings';
         this.panel.className = 'hidden';
         this.panel.innerHTML = `
+            <div class="voice-settings-title">🔊 Volumen</div>
+            <div class="volume-sliders"></div>
             <div class="voice-settings-title">🎙️ Micrófono</div>
             <label class="voice-settings-label" for="voice-device-select">Dispositivo</label>
             <select id="voice-device-select"></select>
@@ -56,6 +63,7 @@ export class VoiceSettingsUI {
         this.meterFill = this.panel.querySelector('.voice-meter-fill');
         this.hint = this.panel.querySelector('.voice-settings-hint');
         this.peerList = this.panel.querySelector('.voice-peers');
+        this.createVolumeSliders(this.panel.querySelector('.volume-sliders'));
 
         this.select.addEventListener('change', () => this.voice.setInputDevice(this.select.value));
         this.allowButton.addEventListener('click', () => this.voice.enableMic());
@@ -66,6 +74,33 @@ export class VoiceSettingsUI {
         document.addEventListener('click', () => this.isOpen && this.close());
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isOpen) this.close();
+        });
+    }
+
+    createVolumeSliders(container) {
+        if (!this.audioSettings) return;
+        Object.entries(VOLUME_LABELS).forEach(([category, label]) => {
+            const row = document.createElement('label');
+            row.className = 'volume-row';
+            const name = document.createElement('span');
+            name.textContent = label;
+            const slider = document.createElement('input');
+            slider.type = 'range';
+            slider.min = '0';
+            slider.max = '100';
+            slider.value = String(Math.round(this.audioSettings.get(category) * 100));
+            const value = document.createElement('span');
+            value.className = 'volume-value';
+            value.textContent = `${slider.value}%`;
+            slider.addEventListener('input', () => {
+                value.textContent = `${slider.value}%`;
+                this.audioSettings.set(category, Number(slider.value) / 100);
+            });
+            // Give the keys back to the game once the slider is released
+            // (a focused input pauses movement, see Game.chatActive).
+            slider.addEventListener('change', () => slider.blur());
+            row.append(name, slider, value);
+            container.appendChild(row);
         });
     }
 

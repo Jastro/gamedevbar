@@ -26,9 +26,10 @@ const OCCLUSION_VOLUME = { none: 1, doorOpen: 0.5, closed: 0.12 };
 // writes transparent pixels ("hole") shows it through, so walls and players
 // in front still hide it. State comes from ProjectorSync.
 export class Projector {
-    constructor(room, serverClock) {
+    constructor(room, serverClock, audioSettings) {
         this.room = room;
         this.serverClock = serverClock;
+        this.audioSettings = audioSettings;
         this.state = null; // { videoId, startedAt, pausedAt } or null
         this.player = null;
         this.playerReady = false;
@@ -243,6 +244,7 @@ export class Projector {
             let gain = VOLUME_REF_DISTANCE /
                 (VOLUME_REF_DISTANCE + VOLUME_ROLLOFF * Math.max(0, distance - VOLUME_REF_DISTANCE));
             gain *= OCCLUSION_VOLUME[environment.getOcclusionLevel(this.room, world.getRoomAt(listenerPosition))];
+            gain *= this.audioSettings?.get('video') ?? 1;
             this.player.unMute?.();
             this.player.setVolume?.(Math.round(gain * 100));
         }

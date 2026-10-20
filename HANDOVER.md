@@ -11,6 +11,10 @@ Next step: Jastro merges both PRs, adds the `TURN_SECRET` repo secret and opens 
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Sound: per-player volume sliders (radio/projector/voices) in ⚙️, and radios stop
+  downloading when inaudible (estimated gain < -40 dB for 3 s; resume live when audible). Verified
+  in-app: gains logged at 5 spots, other bar's radio never loads from inside a bar, resumes from the
+  street, slider 0 stops the stream, settings persist across reload.
 - 2026-10-21 Bug: arcade intro jingle played on every join (all 4 machines, full volume, plus a 30-45 s
   repeat). Removed the automatic intro; in-game sounds unchanged. Verified: no arcade sound playing after
   join, Snake/Pong still start. `public/assets/sound/arcade/intro.mp3` is now unused.

@@ -37,3 +37,8 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       Check: the video looks right on the wall from different angles, players walking in front cover it,
       volume drops with distance and closed doors, a non-embeddable video shows an error in chat.
 - [ ] **Front-wall paintings.** The 4 paintings from the right wall are now left of the door. OK there?
+- [ ] **Volume sliders (⚙️).** Radio / projector / voices sliders change what you hear right away and are
+      kept after reload. Radio at 0 (or *Silenciar para mí*) stops its download after ~3 s.
+- [ ] **Far radios stop.** From inside one bar with doors closed, the other bar's radio shouldn't be
+      audible at all (it isn't even downloaded). Walking out to the street brings it back within ~0.25 s,
+      live. Does the cut-off point (-40 dB) feel right, or is it noticeable when it stops/starts?
