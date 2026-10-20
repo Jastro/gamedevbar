@@ -9,13 +9,13 @@ out. Music from a room sounds muffled from outside, on top of distance attenuati
 
 ## Design
 - **[LOCKED]** One room-local frame for all content; rooms placed by origin + Y rotation (`RoomLayout.js`).
-  Desarrollo = Gamedev rotated π, doors aligned at x = -9, street 14 units wide.
+  Desarrollo = Gamedev rotated π, straight across a 14-unit street.
 - **[LOCKED]** `level.json` loaded once as a template and cloned per room; lights moved to the scene once.
 - **[LOCKED]** Each room gets its own props (bar, TV, radio, arcades, paintings, furniture). Arcades stay
   local-only (Pong sync was already broken, see Architecture.md).
 - **[LOCKED]** Door state server-authoritative (`doorToggle` / `doorState` / `doorStates`).
 - **[LOCKED]** Audio occlusion per room radio: low-pass + gain by listener location and door states.
-- **[PROPOSAL]** Door at x = -9 on the front wall (keeps the forum TV untouched). Click or `E`, range 3.
+- **[LOCKED]** Door centered on the front wall (x = 0); rooms straight across. Click or `E`, range 3.
 - **[PROPOSAL]** Chat, soccer and Snake high scores stay global across rooms.
 
 ## Tasks
@@ -36,3 +36,5 @@ out. Music from a room sounds muffled from outside, on top of distance attenuati
   `system` chat messages showing "undefined".
 - Spawn camera faces the bar in both rooms (camera yaw = room rotation).
 - Added an on-screen hint ("E · Abrir puerta") near doors.
+- After review: doors centered (TV moved to x = 7), rooms aligned straight across (Desarrollo origin
+  (0, 34)), street narrowed to x ∈ [-25, 25], no paintings in Desarrollo (`paintings: false`).

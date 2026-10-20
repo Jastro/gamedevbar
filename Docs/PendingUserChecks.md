@@ -16,4 +16,5 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Camera near doors/walls outside.** Walk along both facades and through the doorways rotating the
       camera (right mouse). Expected: camera doesn't end up behind a wall or a closed door.
 - [ ] **Room selector.** Layout on desktop and phone width; choice remembered after reload.
+- [ ] **Forum TV position.** It moved beside the door (x = 7 on the front wall). Still easy to read?
 - [ ] **Street look.** Exterior is plain (dark ground, fences, neon name signs, no roof). Good enough for now?

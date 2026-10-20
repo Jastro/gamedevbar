@@ -8,10 +8,10 @@ export const ROOM_HALF_DEPTH = 10;   // local z extent (front wall at +z)
 export const WALL_HEIGHT = 8;
 export const WALL_THICKNESS = 0.2;
 
-// Entrance cut into the front wall, in room-local coordinates.
-// x = -9 keeps it clear of the forum TV (x -2.2..4.3 on the same wall).
+// Entrance cut into the front wall, in room-local coordinates (centered).
+// The forum TV hangs on the same wall, to the side (see Bar.createForumTV).
 export const FRONT_DOOR = {
-    x: -9,
+    x: 0,
     width: 2,
     height: 3
 };
@@ -25,6 +25,7 @@ export const ROOMS = [
         name: 'Gamedev',
         tagline: 'La taberna de siempre',
         barSign: 'Gamedev MV',
+        paintings: true,
         origin: { x: 0, z: 0 },
         rotationY: 0
     },
@@ -33,9 +34,10 @@ export const ROOMS = [
         name: 'Desarrollo',
         tagline: 'Al otro lado de la calle',
         barSign: 'Desarrollo MV',
-        // Rotated 180 degrees and shifted so both front doors line up across
-        // a 14-unit street: Gamedev door at (-9, 10), this one at (-9, 24).
-        origin: { x: -18, z: 34 },
+        paintings: false,
+        // Rotated 180 degrees straight across a 14-unit street, so the two
+        // front doors face each other: Gamedev door at (0, 10), this one at (0, 24).
+        origin: { x: 0, z: 34 },
         rotationY: Math.PI
     }
 ];
@@ -44,8 +46,8 @@ export const DEFAULT_ROOM_ID = 'gamedev';
 
 // Walkable outdoor area between the two facades (world coordinates).
 export const STREET = {
-    minX: -40,
-    maxX: 22,
+    minX: -25,
+    maxX: 25,
     minZ: 10,
     maxZ: 24
 };

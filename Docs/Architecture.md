@@ -56,15 +56,16 @@ nearest door.
 ## World layout and rooms
 
 All room content is authored in one **room-local frame** (the original bar): x ∈ [-15, 15], z ∈ [-10, 10],
-walls 8 high, bar counter at z = -3, back bar at z = -7, front wall at z = +10 with the forum TV on it.
+walls 8 high, bar counter at z = -3, back bar at z = -7, front wall at z = +10 with the entrance centered
+(x = 0) and the forum TV beside it (x = 7).
 `src/world/RoomLayout.js` is the single source of truth for placing rooms:
 
 | Room | Origin (x, z) | Rotation Y | Front door (world) |
 |---|---|---|---|
-| Gamedev | (0, 0) | 0 | (-9, 10) |
-| Desarrollo | (-18, 34) | π | (-9, 24) |
+| Gamedev | (0, 0) | 0 | (0, 10) |
+| Desarrollo | (0, 34) | π | (0, 24) |
 
-Street (world): x ∈ [-40, 22], z ∈ [10, 24]. `Street` adds ground, sidewalks, a center line and low fences
+The rooms sit straight across from each other, entrances facing. Street (world): x ∈ [-25, 25], z ∈ [10, 24]. `Street` adds ground, sidewalks, a center line and low fences
 on every street edge not covered by a facade, so players can't leave the play area. The soccer stadium lives
 at (0, 0, -50) behind Gamedev and is only shown during `/furbo`.
 
@@ -73,7 +74,8 @@ How a room is built (`World.create` → `Environment.create`):
    added (colliders are `Box3.setFromObject` of world-space geometry).
 2. A clone of `level.json`'s "Taberna" group (lights and `FrontWall` stripped by `Scene`; lights are global).
 3. `World`: floor, walls (front wall split around the door), bar counter colliders.
-4. `Environment`: Bar (sign text per room, forum TV), Furniture, Radio, Paintings, Snake + Pong arcades, Door.
+4. `Environment`: Bar (sign text per room, forum TV), Furniture, Radio, Paintings (only if the room's
+   `paintings` flag isn't `false`; Desarrollo has bare walls), Snake + Pong arcades, Door.
    Builders receive the `Room` as their "scene", so they keep their original local coordinates.
 
 Anything that compares positions must go through world space: `Room.toWorld/toLocal/containsPoint`,

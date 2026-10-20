@@ -156,7 +156,8 @@ export class Bar {
             metalness: 0.7  // Increased metalness for better reflection
         });
         this.tvFrame = new THREE.Mesh(tvFrameGeometry, tvFrameMaterial);
-        this.tvFrame.position.set(1.09, 3.8, 9.9);  // Lowered Y position from 5 to 3.8
+        // On the front wall, beside the centered entrance (door spans x -1..1).
+        this.tvFrame.position.set(7, 3.8, 9.9);
         this.tvFrame.rotation.y = Math.PI;
         this.scene.add(this.tvFrame);
 

@@ -20,12 +20,13 @@ export class Environment {
 
     create() {
         this.world.rooms.forEach(room => {
+            const hasPaintings = room.definition.paintings !== false;
             const contents = {
                 room,
                 bar: new Bar(room, room.definition.barSign),
                 furniture: new Furniture(room),
                 radio: new Radio(room),
-                paintings: new Paintings(room),
+                paintings: hasPaintings ? new Paintings(room) : null,
                 arcadePong: new ArcadePong(room),
                 arcadeSnake: new ArcadeSnake(room),
                 door: new Door(room, this.world.collisionManager)
@@ -34,11 +35,11 @@ export class Environment {
             contents.bar.create();
             contents.furniture.create();
             contents.radio.create();
-            contents.paintings.create();
+            if (contents.paintings) contents.paintings.create();
             contents.arcadeSnake.create({ x: -12, y: 2, z: -8 });
             contents.arcadePong.create({ x: -7.5, y: 2, z: -8 });
             contents.door.create();
-            this.loadPaintings(contents.paintings);
+            if (contents.paintings) this.loadPaintings(contents.paintings);
 
             this.rooms.set(room.id, contents);
             this.doors.set(contents.door.id, contents.door);

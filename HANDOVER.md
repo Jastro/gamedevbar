@@ -15,9 +15,10 @@ Next step: Borja runs through [Docs/PendingUserChecks.md](Docs/PendingUserChecks
   snapshot, stool facing in the rotated room, occlusion levels per position. Audio not listened to.
 
 ## Decisions to review
-- Door at room-local x = -9 (left of the forum TV), so the rooms are offset along the street (Desarrollo
-  origin x = -18) to line the doors up. Cost if wrong: change `FRONT_DOOR.x` / origins in `RoomLayout.js`.
-- Desarrollo is a full copy: own forum TV (same thread), own radio (same song), own local arcades.
+- Doors centered on the front wall, rooms straight across the street (per Borja, 2026-10-20). The forum TV
+  moved from x = 1.09 to x = 7 on the same wall to make room for the door.
+- Desarrollo is a copy without the paintings: own forum TV (same thread), own radio (same song), own local
+  arcades.
 - Chat, `/furbo` and Snake high scores stay global across rooms.
 - No roofs (camera would clip on them); exterior is minimal.
 - Git: per the request, work went to a branch + PR instead of straight to `main`.
