@@ -69,6 +69,13 @@ only), later presses just toggle `track.enabled`. Remote voices play as `THREE.P
 speaker's avatar through the same `OcclusionChain` as the radios
 (`Environment.getOcclusionLevel(speakerRoom, listenerRoom)`). Avatars show a 🎙️ sprite while talking.
 
+Mic settings (⚙️ next to the mic button, `src/ui/VoiceSettingsUI.js`): input device dropdown (names appear
+once mic permission is granted; choice saved in `localStorage` `voiceInputDevice` and requested as `ideal`,
+so a missing device falls back to the default), a live level meter (fed from a clone of the mic track,
+because the real one is muted between presses; the clone is never sent), and *Desactivar micrófono*, which
+stops the track so the browser's recording indicator goes away; the next press reopens it. Switching device
+mid-call swaps the track on every peer with `replaceTrack`, without reconnecting.
+
 Limits: a mesh costs N-1 connections per player (fine for a bar of ~20); bigger rooms need an SFU. ICE
 servers come from the server (`ICE_SERVERS` env, JSON array; default Google STUN). Without a TURN server,
 some players behind strict NATs won't connect. Embedding in a forum thread needs

@@ -17,6 +17,7 @@ import { ModelSelector } from '../ui/ModelSelector';
 import { RoomSelector } from '../ui/RoomSelector';
 import { StartScreen } from '../ui/StartScreen';
 import { VoiceUI } from '../ui/VoiceUI';
+import { VoiceSettingsUI } from '../ui/VoiceSettingsUI';
 import { createDoorInteraction } from '../interactions/doorInteraction';
 import { createSeatInteraction } from '../interactions/seatInteraction';
 import { createRadioInteraction } from '../interactions/radioInteraction';
@@ -48,6 +49,7 @@ export class Game {
         this.players = new PlayerManager(this);
         this.voice = new VoiceChat(this);
         this.ui.voice = new VoiceUI(this.voice, this.ui.chat);
+        this.ui.voiceSettings = new VoiceSettingsUI(this.voice);
         this.doorSync = new DoorSync(this);
 
         this.interactions = new InteractionSystem(this);

@@ -25,3 +25,6 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Voice over the internet.** Two different networks (e.g. phone hotspot). If it never connects, a
       TURN server is needed (`ICE_SERVERS`).
 - [ ] **🎙️ button.** Hold it with mouse and touch; releasing anywhere stops talking.
+- [ ] **Mic settings (⚙️).** With 2+ real mics (e.g. webcam + headset): the dropdown lists them by name
+      after permission, the meter moves when you speak, switching while someone listens changes what they
+      hear without dropping, *Desactivar micrófono* turns off the browser's mic indicator, choice survives reload.

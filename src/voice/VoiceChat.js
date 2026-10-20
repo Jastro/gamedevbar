@@ -14,8 +14,12 @@ const VOICE_REF_DISTANCE = 4;
 const VOICE_ROLLOFF = 1.2;
 const VOICE_HEIGHT = 0.6; // mouth height relative to the avatar origin
 
+const DEVICE_STORAGE_KEY = 'voiceInputDevice';
+const MIC_PROCESSING = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+
 // Push-to-talk proximity voice chat over a WebRTC mesh; the game's WebSocket
-// only relays signaling. Events: 'talking' (bool), 'mic' (bool), 'error' (reason).
+// only relays signaling. Events: 'talking' (bool), 'mic' (bool: mic open or
+// released), 'error' (reason), 'devices' (input device list may have changed).
 export class VoiceChat extends EventEmitter {
     constructor(game) {
         super();
@@ -29,6 +33,7 @@ export class VoiceChat extends EventEmitter {
         this.pttHeld = false;
         this.isTalking = false;
         this.setupNetworkHandlers();
+        navigator.mediaDevices?.addEventListener?.('devicechange', () => this.emit('devices'));
     }
 
     get isSupported() {
@@ -189,6 +194,36 @@ export class VoiceChat extends EventEmitter {
         this.emit('talking', isTalking);
     }
 
+    // --- Microphone -------------------------------------------------------
+
+    get preferredDeviceId() {
+        try {
+            return localStorage.getItem(DEVICE_STORAGE_KEY) || null;
+        } catch {
+            return null;
+        }
+    }
+
+    // Device of the open mic, or the saved choice if the mic isn't open yet.
+    get currentDeviceId() {
+        return this.micTrack?.getSettings().deviceId ?? this.preferredDeviceId;
+    }
+
+    // Labels are empty until mic permission has been granted once.
+    async listInputDevices() {
+        if (!navigator.mediaDevices?.enumerateDevices) return [];
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        return devices.filter(device => device.kind === 'audioinput');
+    }
+
+    // `exact` fails if that device is gone; `ideal` falls back to the default.
+    requestTrack(deviceId, exact) {
+        const audio = { ...MIC_PROCESSING };
+        if (deviceId) audio.deviceId = exact ? { exact: deviceId } : { ideal: deviceId };
+        return navigator.mediaDevices.getUserMedia({ audio, video: false })
+            .then(stream => stream.getAudioTracks()[0]);
+    }
+
     // Asked on the first push-to-talk press (needs a user gesture) and kept
     // open afterwards, so later presses start instantly.
     enableMic() {
@@ -196,17 +231,11 @@ export class VoiceChat extends EventEmitter {
             this.emit('error', window.isSecureContext ? 'unsupported' : 'insecure');
             return Promise.resolve(false);
         }
+        if (this.micTrack) return Promise.resolve(true);
         if (this.micRequest) return this.micRequest;
 
-        this.micRequest = navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-            video: false
-        }).then(stream => {
-            this.micTrack = stream.getAudioTracks()[0];
-            this.micTrack.enabled = false;
-            this.micTrack.addEventListener('ended', () => this.handleMicLost());
-            this.peers.forEach(entry => entry.peer.setLocalTrack(this.micTrack));
-            this.emit('mic', true);
+        this.micRequest = this.requestTrack(this.preferredDeviceId, false).then(track => {
+            this.useTrack(track);
             return true;
         }).catch(error => {
             console.warn('Voice: microphone unavailable', error);
@@ -216,6 +245,48 @@ export class VoiceChat extends EventEmitter {
             this.micRequest = null;
         });
         return this.micRequest;
+    }
+
+    // Remembers the choice; if the mic is open, swaps devices live (peers get
+    // the new track through replaceTrack, no reconnect).
+    async setInputDevice(deviceId) {
+        try {
+            localStorage.setItem(DEVICE_STORAGE_KEY, deviceId);
+        } catch {
+            // Not critical: the choice just won't be remembered.
+        }
+        if (!this.micTrack) return true;
+        try {
+            this.useTrack(await this.requestTrack(deviceId, true));
+            return true;
+        } catch (error) {
+            console.warn('Voice: switching microphone failed', error);
+            this.emit('error', 'unavailable');
+            return false;
+        }
+    }
+
+    useTrack(track) {
+        const previous = this.micTrack;
+        track.enabled = this.isTalking;
+        track.addEventListener('ended', () => {
+            if (this.micTrack === track) this.handleMicLost();
+        });
+        this.micTrack = track;
+        this.peers.forEach(entry => entry.peer.setLocalTrack(track));
+        previous?.stop();
+        this.emit('mic', true);
+    }
+
+    // Closes the mic (the browser's recording indicator goes away); the next
+    // push to talk opens it again.
+    releaseMic() {
+        if (!this.micTrack) return;
+        this.stopTalking();
+        this.micTrack.stop();
+        this.micTrack = null;
+        this.peers.forEach(entry => entry.peer.setLocalTrack(null));
+        this.emit('mic', false);
     }
 
     // Device unplugged or permission revoked: next press asks again.

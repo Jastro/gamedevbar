@@ -3,13 +3,18 @@
 ## Start here
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat, and a modular client/server layout. Branches on the `borjafac` fork:
-`feature/rooms-and-doors` (PR Jastro/gamedevbar#10, merged 2026-10-20) and `feature/voice-chat` (voice +
-refactor, PR Jastro/gamedevbar#11). Docs: [Architecture](Docs/Architecture.md) (code map + how to add things),
+PRs Jastro/gamedevbar#10 (rooms) and #11 (voice + refactor) merged 2026-10-20; `feature/mic-settings`
+(mic device picker + meter) in a new PR. Docs: [Architecture](Docs/Architecture.md) (code map + how to add things),
 [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
-Next step: Borja tries voice with a real mic ([Docs/PendingUserChecks.md](Docs/PendingUserChecks.md)), then
-merge #11.
+Next step: Borja tries voice + mic settings with real mics ([Docs/PendingUserChecks.md](Docs/PendingUserChecks.md)),
+then merge the mic-settings PR.
 
 ## Done
+- 2026-10-20 Mic settings panel (⚙️): input device dropdown (remembered, live switch via replaceTrack),
+  level meter, release-mic button, PTT ignored while typing in form fields. Verified in two in-app browser
+  clients with two fake mics (440/880 Hz tones): device names hidden until permission, listener's peak moves
+  445 → 879 Hz on a mid-talk switch with no reconnect, old track stopped, choice saved and reused after
+  release, meter fills while not talking. Real devices not tested.
 - 2026-10-20 Modular refactor (behavior unchanged): server split into `server/` (Hub + one module per
   feature), client gets `InteractionSystem` + `src/interactions/`, `StartScreen`, `DoorSync`, transport-only
   `WebSocketManager`. Fixed on the way: `ModelSelector.init()` ran twice (12 preview WebGL contexts instead
