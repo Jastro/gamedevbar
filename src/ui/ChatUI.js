@@ -112,7 +112,11 @@ export class ChatUI {
 
         const messageDiv = document.createElement('div');
         
-        if (messageData.isTaberna) {
+        if (messageData.type === 'system') {
+            // Local hints (e.g. "get closer"); they carry no username.
+            messageDiv.className = 'chat-message taberna-message';
+            messageDiv.textContent = messageData.message;
+        } else if (messageData.isTaberna) {
             messageDiv.className = 'chat-message taberna-message';
             messageDiv.innerHTML = `<span class="taberna-tag">Taberna</span> ${messageData.message}`;
         } else {
@@ -132,7 +136,7 @@ export class ChatUI {
             this.chatBox.removeChild(this.chatBox.firstChild);
         }
 
-        if (!messageData.isTaberna && window.game?.players?.players) {
+        if (!messageData.isTaberna && messageData.type !== 'system' && window.game?.players?.players) {
             const player = window.game.players.players.get(messageData.userId);
             if (player) {
                 player.showChatBubble(messageData.message, messageData.isEmote, messageData.emoji);

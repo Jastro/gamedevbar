@@ -47,8 +47,10 @@ export class LocalPlayer extends Player {
         this.position.y += 1.4;
 
         // Calcular rotación hacia la barra si es un taburete
-        if (seat.position.z < 0) {  // Asumiendo que los taburetes están en z < 0
-            const barPosition = new THREE.Vector3(0, this.position.y, -3);
+        // (stools sit at room-local z < 0; the counter is at room-local z = -3)
+        const room = this.game.world.getRoomForObject(seat);
+        if (room && seat.position.z < 0) {
+            const barPosition = room.toWorld(0, this.position.y, -3);
             const direction = barPosition.sub(this.position).normalize();
             this.rotation = Math.atan2(direction.x, direction.z);
         }
@@ -74,7 +76,7 @@ export class LocalPlayer extends Player {
     handleMovement() {
         if (this.game.chatActive) return;
 
-        if (this.game.environment.arcadePong.isPlayingGame(this.id)) {
+        if (this.game.environment.isPlayingArcade(this.id)) {
             return;
         }
         
@@ -113,8 +115,10 @@ export class LocalPlayer extends Player {
             // Calcular la nueva posición
             const newPosition = this.position.clone().add(moveVector);
 
-            // Comprobar colisiones
-            if (!this.game.world.checkCollision(newPosition)) {
+            // Comprobar colisiones. If we are already overlapping something
+            // (e.g. a door closed on us), let the player walk out of it.
+            const world = this.game.world;
+            if (!world.checkCollision(newPosition) || world.checkCollision(this.position)) {
                 this.position.copy(newPosition);
                 // Rotar el personaje hacia la dirección del movimiento
                 const angle = Math.atan2(moveVector.x, moveVector.z);

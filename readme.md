@@ -5,10 +5,11 @@ Originally proposed in this thread.
 ## Features
 
 - 3D environment with a classic bar layout
+- Two bars across the street from each other (Gamedev and Desarrollo): pick one on the start screen and walk between them through the front doors (click or `E`)
+- Positional music that sounds muffled from outside a bar
 - Real-time user interaction
 - Chat system with emotes
 - Multiple seating areas
-- Interactive bathroom with privacy features
 - Challenge other users to mini-games
 
 ## Development Setup
@@ -43,6 +44,8 @@ The application will start in development mode with hot reload enabled. Any chan
 
 - Frontend runs on port 5148
 - Backend WebSocket server runs on port 3000
+
+See [Docs/Architecture.md](Docs/Architecture.md) for how the code is organized and [Docs/Protocol.md](Docs/Protocol.md) for the WebSocket messages.
 
 ## Contributing
 Contributions are welcome! Here's how you can contribute:

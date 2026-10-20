@@ -258,13 +258,18 @@ const seats = new Map(); // Mapa de asientos ocupados
 const ChatLog = new Array(); // Historial de chat
 const CHAT_LOG_HISTORY_MAX_LENGTH = 50; // Máximo número de mensajes en el historial
 const snakeHighScores = [];
+// Door states (doorId -> isOpen). Door ids come from the client layout
+// ("<roomId>:front"), so they are validated and the map is capped.
+const doors = new Map();
+const DOOR_ID_PATTERN = /^[a-z0-9_-]{1,32}:[a-z0-9_-]{1,32}$/;
+const MAX_DOORS = 64;
 
 class User {
     constructor(ws) {
         this.id = uuidv4();
         this.ws = ws;
         this.username = null;
-        this.position = { x: 0, y: 1, z: 0 };
+        this.position = [0, 1, 0]; // same [x, y, z] shape clients send in userMoved
         this.rotation = 0;
         this.seatId = null;
         this.isInDuel = false;
@@ -581,6 +586,17 @@ wss.on('connection', (ws, req) => {
                 });
                 break;
 
+            case 'doorToggle': {
+                const doorId = data.doorId;
+                if (typeof doorId !== 'string' || !DOOR_ID_PATTERN.test(doorId)) break;
+                if (!doors.has(doorId) && doors.size >= MAX_DOORS) break;
+
+                const isOpen = !doors.get(doorId);
+                doors.set(doorId, isOpen);
+                broadcastAll({ type: 'doorState', doorId, isOpen });
+                break;
+            }
+
             case 'userSat':
                 if (seats.has(data.seatId)) {
                     ws.send(JSON.stringify({
@@ -679,6 +695,12 @@ wss.on('connection', (ws, req) => {
                         }));
                     }
                 });
+
+                // Current door states, so the newcomer sees open doors as open
+                ws.send(JSON.stringify({
+                    type: 'doorStates',
+                    doors: Object.fromEntries(doors)
+                }));
 
                 // Enviar historial de chat al nuevo usuario
                 if (ChatLog.length > 0) {

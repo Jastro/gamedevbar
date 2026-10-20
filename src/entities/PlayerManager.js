@@ -1,6 +1,7 @@
 import { LocalPlayer } from './LocalPlayer';
 import { RemotePlayer } from './RemotePlayer';
 import { Vector3 } from 'three';
+import { getSpawnPosition } from '../world/RoomLayout';
 
 export class PlayerManager {
     constructor(game) {
@@ -19,7 +20,8 @@ export class PlayerManager {
     }
 
     handleInit(data) {
-        const initialPosition = new Vector3(0, 1, 0);
+        const spawn = getSpawnPosition(this.game.selectedRoomId);
+        const initialPosition = new Vector3(spawn.x, spawn.y, spawn.z);
         const selectedModel = this.game.ui.modelSelector.getSelectedModel();
 
         // Crear el jugador local con el modelo seleccionado

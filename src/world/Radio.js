@@ -1,5 +1,14 @@
 import * as THREE from 'three';
 
+// Filter cutoff (Hz) and extra gain applied to a room's music depending on
+// where the listener is. Tuned by ear; see Docs/PendingUserChecks.md.
+const OCCLUSION_LEVELS = {
+    none: { frequency: 20000, gain: 1 },
+    doorOpen: { frequency: 2500, gain: 0.8 },
+    closed: { frequency: 450, gain: 0.55 }
+};
+const OCCLUSION_SMOOTHING = 0.15; // seconds (time constant)
+
 export class Radio {
     constructor(scene) {
         this.scene = scene;
@@ -13,10 +22,10 @@ export class Radio {
         this.createRadioModel();
     }
 
-    initializeAudio() {
+    initializeAudio(listener) {
         if (this.isInitialized) return;
         
-        this.setupAudio();
+        this.setupAudio(listener);
         this.isInitialized = true;
     }
 
@@ -124,15 +133,20 @@ export class Radio {
         this.scene.add(radioGroup);
     }
 
-    setupAudio() {
-        // Configurar el audio
-        this.audioListener = new THREE.AudioListener();
-        // Asumiendo que tenemos acceso a la cámara a través de una referencia global
-        if (window.game && window.game.camera) {
-            window.game.camera.getCamera().add(this.audioListener);
-        }
+    setupAudio(listener) {
+        // All rooms share one listener (on the camera) so their radios mix correctly.
+        this.audioListener = listener;
 
         this.sound = new THREE.PositionalAudio(this.audioListener);
+
+        // Low-pass + gain driven by setOcclusion(): heard through a wall, the
+        // music loses its highs and some volume on top of distance attenuation.
+        this.occlusionFilter = this.audioListener.context.createBiquadFilter();
+        this.occlusionFilter.type = 'lowpass';
+        this.occlusionFilter.frequency.value = OCCLUSION_LEVELS.none.frequency;
+        this.occlusionGain = this.audioListener.context.createGain();
+        this.sound.setFilters([this.occlusionFilter, this.occlusionGain]);
+        this.occlusion = 'none';
         
         const audioLoader = new THREE.AudioLoader();
         audioLoader.load('assets/sound/ElFary_LaMandanga.mp3', (buffer) => {
@@ -146,6 +160,17 @@ export class Radio {
             this.radio.add(this.sound);
             this.radio.userData.sound = this.sound;
         }
+    }
+
+    // level: 'none' (listener inside this room), 'doorOpen' or 'closed'.
+    setOcclusion(level) {
+        if (!this.occlusionFilter || this.occlusion === level) return;
+        this.occlusion = level;
+
+        const target = OCCLUSION_LEVELS[level];
+        const now = this.audioListener.context.currentTime;
+        this.occlusionFilter.frequency.setTargetAtTime(target.frequency, now, OCCLUSION_SMOOTHING);
+        this.occlusionGain.gain.setTargetAtTime(target.gain, now, OCCLUSION_SMOOTHING);
     }
 
     toggleSound() {

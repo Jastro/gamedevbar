@@ -7,9 +7,16 @@ import { PlayerManager } from '../entities/PlayerManager';
 import { Environment } from '../world/Environment';
 import { ChatUI } from '@/ui/ChatUI';
 import { ModelSelector } from '../ui/ModelSelector';
+import { RoomSelector } from '../ui/RoomSelector';
 import * as THREE from 'three';
 import { World } from '../world/World';
 import { SoccerGame } from '../world/SoccerGame';
+import { ArcadePong } from '../world/ArcadePong';
+import { DOOR_INTERACT_DISTANCE } from '../world/Door';
+import { getRoomDefinition } from '../world/RoomLayout';
+
+// Object types (userData.type) that glow on hover and react to clicks.
+const HIGHLIGHT_TYPES = new Set(['seat', 'radio', 'arcade', 'door']);
 
 export class Game {
     constructor() {
@@ -27,7 +34,8 @@ export class Game {
         // Inicializar UI antes que network
         this.ui = {
             chat: new ChatUI(),
-            modelSelector: new ModelSelector()
+            modelSelector: new ModelSelector(),
+            roomSelector: new RoomSelector()
         };
 
         // Inicializar network después de UI
@@ -35,6 +43,7 @@ export class Game {
         this.players = new PlayerManager(this);
 
         this.ui.modelSelector.init();
+        this.ui.roomSelector.init();
         this.setupInitialUI();
         this.clock = new THREE.Clock();
     }
@@ -60,6 +69,9 @@ export class Game {
                 console.log('Selected model before starting game:', selectedModel);
 
                 this.username = username;
+                this.selectedRoomId = this.ui.roomSelector.getSelectedRoom();
+                // Same view on entry in every room: camera on the entrance side, facing the bar.
+                this.camera.rotation.horizontal = getRoomDefinition(this.selectedRoomId).rotationY;
                 usernameDialog.classList.add('hidden');
                 if (chatContainer) chatContainer.classList.remove('hidden');
                 if (chatBox) chatBox.classList.remove('hidden');
@@ -68,9 +80,7 @@ export class Game {
                 this.setupEventListeners();
                 this.animate();
 
-                if (this.environment?.radio) {
-                    this.environment.radio.initializeAudio();
-                }
+                this.environment.initializeAudio(this.camera.getCamera());
             }
         });
 
@@ -87,6 +97,8 @@ export class Game {
         this.network.connect();
         this.world.create();
         this.environment.create();
+        this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
+        this.setupDoorNetworking();
         this.ui.modelSelector.init();
         await this.soccerGame.init();
 
@@ -99,6 +111,55 @@ export class Game {
                 message: `¡${this.players.players.get(data.initiatorId).username} ha iniciado un partido de fútbol!`
             });
         });
+    }
+
+    setupDoorNetworking() {
+        this.network.on('doorState', (data) => {
+            this.environment.setDoorState(data.doorId, data.isOpen);
+        });
+        // Snapshot sent on join: apply without animating.
+        this.network.on('doorStates', (data) => {
+            Object.entries(data.doors || {}).forEach(([doorId, isOpen]) => {
+                this.environment.setDoorState(doorId, isOpen, true);
+            });
+        });
+    }
+
+    // The server owns door state; offline (no server) we toggle locally.
+    toggleDoor(door) {
+        if (this.network.isConnected) {
+            this.network.send('doorToggle', { doorId: door.id });
+        } else {
+            door.setOpen(!door.isOpen);
+        }
+    }
+
+    tryToggleDoor(door) {
+        const player = this.players.localPlayer;
+        if (!player || player.isSitting) return;
+        if (door.distanceTo(player.position) <= DOOR_INTERACT_DISTANCE) {
+            this.toggleDoor(door);
+        } else {
+            this.ui.chat?.addMessage({
+                type: 'system',
+                message: '¡Acércate más a la puerta!'
+            });
+        }
+    }
+
+    updateInteractionHint() {
+        const player = this.players.localPlayer;
+        const door = player && !player.isSitting && !this.chatActive
+            ? this.environment.getNearestDoor(player.position)
+            : null;
+        const text = door ? `E · ${door.isOpen ? 'Cerrar' : 'Abrir'} puerta` : '';
+        if (text === this.interactionHintText) return;
+
+        this.interactionHintText = text;
+        const hint = document.getElementById('interaction-hint');
+        if (!hint) return;
+        hint.textContent = text;
+        hint.classList.toggle('hidden', !text);
     }
 
     setupEventListeners() {
@@ -114,6 +175,12 @@ export class Game {
         });
 
         window.addEventListener('click', (e) => this.handleClick(e));
+        window.addEventListener('keydown', (e) => {
+            if (this.chatActive || e.repeat || e.key.toLowerCase() !== 'e') return;
+            const player = this.players.localPlayer;
+            const door = player && this.environment.getNearestDoor(player.position);
+            if (door) this.tryToggleDoor(door);
+        });
         window.addEventListener('contextmenu', (e) => e.preventDefault());
 
         // Prevenir comportamiento por defecto en el chat
@@ -137,9 +204,7 @@ export class Game {
     
         // Restaurar highlight anterior
         if (this.highlightedObject) {
-            if (this.highlightedObject.userData?.type === "seat" || 
-                this.highlightedObject.userData?.type === "radio" ||
-                this.highlightedObject.userData?.type === "arcade") {
+            if (HIGHLIGHT_TYPES.has(this.highlightedObject.userData?.type)) {
                     
                 this.highlightedObject.traverse((child) => {
                     if (child.isMesh && child.userData.originalMaterial) {
@@ -159,9 +224,7 @@ export class Game {
                 object = object.parent;
             }
             
-            if (object?.userData?.type === "seat" || 
-                object?.userData?.type === "radio" || 
-                object?.userData?.type === "arcade") {
+            if (HIGHLIGHT_TYPES.has(object?.userData?.type)) {
                     
                 this.highlightedObject = object;
                 object.traverse((child) => {
@@ -210,16 +273,14 @@ export class Game {
 
         // Procesar interacciones con objetos 3D
         if (this.highlightedObject) {
+            if (this.highlightedObject.userData.type === "door") {
+                this.tryToggleDoor(this.highlightedObject.userData.door);
+            }
             if (this.highlightedObject.userData.type === "arcade") {
-                let arcade;
-                if (this.highlightedObject.position.x === -12) {
-                    arcade = this.environment.arcadeSnake;  // x: -12
-                } else {
-                    arcade = this.environment.arcadePong;   // z: -8
-                }
+                const arcade = this.highlightedObject.userData.arcade;
             
                 if (arcade.checkPlayerProximity(this.players.localPlayer.position)) {
-                    if (arcade === this.environment.arcadePong) {
+                    if (arcade instanceof ArcadePong) {
                         // Lógica específica para Pong
                         if (arcade.gameState === 'title') {
                             arcade.startOnePlayerGame(this.players.localPlayer);
@@ -293,6 +354,8 @@ export class Game {
         this.players.update(deltaTime);
         this.world.update(deltaTime);
         this.soccerGame.update(deltaTime);
+        this.environment.update(deltaTime, this.players.localPlayer?.position);
+        this.updateInteractionHint();
 
         // Actualizar posición de la cámara para seguir al jugador local
         if (this.players.localPlayer) {
