@@ -32,18 +32,23 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ./jacobocaraballo-taberna.tar
+          # deploy/ holds the remote deploy script and the coturn relay files (Docs/TURN.md).
+          source: ./jacobocaraballo-taberna.tar,deploy
           target: ~/_docker/jacobocaraballo_taberna
 
       - name: Run Docker Container
         uses: appleboy/ssh-action@v0.1.4
+        env:
+          IMAGE_TAG: ${{ env.COMMIT_SHA }}
+          # Optional. Without TURN_SECRET the deploy is the same as before (no relay).
+          TURN_SECRET: ${{ secrets.TURN_SECRET }}
+          TURN_HOST: ${{ vars.TURN_HOST }}
+          TURN_APP_SERVICE: ${{ vars.TURN_APP_SERVICE }}
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: IMAGE_TAG,TURN_SECRET,TURN_HOST,TURN_APP_SERVICE
           script: |
             cd ~/_docker/jacobocaraballo_taberna
-            docker load -i ./jacobocaraballo-taberna.tar
-            export IMAGE_TAG=${{ env.COMMIT_SHA }}
-            docker compose down
-            docker compose up -d
+            bash deploy/remote-deploy.sh

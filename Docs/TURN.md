@@ -14,80 +14,50 @@ The game server hands each player short-lived TURN credentials in the `init` mes
 `base64(HMAC-SHA1(secret, username))`, valid `TURN_TTL_SECONDS`, default 6 h). The shared secret stays on
 the server.
 
-## 1. Secret
-On the server: `openssl rand -hex 32`. The same value goes into coturn (`static-auth-secret`) and into the
-taberna container (`TURN_SECRET`).
+## Automatic setup (deploy workflow)
+Every deploy (`.github/workflows/deploy.yml`) copies `deploy/` to the server and runs
+`deploy/remote-deploy.sh`. When the `TURN_SECRET` repository secret exists, the script:
+1. starts coturn as its own compose project, `taberna-coturn` (`deploy/coturn/`, host networking,
+   config = `deploy/coturn/turnserver.conf` + realm + secret);
+2. writes `docker-compose.override.yml` (or `compose.override.yaml`) next to the server's compose file,
+   adding `TURN_URLS` and `TURN_SECRET` to the app service. `docker compose` merges that file
+   automatically, and the server's own compose file is never edited;
+3. restarts the app as before (`docker compose down` / `up -d`).
 
-## 2. coturn config
-`~/_docker/jacobocaraballo_taberna/turnserver.conf`:
+Without the secret, the deploy is exactly as before. If something doesn't fit, the script stops **before**
+taking the app down and explains why in the Actions log. That happens if the compose file has more than one
+service and `TURN_APP_SERVICE` isn't set, if an override file exists that the workflow didn't create, or if
+the secret is malformed.
 
-```
-listening-port=3478
-fingerprint
-use-auth-secret
-static-auth-secret=PASTE_THE_SECRET_HERE
-realm=taberna.d.jacobocaraballo.com
-# Relay ports: one per relayed connection side; 200 is plenty for a bar.
-min-port=49160
-max-port=49360
-# Only if the server itself sits behind NAT (OVH servers usually have the public IP on the NIC):
-# external-ip=149.202.94.208
-no-cli
-no-multicast-peers
-no-tls
-no-dtls
-total-quota=200
-user-quota=12
-stale-nonce=600
-log-file=stdout
-# Never relay into the server's own/private networks.
-denied-peer-ip=0.0.0.0-0.255.255.255
-denied-peer-ip=10.0.0.0-10.255.255.255
-denied-peer-ip=100.64.0.0-100.127.255.255
-denied-peer-ip=127.0.0.0-127.255.255.255
-denied-peer-ip=169.254.0.0-169.254.255.255
-denied-peer-ip=172.16.0.0-172.31.255.255
-denied-peer-ip=192.168.0.0-192.168.255.255
-denied-peer-ip=::1
-denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-```
+### One-time checklist (repo + server owner)
+1. **Secret:** `openssl rand -hex 32`, then add it in GitHub → repo *Settings → Secrets and variables →
+   Actions* as secret `TURN_SECRET`.
+2. **Optional variables** (same page, *Variables* tab): `TURN_HOST` (default
+   `taberna.d.jacobocaraballo.com`; it must resolve straight to the server, with no proxy/CDN in front)
+   and `TURN_APP_SERVICE` (only if the server's compose file has more than one service).
+3. **Firewall:** open `3478/udp`, `3478/tcp` and `49160-49360/udp` on the server
+   (`ufw allow 3478/udp`, `ufw allow 3478/tcp`, `ufw allow 49160:49360/udp`) and in the OVH network
+   firewall if it's enabled.
+4. Re-run the latest deploy (Actions → *Build and Deploy* → *Re-run*) or push to `main`.
 
-## 3. docker compose
-In the server's `docker-compose.yml` (it lives on the server, not in this repo), add the service and the
-two variables for the taberna container:
+## Manual setup (without the workflow)
+Same pieces by hand: copy `deploy/coturn/` to the server, append `realm=<host>` and
+`static-auth-secret=<secret>` to a copy named `turnserver.generated.conf` (mode 644, in a folder only the
+deploy user can read; coturn runs as `nobody`), and run
+`docker compose -p taberna-coturn -f deploy/coturn/docker-compose.yml up -d`. Then add to the app service:
 
 ```yaml
-services:
-  coturn:
-    image: coturn/coturn:4.6
-    restart: unless-stopped
-    network_mode: host   # avoids mapping 200 UDP ports through Docker
-    volumes:
-      - ./turnserver.conf:/etc/coturn/turnserver.conf:ro
-
-  taberna:            # existing service: keep what's there, add these
     environment:
-      TURN_URLS: "turn:taberna.d.jacobocaraballo.com:3478?transport=udp,turn:taberna.d.jacobocaraballo.com:3478?transport=tcp"
-      TURN_SECRET: "PASTE_THE_SECRET_HERE"
+      TURN_URLS: "turn:<host>:3478?transport=udp,turn:<host>:3478?transport=tcp"
+      TURN_SECRET: "<secret>"
 ```
 
-Then `docker compose up -d`. The GitHub deploy runs `docker compose down/up` in that folder, so it
-keeps working.
+and open the firewall ports above.
 
-## 4. Firewall
-Open on the server (and in the OVH network firewall, if it's enabled):
-- `3478/udp` and `3478/tcp` (TURN)
-- `49160-49360/udp` (relay ports)
-
-With ufw: `ufw allow 3478/udp`, `ufw allow 3478/tcp`, `ufw allow 49160:49360/udp`.
-
-The hostname must resolve to the server directly (no HTTP proxy/CDN in front). `taberna.d.jacobocaraballo.com`
-currently points at 149.202.94.208, so it can be reused.
-
-## 5. Check it
-1. Get test credentials from the running container:
+## Check it
+1. Get test credentials from the running app container (replace `taberna` with the service name):
    `docker compose exec taberna node -e "console.log(require('./server/config').turnCredentials('test'))"`
+   coturn logs: `docker compose -p taberna-coturn logs -f`.
 2. Open https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/, add
    `turn:taberna.d.jacobocaraballo.com:3478` with that username/password, and click *Gather candidates*.
    A `relay` candidate means TURN works. Only `host`/`srflx` means the ports or the secret are wrong.
