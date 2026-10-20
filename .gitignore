@@ -2,7 +2,3 @@ node_modules
 dist
 *.log
 .DS_Store
-# Generated on the server by deploy/remote-deploy.sh (contain the TURN secret)
-deploy/coturn/turnserver.generated.conf
-docker-compose.override.yml
-compose.override.yaml

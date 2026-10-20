@@ -5,12 +5,16 @@
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
 In production, voice failed between different networks: there was no TURN relay. `fix/voice-turn` adds
 per-user TURN credentials + connection status/errors, and the coturn setup guide in [Docs/TURN.md](Docs/TURN.md).
-`feature/turn-deploy` (stacked on it) makes the deploy workflow run coturn automatically.
-Next step: Jastro merges both PRs, adds the `TURN_SECRET` repo secret and opens the firewall ports
-(checklist in Docs/TURN.md); then retest voice across networks.
+Deploy moved to git-ops: this repo builds `ghcr.io/jastro/gamedevbar` and calls a Portainer webhook; the app
+and coturn are stacks in the server owner's git-ops repo (Docs/TURN.md).
+Next step: Jastro sets up both stacks, the firewall ports and the webhook secret (checklist in
+Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Deploy through GHCR + Portainer webhook instead of scp/ssh; app and coturn run as git-ops
+  stacks. Removed `deploy/` (remote-deploy.sh, coturn files): the repo no longer needs an SSH key to the
+  server, only `PORTAINER_WEBHOOK_URL`. Not run yet against the real server.
 - 2026-10-21 Sound: per-player volume sliders (radio/projector/voices) in ⚙️, and radios stop
   downloading when inaudible (estimated gain < -40 dB for 3 s; resume live when audible). Verified
   in-app: gains logged at 5 spots, other bar's radio never loads from inside a bar, resumes from the

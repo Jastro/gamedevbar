@@ -1,2 +1,0 @@
-# Shell scripts run on the Linux server: never check them out with CRLF.
-*.sh text eol=lf

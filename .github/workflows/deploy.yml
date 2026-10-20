@@ -1,54 +1,51 @@
-name: Build and Deploy Docker Image to Personal Server
+name: Build and Deploy
+
+# Push to main → image in GHCR (ghcr.io/jastro/gamedevbar, public) → Portainer
+# webhook. The stack (app + its TURN settings) and the coturn relay live in the
+# server owner's git-ops repo, not here.
+#
+# The registry login uses the workflow's own GITHUB_TOKEN, so the only repository
+# secret is PORTAINER_WEBHOOK_URL (Settings → Secrets and variables → Actions):
+# it can only redeploy the `taberna` stack with the image already published.
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/jastro/gamedevbar
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Get short commit SHA
-        id: vars
-        run: echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - name: Build the image
+        run: docker build --label org.opencontainers.image.source=https://github.com/${{ github.repository }} -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" .
 
-      - name: Build Docker Image
-        run: docker build -t jacobocaraballo-taberna:${{ env.COMMIT_SHA }} .
+      - name: Push the image
+        run: |
+          docker push "$IMAGE:latest"
+          docker push "$IMAGE:${{ github.sha }}"
 
-      - name: Save Docker Image to File
-        run: docker save jacobocaraballo-taberna:${{ env.COMMIT_SHA }} -o jacobocaraballo-taberna.tar
-
-      - name: Transfer Docker Image to Server
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # deploy/ holds the remote deploy script and the coturn relay files (Docs/TURN.md).
-          source: ./jacobocaraballo-taberna.tar,deploy
-          target: ~/_docker/jacobocaraballo_taberna
-
-      - name: Run Docker Container
-        uses: appleboy/ssh-action@v0.1.4
-        env:
-          IMAGE_TAG: ${{ env.COMMIT_SHA }}
-          # Optional. Without TURN_SECRET the deploy is the same as before (no relay).
-          TURN_SECRET: ${{ secrets.TURN_SECRET }}
-          TURN_HOST: ${{ vars.TURN_HOST }}
-          TURN_APP_SERVICE: ${{ vars.TURN_APP_SERVICE }}
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: IMAGE_TAG,TURN_SECRET,TURN_HOST,TURN_APP_SERVICE
-          script: |
-            cd ~/_docker/jacobocaraballo_taberna
-            bash deploy/remote-deploy.sh
+      - name: Redeploy in Portainer
+        run: |
+          set -eu
+          # No fallback on purpose: if the webhook fails, the bar stays on the
+          # old image and the run must show red.
+          curl -fsS -X POST "${{ secrets.PORTAINER_WEBHOOK_URL }}"
+          echo "Portainer webhook triggered"
