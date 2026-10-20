@@ -4,11 +4,17 @@ Last updated 2026-10-20. JSON text frames, one object per message, discriminated
 Client sends with `network.send(type, data)` → `{ type, ...data }` (a `type` inside `data` wins; see
 Architecture.md known issues). Client listeners: `network.on(type, fn)`.
 
+Server input handling (`server.js` `handleMessage`): frames that are not JSON objects with a string `type` are
+dropped (logged); a throwing handler is logged, never fatal. Strings are trimmed and clamped: `username` to 24
+chars (empty/non-string → `Anónimo`), chat `message` to 200 (empty → dropped), `emoji` to 16; `selectedModel`
+must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `duelChoice` must be
+`piedra`/`papel`/`tijera`. The client renders all chat text with `textContent`, never HTML.
+
 ## Client → server
 
 | type | Fields | Server reaction |
 |---|---|---|
-| `setUsername` | `username`, `selectedModel` | store, `userUsername` to all |
+| `setUsername` | `username`, `selectedModel` | clamp/validate, store, `userUsername` to all |
 | `initCompleted` | `username`, `selectedModel` | `userJoined` to others, existing users + `doorStates` + chat history to sender, welcome chat to all |
 | `userMoved` | `position: [x,y,z]`, `rotation` | store, `userMoved` to others |
 | `userChat` | `message`, `isEmote`, `emoji` | `/furbo` → `startSoccerGame` to all; else log + `userChat` to all |

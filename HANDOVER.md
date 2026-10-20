@@ -8,6 +8,11 @@ screen, interactive server-synced front doors, muffled music from outside. Work 
 Next step: Borja runs through [Docs/PendingUserChecks.md](Docs/PendingUserChecks.md), then merge.
 
 ## Done
+- 2026-10-20 Security: WS handler no longer crashes on malformed/partial frames (try/catch, field checks,
+  safe user lookups), usernames/chat/emoji clamped server-side, chat history capped on join/leave too, chat
+  XSS fixed (`textContent`). Verified: `npm run build`; ws script sending 17 bad frames (old server dies on
+  `{"type":"userChat"}`, new one stays up); in-app browser with `<i>Pepe</i>` name + `<img onerror>` message
+  renders as text, no alert.
 - 2026-10-20 Repo docs: Architecture, Protocol, CLAUDE.md, this handover.
 - 2026-10-20 Rooms + street + doors + audio occlusion (plan: `Docs/Plans done/2026-10-20-rooms-and-doors.md`).
   Verified in the in-app browser with the real server: spawn in each room, walking blocked by closed doors /
@@ -28,7 +33,5 @@ Next step: Borja runs through [Docs/PendingUserChecks.md](Docs/PendingUserChecks
 - Desarrollo's identity: different decoration, music, TV feed (another subforum thread)?
 
 ## Next
-- Fix server crash on malformed WS JSON (missing try/catch) and chat XSS (`innerHTML`). See Architecture.md
-  "Known issues".
 - Pong sync (message `type` overwritten in `WebSocketManager.send`).
 - Remove duplicated geometry (level.json vs World vs Bar).

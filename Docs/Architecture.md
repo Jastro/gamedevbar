@@ -116,9 +116,9 @@ proxied images 5 min. Message list: see [Protocol.md](Protocol.md).
 
 ## Known issues and quirks (found 2026-10-20, not fixed unless noted)
 
-- **Server crash on bad input**: `JSON.parse(message)` in the WS handler has no try/catch; one malformed
-  message from any client throws and kills the process.
-- **XSS**: chat messages and usernames are inserted with `innerHTML` (`ChatUI.addMessage`) unescaped.
+- ~~Server crash on bad input~~ (fixed 2026-10-20): frames are parsed in a try/catch, dispatched through
+  `handleMessage` inside a try/catch, and fields are validated/clamped (see Protocol.md).
+- ~~XSS in chat~~ (fixed 2026-10-20): `ChatUI.addMessage` builds DOM nodes with `textContent`.
 - **Pong multiplayer sync is broken**: `WebSocketManager.send(type, data)` builds `{ type, ...data }`, so a
   `data.type` overrides the message type. `Game` sends `arcadeState` with `type: 'startGame'` (server sees
   `startGame`, unhandled) and `syncGameState` gets re-broadcast as `arcadeState`, which no client listens to.
