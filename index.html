@@ -680,40 +680,6 @@
   <script type="module" src="/src/ui/emotes.js"></script>
   <script type="module" src="/src/ui/EmotesUI.js"></script>
   <script type="module" src="/src/main.js"></script>
-  <script>
-    // Esperar a que el DOM esté completamente cargado
-    window.addEventListener('DOMContentLoaded', () => {
-      const startButton = document.getElementById('start-button');
-      const usernameInput = document.getElementById('username-input');
-      const modelOptions = document.querySelectorAll('.model-option');
-      
-      // Deshabilitar el botón inicialmente
-      startButton.disabled = true;
-      
-      // Función para verificar si se puede habilitar el botón
-      function checkEnableButton() {
-        const username = usernameInput.value.trim();
-        const selectedModel = document.querySelector('.model-option.selected');
-        startButton.disabled = username.length === 0 || !selectedModel;
-      }
-      
-      // Manejar la entrada de texto en el campo de nombre
-      usernameInput.addEventListener('input', () => {
-        checkEnableButton();
-      });
-
-      // Manejar la selección de modelo
-      modelOptions.forEach(option => {
-        option.addEventListener('click', () => {
-          // Remover la selección previa
-          modelOptions.forEach(opt => opt.classList.remove('selected'));
-          // Seleccionar el nuevo modelo
-          option.classList.add('selected');
-          checkEnableButton();
-        });
-      });
-    });
-  </script>
 </body>
 
 </html>

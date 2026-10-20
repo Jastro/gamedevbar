@@ -45,7 +45,7 @@ The application will start in development mode with hot reload enabled. Any chan
 - Frontend runs on port 5148
 - Backend WebSocket server runs on port 3000
 
-See [Docs/Architecture.md](Docs/Architecture.md) for how the code is organized and [Docs/Protocol.md](Docs/Protocol.md) for the WebSocket messages.
+See [Docs/Architecture.md](Docs/Architecture.md) for how the code is organized, [Docs/Systems.md](Docs/Systems.md) for how each system works, and [Docs/Protocol.md](Docs/Protocol.md) for the WebSocket messages.
 
 ## Contributing
 Contributions are welcome! Here's how you can contribute:

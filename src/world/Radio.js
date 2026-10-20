@@ -108,6 +108,7 @@ export class Radio {
         // Añadir propiedades para interactividad
         radioGroup.userData = {
             type: "radio",
+            radio: this,
             isPlaying: true,
             indicator: indicator,
             originalIndicatorColor: 0x32CD32,
