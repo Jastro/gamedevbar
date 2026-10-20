@@ -47,7 +47,9 @@ export class VoiceUI {
     handleKey(event, isDown, chatActive) {
         if (event.key.toLowerCase() !== PTT_KEY) return false;
         if (isDown) {
-            if (chatActive || event.repeat) return false;
+            // Typing in a form field (e.g. the mic settings dropdown) isn't push to talk.
+            const inFormField = ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target?.tagName);
+            if (chatActive || event.repeat || inFormField) return false;
             this.voice.startTalking();
         } else {
             this.voice.stopTalking();

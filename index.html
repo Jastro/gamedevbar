@@ -296,6 +296,99 @@
       transition: all 0.15s ease;
     }
 
+    #voice-settings-button {
+      position: absolute;
+      right: -162px;
+      bottom: 4px;
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(40, 40, 40, 0.9);
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      z-index: 1002;
+      transition: all 0.15s ease;
+    }
+
+    #voice-settings-button:hover,
+    #voice-settings-button.active {
+      background: rgba(220, 90, 11, 0.9);
+    }
+
+    #voice-settings {
+      position: absolute;
+      bottom: 60px;
+      right: -170px;
+      width: 280px;
+      padding: 14px;
+      box-sizing: border-box;
+      background: rgba(0, 0, 0, 0.92);
+      border: 2px solid rgba(220, 90, 11, 0.3);
+      border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      color: #fff;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 1003;
+    }
+
+    #voice-settings .voice-settings-title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    #voice-settings .voice-settings-label {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+    }
+
+    #voice-settings select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(220, 90, 11, 0.4);
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    #voice-settings .voice-meter {
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    #voice-settings .voice-meter-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #4caf50, #dc5a0b);
+      transition: width 0.05s linear;
+    }
+
+    #voice-settings .voice-settings-hint {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+    }
+
+    #voice-settings .voice-settings-action {
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      background: #dc5a0b;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    #voice-settings .voice-settings-action.secondary {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
     #voice-button.talking {
       background: #d93025;
       box-shadow: 0 0 0 4px rgba(217, 48, 37, 0.35), 0 0 20px rgba(217, 48, 37, 0.6);
