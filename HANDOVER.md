@@ -11,6 +11,9 @@ Next step: Jastro merges both PRs, adds the `TURN_SECRET` repo secret and opens 
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Bug: arcade intro jingle played on every join (all 4 machines, full volume, plus a 30-45 s
+  repeat). Removed the automatic intro; in-game sounds unchanged. Verified: no arcade sound playing after
+  join, Snake/Pong still start. `public/assets/sound/arcade/intro.mp3` is now unused.
 - 2026-10-21 Removed the El Fary mp3 loop ("Taberna FM"): radios play live stations only; Gamedev
   defaults to LOS40 Classic.
 - 2026-10-21 Shared radio (13 live Spanish stations + Taberna FM synced to the server clock, per-room
