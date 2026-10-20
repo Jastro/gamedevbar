@@ -1,27 +1,79 @@
 import * as THREE from 'three';
 import { CollisionManager } from './CollisionManager';
+import { Room } from './Room';
+import { Street } from './Street';
+import {
+    ROOMS,
+    ROOM_HALF_WIDTH,
+    ROOM_HALF_DEPTH,
+    WALL_HEIGHT,
+    WALL_THICKNESS,
+    FRONT_DOOR
+} from './RoomLayout';
 
 export class World {
     constructor(scene) {
+        this.sceneWrapper = scene;
         this.scene = scene.getScene();
         this.collisionManager = new CollisionManager();
+        this.rooms = new Map();
+        // Meshes the third-person camera must not pass through.
+        this.cameraOccluders = [];
+        this.toonGradient = this.createToonGradient();
     }
 
     create() {
-        this.createFloor();
-        this.createWalls();
-        this.createBarArea();
+        ROOMS.forEach(definition => {
+            const room = new Room(definition, this.scene);
+            this.rooms.set(room.id, room);
+
+            const level = this.sceneWrapper.createLevelInstance();
+            if (level) room.add(level);
+
+            this.createFloor(room);
+            this.createWalls(room);
+            this.createBarArea(room);
+        });
+
+        this.street = new Street(this.scene, this.collisionManager, [...this.rooms.values()]);
+        this.street.create();
     }
 
-    createFloor() {
-        const floorGeometry = new THREE.PlaneGeometry(30, 20, 1, 1);
+    getRoom(roomId) {
+        return this.rooms.get(roomId);
+    }
+
+    // Room whose interior contains the given world position, or null when outside.
+    getRoomAt(worldPosition) {
+        for (const room of this.rooms.values()) {
+            if (room.containsPoint(worldPosition)) return room;
+        }
+        return null;
+    }
+
+    // Walks up the hierarchy to find the room an object belongs to.
+    getRoomForObject(object) {
+        let current = object;
+        while (current) {
+            if (current.userData?.roomId) return this.rooms.get(current.userData.roomId) ?? null;
+            current = current.parent;
+        }
+        return null;
+    }
+
+    getCameraOccluders() {
+        return this.cameraOccluders.filter(mesh => mesh.userData.blocksCamera !== false);
+    }
+
+    createFloor(room) {
+        const floorGeometry = new THREE.PlaneGeometry(ROOM_HALF_WIDTH * 2, ROOM_HALF_DEPTH * 2, 1, 1);
         const textureLoader = new THREE.TextureLoader();
         
         const floorMaterial = new THREE.MeshToonMaterial({
             roughness: 0.8,
             metalness: 0.1,
             side: THREE.DoubleSide,
-            gradientMap: this.createToonGradient()
+            gradientMap: this.toonGradient
         });
         
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
@@ -44,57 +96,55 @@ export class World {
             }
         );
         
-        this.scene.add(floor);
+        room.add(floor);
     }
 
-    createWalls() {
+    createWalls(room) {
         const wallMaterial = new THREE.MeshToonMaterial({
             color: 0xf0e6d2,
             roughness: 0.7,
-            gradientMap: this.createToonGradient()
+            gradientMap: this.toonGradient
         });
 
+        const addWall = (width, height, depth, x, y, z) => {
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), wallMaterial);
+            wall.position.set(x, y, z);
+            wall.castShadow = true;
+            wall.receiveShadow = true;
+            room.add(wall);
+            this.collisionManager.addCollider(wall);
+            this.cameraOccluders.push(wall);
+            return wall;
+        };
+
+        const fullWidth = ROOM_HALF_WIDTH * 2;
+        const halfHeight = WALL_HEIGHT / 2;
+
         // Pared trasera
-        const backWallGeometry = new THREE.BoxGeometry(30, 8, 0.2);
-        const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
-        backWall.position.set(0, 4, -10);
-        backWall.castShadow = true;
-        backWall.receiveShadow = true;
-        this.scene.add(backWall);
-        this.collisionManager.addCollider(backWall);
+        addWall(fullWidth, WALL_HEIGHT, WALL_THICKNESS, 0, halfHeight, -ROOM_HALF_DEPTH);
 
         // Paredes laterales
-        const sideWallGeometry = new THREE.BoxGeometry(0.2, 8, 20);
-        const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
-        leftWall.position.set(-15, 4, 0);
-        leftWall.castShadow = true;
-        leftWall.receiveShadow = true;
-        this.scene.add(leftWall);
-        this.collisionManager.addCollider(leftWall);
+        addWall(WALL_THICKNESS, WALL_HEIGHT, ROOM_HALF_DEPTH * 2, -ROOM_HALF_WIDTH, halfHeight, 0);
+        addWall(WALL_THICKNESS, WALL_HEIGHT, ROOM_HALF_DEPTH * 2, ROOM_HALF_WIDTH, halfHeight, 0);
 
-        const rightWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
-        rightWall.position.set(15, 4, 0);
-        rightWall.castShadow = true;
-        rightWall.receiveShadow = true;
-        this.scene.add(rightWall);
-        this.collisionManager.addCollider(rightWall);
+        // Front wall, split around the entrance: left piece, right piece, lintel.
+        const doorLeft = FRONT_DOOR.x - FRONT_DOOR.width / 2;
+        const doorRight = FRONT_DOOR.x + FRONT_DOOR.width / 2;
+        const leftWidth = doorLeft + ROOM_HALF_WIDTH;
+        const rightWidth = ROOM_HALF_WIDTH - doorRight;
+        const lintelHeight = WALL_HEIGHT - FRONT_DOOR.height;
 
-        // Pared frontal
-        const frontWallGeometry = new THREE.BoxGeometry(30, 8, 0.2);
-        const frontWall = new THREE.Mesh(frontWallGeometry, wallMaterial);
-        frontWall.position.set(0, 4, 10);
-        frontWall.castShadow = true;
-        frontWall.receiveShadow = true;
-        this.scene.add(frontWall);
-        this.collisionManager.addCollider(frontWall);
+        addWall(leftWidth, WALL_HEIGHT, WALL_THICKNESS, -ROOM_HALF_WIDTH + leftWidth / 2, halfHeight, ROOM_HALF_DEPTH);
+        addWall(rightWidth, WALL_HEIGHT, WALL_THICKNESS, ROOM_HALF_WIDTH - rightWidth / 2, halfHeight, ROOM_HALF_DEPTH);
+        addWall(FRONT_DOOR.width, lintelHeight, WALL_THICKNESS, FRONT_DOOR.x, FRONT_DOOR.height + lintelHeight / 2, ROOM_HALF_DEPTH);
     }
 
-    createBarArea() {
+    createBarArea(room) {
         const barMaterial = new THREE.MeshToonMaterial({
             color: 0x8b4513,
             roughness: 0.6,
             metalness: 0.1,
-            gradientMap: this.createToonGradient()
+            gradientMap: this.toonGradient
         });
 
         // Barra principal
@@ -103,7 +153,7 @@ export class World {
         bar.position.set(0, 0.7, -3);
         bar.castShadow = true;
         bar.receiveShadow = true;
-        this.scene.add(bar);
+        room.add(bar);
         this.collisionManager.addCollider(bar);
 
         // Estantería trasera
@@ -112,7 +162,7 @@ export class World {
         backBar.position.set(0, 1.5, -7);
         backBar.castShadow = true;
         backBar.receiveShadow = true;
-        this.scene.add(backBar);
+        room.add(backBar);
         this.collisionManager.addCollider(backBar);
     }
 

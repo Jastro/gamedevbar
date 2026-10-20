@@ -60,9 +60,7 @@ export class WebSocketManager extends EventEmitter {
             }
 
             if (data.type === 'snakeHighScores') {
-                if (window.game?.environment?.arcadeSnake) {
-                    window.game.environment.arcadeSnake.updateHighScores(data.scores);
-                }
+                window.game?.environment?.updateSnakeHighScores?.(data.scores);
             }
 
             if (data.type === 'arcadeUpdate') {

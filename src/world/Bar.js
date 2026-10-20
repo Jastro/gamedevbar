@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 
 export class Bar {
-    constructor(scene) {
+    constructor(scene, signText = 'Gamedev MV') {
         this.scene = scene;
+        this.signText = signText;
         this.avatarCache = new Map(); // Cache for loaded avatar images
         this.createForumTV();
     }
@@ -44,9 +45,14 @@ export class Bar {
         const context = canvas.getContext("2d");
         context.fillStyle = "#FFFFFF";
         context.font = "bold 32px Arial";
+        // Shrink longer names (e.g. "Desarrollo MV") so they fit the sign.
+        const textWidth = context.measureText(this.signText).width;
+        if (textWidth > 240) {
+            context.font = `bold ${Math.floor(32 * 240 / textWidth)}px Arial`;
+        }
         context.textAlign = "center";
         context.textBaseline = "middle";
-        context.fillText("Gamedev MV", 128, 32);
+        context.fillText(this.signText, 128, 32);
 
         const texture = new THREE.CanvasTexture(canvas);
         const textMaterial = new THREE.MeshBasicMaterial({
@@ -150,7 +156,8 @@ export class Bar {
             metalness: 0.7  // Increased metalness for better reflection
         });
         this.tvFrame = new THREE.Mesh(tvFrameGeometry, tvFrameMaterial);
-        this.tvFrame.position.set(1.09, 3.8, 9.9);  // Lowered Y position from 5 to 3.8
+        // On the front wall, beside the centered entrance (door spans x -1..1).
+        this.tvFrame.position.set(7, 3.8, 9.9);
         this.tvFrame.rotation.y = Math.PI;
         this.scene.add(this.tvFrame);
 

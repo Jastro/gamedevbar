@@ -94,14 +94,11 @@ export class Camera {
             cameraOffset.clone().normalize()
         );
 
-        // Lista de objetos a comprobar para colisiones (paredes)
-        const walls = this.scene.children.filter(obj =>
-            obj.isMesh &&
-            (obj.geometry instanceof THREE.BoxGeometry) &&
-            obj.position.y >= 2 // Asumiendo que las paredes están en y >= 2
-        );
+        // Walls (and closed doors) live inside room groups, so they come from
+        // the world instead of scanning direct scene children.
+        const walls = this.getOccluders ? this.getOccluders() : [];
 
-        const intersects = raycaster.intersectObjects(walls);
+        const intersects = raycaster.intersectObjects(walls, false);
 
         if (intersects.length > 0) {
             // Si hay una colisión, colocar la cámara justo antes del punto de colisión
@@ -118,6 +115,10 @@ export class Camera {
         }
 
         this.camera.lookAt(targetPosition);
+    }
+
+    setOccluderProvider(getOccluders) {
+        this.getOccluders = getOccluders;
     }
 
     getCamera() {

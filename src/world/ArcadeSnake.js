@@ -74,6 +74,7 @@ export class ArcadeSnake {
         this.arcadeGroup.position.set(position.x, position.y, position.z);
         this.arcadeGroup.userData = {
             type: "arcade",
+            arcade: this,
             isInteractive: true,
             originalMaterial: cabinetMaterial,
             highlightMaterial: new THREE.MeshStandardMaterial({
@@ -344,7 +345,8 @@ export class ArcadeSnake {
 
     checkPlayerProximity(playerPosition) {
         const maxDistance = 3;
-        const arcadePosition = this.arcadeGroup.position;
+        // World position: the arcade lives inside a room group.
+        const arcadePosition = this.arcadeGroup.getWorldPosition(new THREE.Vector3());
         const distance = new THREE.Vector3(
             playerPosition.x - arcadePosition.x,
             0,

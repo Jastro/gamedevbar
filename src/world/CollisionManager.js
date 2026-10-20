@@ -8,14 +8,18 @@ export class CollisionManager {
     addCollider(mesh, type = 'box') {
         const box = new THREE.Box3();
         box.setFromObject(mesh);
-        this.colliders.push({
+        const collider = {
             mesh,
             box,
             type,
+            // Doors toggle this instead of being added/removed.
+            enabled: true,
             update: () => {
                 box.setFromObject(mesh);
             }
-        });
+        };
+        this.colliders.push(collider);
+        return collider;
     }
 
     checkCollision(position, radius = 0.5) {
@@ -27,6 +31,7 @@ export class CollisionManager {
         );
 
         for (const collider of this.colliders) {
+            if (!collider.enabled) continue;
             collider.update();
             if (playerBox.intersectsBox(collider.box)) {
                 return true;

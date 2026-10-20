@@ -110,19 +110,29 @@ export class ChatUI {
             this.messages.shift();
         }
 
+        // Usernames and messages come from other clients (taberna messages embed
+        // usernames too), so they only ever go in as text, never as HTML.
         const messageDiv = document.createElement('div');
-        
-        if (messageData.isTaberna) {
+        const text = String(messageData.message ?? '');
+
+        if (messageData.type === 'system') {
+            // Local hints (e.g. "get closer"); they carry no username.
             messageDiv.className = 'chat-message taberna-message';
-            messageDiv.innerHTML = `<span class="taberna-tag">Taberna</span> ${messageData.message}`;
+            messageDiv.textContent = text;
+        } else if (messageData.isTaberna) {
+            messageDiv.className = 'chat-message taberna-message';
+            const tag = document.createElement('span');
+            tag.className = 'taberna-tag';
+            tag.textContent = 'Taberna';
+            messageDiv.append(tag, ` ${text}`);
         } else {
             messageDiv.className = `chat-message ${messageData.isEmote ? 'emote-message' : ''}`;
-            const username = messageData.username || messageData.userId;
+            const name = document.createElement('strong');
+            name.textContent = String(messageData.username || messageData.userId || '');
             if (messageData.isEmote) {
-                messageDiv.innerHTML = `* <strong>${username}</strong> ${messageData.message}`;
-            } else {
-                messageDiv.innerHTML = `<strong>${username}</strong> ${messageData.message}`;
+                messageDiv.append('* ');
             }
+            messageDiv.append(name, ` ${text}`);
         }
 
         this.chatBox.appendChild(messageDiv);
@@ -132,7 +142,7 @@ export class ChatUI {
             this.chatBox.removeChild(this.chatBox.firstChild);
         }
 
-        if (!messageData.isTaberna && window.game?.players?.players) {
+        if (!messageData.isTaberna && messageData.type !== 'system' && window.game?.players?.players) {
             const player = window.game.players.players.get(messageData.userId);
             if (player) {
                 player.showChatBubble(messageData.message, messageData.isEmote, messageData.emoji);

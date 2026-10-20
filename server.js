@@ -258,13 +258,54 @@ const seats = new Map(); // Mapa de asientos ocupados
 const ChatLog = new Array(); // Historial de chat
 const CHAT_LOG_HISTORY_MAX_LENGTH = 50; // Máximo número de mensajes en el historial
 const snakeHighScores = [];
+// Door states (doorId -> isOpen). Door ids come from the client layout
+// ("<roomId>:front"), so they are validated and the map is capped.
+const doors = new Map();
+const DOOR_ID_PATTERN = /^[a-z0-9_-]{1,32}:[a-z0-9_-]{1,32}$/;
+const MAX_DOORS = 64;
+
+// Client input limits. Everything below comes straight from the socket, so it is
+// type-checked and clamped before it is stored or relayed to other clients.
+const MAX_USERNAME_LENGTH = 24;
+const MAX_CHAT_LENGTH = 200;
+const MAX_EMOJI_LENGTH = 16;
+const MODEL_ID_PATTERN = /^[a-z0-9_-]{1,32}$/i;
+const DUEL_CHOICES = ['piedra', 'papel', 'tijera'];
+
+function cleanString(value, maxLength) {
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim().slice(0, maxLength);
+    return trimmed.length > 0 ? trimmed : null;
+}
+
+function cleanUsername(value) {
+    return cleanString(value, MAX_USERNAME_LENGTH) || 'Anónimo';
+}
+
+// The model id ends up in a client asset path (/assets/models/<id>.glb).
+function cleanModelId(value) {
+    return typeof value === 'string' && MODEL_ID_PATTERN.test(value) ? value : 'pj';
+}
+
+// Every push goes through here so join/leave spam can't grow the history without bound.
+function addToChatLog(entry) {
+    ChatLog.push(entry);
+    while (ChatLog.length > CHAT_LOG_HISTORY_MAX_LENGTH) {
+        ChatLog.shift();
+    }
+}
+
+// Users can disconnect between a message being sent and handled, so lookups may miss.
+function findClientByUserId(userId) {
+    return [...wss.clients].find(client => users.get(client)?.id === userId);
+}
 
 class User {
     constructor(ws) {
         this.id = uuidv4();
         this.ws = ws;
         this.username = null;
-        this.position = { x: 0, y: 1, z: 0 };
+        this.position = [0, 1, 0]; // same [x, y, z] shape clients send in userMoved
         this.rotation = 0;
         this.seatId = null;
         this.isInDuel = false;
@@ -292,6 +333,390 @@ function broadcastAll(message) {
     wss.clients.forEach(client => {
         client.send(JSON.stringify(message));
     });
+}
+
+// Dispatch one parsed client message. `data` is untrusted: check fields before use.
+function handleMessage(ws, user, data) {
+    switch (data.type) {
+        case 'snakeHighScore':
+            if (typeof data.score !== 'number' || !Number.isFinite(data.score)) break;
+            // Añadir nuevo high score
+            snakeHighScores.push({
+                name: cleanUsername(data.username),
+                score: data.score
+            });
+            // Ordenar por puntuación
+            snakeHighScores.sort((a, b) => b.score - a.score);
+            // Mantener solo los top 10
+            if (snakeHighScores.length > 10) {
+                snakeHighScores.length = 10;
+            }
+            // Broadcast a todos los jugadores
+            broadcastAll({
+                type: 'snakeHighScores',
+                scores: snakeHighScores
+            });
+            break;
+        case 'arcadeState':
+            const arcade = data;
+            broadcastAll({
+                type: 'arcadeState',
+                gameState: data.gameState,
+                data: data.data
+            });
+            switch (arcade.type) {
+                case 'startGame':
+                    broadcastAll({
+                        type: 'arcadeUpdate',
+                        action: 'startGame',
+                        playerId: arcade.playerId
+                    });
+                    break;
+
+                case 'playerJoined':
+                    // Enviar mensaje de que se unió un jugador
+                    broadcastAll({
+                        type: 'arcadeUpdate',
+                        action: 'playerJoined',
+                        playerId: arcade.playerId
+                    });
+
+                    // Esperar 3 segundos y reiniciar el juego
+                    setTimeout(() => {
+                        broadcastAll({
+                            type: 'arcadeUpdate',
+                            action: 'startTwoPlayer',
+                            player1Id: data.currentPlayerId,
+                            player2Id: arcade.playerId
+                        });
+                    }, 3000);
+                    break;
+
+                case 'gameState':
+                    // Actualizar estado del juego (posiciones, puntuaciones, etc)
+                    broadcastAll({
+                        type: 'arcadeUpdate',
+                        action: 'updateState',
+                        state: arcade.state
+                    });
+                    break;
+            }
+            break;
+        case 'duelRequest':
+            const targetClient = findClientByUserId(data.targetId);
+            const targetUser = users.get(targetClient);
+            const challengerUser = user;
+
+            if (targetUser && !targetUser.isInDuel && !challengerUser.isInDuel) {
+                console.log('Enviando solicitud de duelo:', {
+                    from: challengerUser.id,
+                    to: targetUser.id
+                });
+
+                // Añadir mensaje al chat global
+                const duelRequestMessage = {
+                    type: 'userChat',
+                    userId: 'system',
+                    username: 'Sistema',
+                    message: `${challengerUser.username} ha retado a ${targetUser.username} a un duelo`,
+                    isEmote: true
+                };
+                broadcastAll(duelRequestMessage);
+
+                targetClient.send(JSON.stringify({
+                    type: 'duelRequest',
+                    targetId: data.targetId,
+                    challengerId: challengerUser.id,
+                    challengerName: challengerUser.username
+                }));
+            }
+            break;
+
+        case 'duelAccepted':
+            const challengerClient = findClientByUserId(data.challengerId);
+            if (challengerClient) {
+                user.isInDuel = true;
+                user.duelOpponent = data.challengerId;
+                const challenger = users.get(challengerClient);
+                challenger.isInDuel = true;
+                challenger.duelOpponent = user.id;
+
+                challengerClient.send(JSON.stringify({
+                    type: 'duelAccepted',
+                    targetId: user.id,
+                    challengerId: data.challengerId
+                }));
+            }
+            break;
+
+        case 'duelRejected':
+            const rejectedClient = findClientByUserId(data.challengerId);
+            if (rejectedClient) {
+                rejectedClient.send(JSON.stringify({
+                    type: 'duelRejected',
+                    challengerId: data.challengerId
+                }));
+            }
+            break;
+
+        case 'duelChoice':
+            if (!DUEL_CHOICES.includes(data.choice)) break;
+            if (user.isInDuel && user.duelOpponent) {
+                user.duelChoice = data.choice;
+                const opponentClient = findClientByUserId(user.duelOpponent);
+
+                if (opponentClient) {
+                    const opponent = users.get(opponentClient);
+
+                    // Enviar la elección al oponente
+                    opponentClient.send(JSON.stringify({
+                        type: 'duelChoice',
+                        playerId: user.id,
+                        choice: data.choice
+                    }));
+
+                    // Si ambos jugadores han elegido, enviar un mensaje de confirmación
+                    if (user.duelChoice && opponent.duelChoice) {
+                        const choiceEmojis = {
+                            piedra: '🪨',
+                            papel: '📄',
+                            tijera: '✂️',
+                            timeout: '⏰'
+                        };
+
+                        // Determinar el resultado
+                        let resultEmoji;
+                        if (user.duelChoice === opponent.duelChoice) {
+                            resultEmoji = "🤝";
+                        } else if (
+                            (user.duelChoice === 'piedra' && opponent.duelChoice === 'tijera') ||
+                            (user.duelChoice === 'papel' && opponent.duelChoice === 'piedra') ||
+                            (user.duelChoice === 'tijera' && opponent.duelChoice === 'papel')
+                        ) {
+                            resultEmoji = "🏆";
+                        } else {
+                            resultEmoji = "💔";
+                        }
+
+                        // Enviar resultado a ambos jugadores
+                        const result = {
+                            type: 'duelResult',
+                            player1: {
+                                id: user.id,
+                                choice: user.duelChoice,
+                                username: user.username
+                            },
+                            player2: {
+                                id: opponent.id,
+                                choice: opponent.duelChoice,
+                                username: opponent.username
+                            },
+                            choiceEmojis: choiceEmojis
+                        };
+
+                        ws.send(JSON.stringify(result));
+                        opponentClient.send(JSON.stringify(result));
+
+                        // Añadir el resultado al chat global con el formato deseado
+                        const duelResult = {
+                            type: 'userChat',
+                            userId: 'taberna',
+                            username: '',
+                            message: `${user.duelChoice === opponent.duelChoice ?
+                                `¡${user.username} y ${opponent.username} han empatado como buenos bebedores!` :
+                                (
+                                    (user.duelChoice === 'piedra' && opponent.duelChoice === 'tijera') ||
+                                    (user.duelChoice === 'papel' && opponent.duelChoice === 'piedra') ||
+                                    (user.duelChoice === 'tijera' && opponent.duelChoice === 'papel')
+                                ) ?
+                                    `¡El borracho de ${user.username} ha ganado a ${opponent.username}!` :
+                                    `¡El borracho de ${opponent.username} ha ganado a ${user.username}!`
+                                } (${choiceEmojis[user.duelChoice]}) vs (${choiceEmojis[opponent.duelChoice]}) ${resultEmoji}`,
+                            isTaberna: true,
+                            timestamp: Date.now()
+                        };
+
+                        // Añadir al historial y enviar a todos
+                        addToChatLog(duelResult);
+                        broadcastAll(duelResult);
+
+                        // Resetear el estado del duelo
+                        user.isInDuel = false;
+                        user.duelOpponent = null;
+                        user.duelChoice = null;
+                        opponent.isInDuel = false;
+                        opponent.duelOpponent = null;
+                        opponent.duelChoice = null;
+                    }
+                }
+            }
+            break;
+
+        case 'setUsername':
+            user.setUsername(cleanUsername(data.username));
+            user.selectedModel = cleanModelId(data.selectedModel);
+            broadcastAll({
+                type: 'userUsername',
+                userId: user.id,
+                username: user.username,
+                selectedModel: user.selectedModel
+            });
+            break;
+        case 'userMoved':
+            user.position = data.position;
+            user.rotation = data.rotation;
+            broadcast(ws, {
+                type: 'userMoved',
+                userId: user.id,
+                position: data.position,
+                rotation: data.rotation
+            });
+            break;
+
+        case 'doorToggle': {
+            const doorId = data.doorId;
+            if (typeof doorId !== 'string' || !DOOR_ID_PATTERN.test(doorId)) break;
+            if (!doors.has(doorId) && doors.size >= MAX_DOORS) break;
+
+            const isOpen = !doors.get(doorId);
+            doors.set(doorId, isOpen);
+            broadcastAll({ type: 'doorState', doorId, isOpen });
+            break;
+        }
+
+        case 'userSat':
+            if (seats.has(data.seatId)) {
+                ws.send(JSON.stringify({
+                    type: 'error',
+                    message: 'Seat already occupied'
+                }));
+                return;
+            }
+
+            // Liberar asiento anterior si existe
+            if (user.seatId) {
+                seats.delete(user.seatId);
+            }
+
+            // Ocupar nuevo asiento
+            user.seatId = data.seatId;
+            seats.set(data.seatId, user.id);
+            broadcast(ws, {
+                type: 'userSat',
+                userId: user.id,
+                seatId: data.seatId
+            });
+            break;
+
+        case 'userStood':
+            if (user.seatId) {
+                seats.delete(user.seatId);
+                user.seatId = null;
+                broadcast(ws, {
+                    type: 'userStood',
+                    userId: user.id
+                });
+            }
+            break;
+
+        case 'userChat':
+            const chatText = cleanString(data.message, MAX_CHAT_LENGTH);
+            if (!chatText) break;
+
+            let messageData = {
+                type: 'userChat',
+                userId: user.id,
+                username: user.username,
+                message: chatText,
+                isEmote: data.isEmote === true,
+                emoji: cleanString(data.emoji, MAX_EMOJI_LENGTH),
+                timestamp: Date.now()
+            };
+
+            // Manejar comando de fútbol
+            if (chatText.toLowerCase() === '/furbo') {
+                // Cambiar estado del juego
+                const isGameActive = chatText.toLowerCase() === '/furbo';
+                broadcastAll({
+                    type: 'startSoccerGame',
+                    initiatorId: user.id,
+                    active: isGameActive
+                });
+                return;
+            }
+
+            // Añadir mensaje al historial
+            addToChatLog(messageData);
+
+            // Enviar a todos los usuarios conectados
+            broadcastAll(messageData);
+            break;
+
+        case 'initCompleted':
+            user.username = cleanUsername(data.username);
+            user.selectedModel = cleanModelId(data.selectedModel);
+
+            // Informar a todos los demás usuarios sobre el nuevo usuario
+            broadcast(ws, {
+                type: 'userJoined',
+                userId: user.id,
+                username: user.username,
+                position: user.position,
+                rotation: user.rotation,
+                selectedModel: user.selectedModel
+            });
+
+            // Enviar al nuevo usuario información sobre los usuarios existentes
+            users.forEach((existingUser, existingWs) => {
+                if (existingWs !== ws) {
+                    ws.send(JSON.stringify({
+                        type: 'userJoined',
+                        userId: existingUser.id,
+                        username: existingUser.username,
+                        position: existingUser.position,
+                        rotation: existingUser.rotation,
+                        selectedModel: existingUser.selectedModel,
+                        seatId: existingUser.seatId
+                    }));
+                }
+            });
+
+            // Current door states, so the newcomer sees open doors as open
+            ws.send(JSON.stringify({
+                type: 'doorStates',
+                doors: Object.fromEntries(doors)
+            }));
+
+            // Enviar historial de chat al nuevo usuario
+            if (ChatLog.length > 0) {
+
+                // Enviar todos los mensajes del historial
+                ChatLog.forEach(chatMessage => {
+                    ws.send(JSON.stringify(chatMessage));
+                });
+            }
+
+            // Añadir mensaje de bienvenida al chat después del historial
+            const welcomeMessage = {
+                type: 'userChat',
+                userId: 'taberna',
+                message: `🍺 ¡El borracho de ${user.username} ha entrado!`,
+                isTaberna: true,
+                timestamp: Date.now()
+            };
+            addToChatLog(welcomeMessage);
+            broadcastAll(welcomeMessage);
+            break;
+
+        case 'soccerBallUpdate':
+            // Reenviar la actualización de la pelota a todos los clientes excepto al remitente
+            broadcast(ws, {
+                type: 'soccerBallUpdate',
+                position: data.position,
+                velocity: data.velocity
+            });
+            break;
+    }
 }
 
 // Manejo de conexiones WebSocket
@@ -331,392 +756,29 @@ wss.on('connection', (ws, req) => {
     });
 
     ws.on('message', (message) => {
-        const data = JSON.parse(message);
-        const user = users.get(ws);
+        let data;
+        try {
+            data = JSON.parse(message);
+        } catch (error) {
+            console.warn(`Ignoring malformed WS frame from ${user.id}`);
+            return;
+        }
+        if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
 
-        switch (data.type) {
-            case 'snakeHighScore':
-                // Añadir nuevo high score
-                snakeHighScores.push({
-                    name: data.username,
-                    score: data.score
-                });
-                // Ordenar por puntuación
-                snakeHighScores.sort((a, b) => b.score - a.score);
-                // Mantener solo los top 10
-                if (snakeHighScores.length > 10) {
-                    snakeHighScores.length = 10;
-                }
-                // Broadcast a todos los jugadores
-                broadcastAll({
-                    type: 'snakeHighScores',
-                    scores: snakeHighScores
-                });
-                break;
-            case 'arcadeState':
-                const arcade = data;
-                broadcastAll({
-                    type: 'arcadeState',
-                    gameState: data.gameState,
-                    data: data.data
-                });
-                switch (arcade.type) {
-                    case 'startGame':
-                        broadcastAll({
-                            type: 'arcadeUpdate',
-                            action: 'startGame',
-                            playerId: arcade.playerId
-                        });
-                        break;
-
-                    case 'playerJoined':
-                        // Enviar mensaje de que se unió un jugador
-                        broadcastAll({
-                            type: 'arcadeUpdate',
-                            action: 'playerJoined',
-                            playerId: arcade.playerId
-                        });
-
-                        // Esperar 3 segundos y reiniciar el juego
-                        setTimeout(() => {
-                            broadcastAll({
-                                type: 'arcadeUpdate',
-                                action: 'startTwoPlayer',
-                                player1Id: data.currentPlayerId,
-                                player2Id: arcade.playerId
-                            });
-                        }, 3000);
-                        break;
-
-                    case 'gameState':
-                        // Actualizar estado del juego (posiciones, puntuaciones, etc)
-                        broadcastAll({
-                            type: 'arcadeUpdate',
-                            action: 'updateState',
-                            state: arcade.state
-                        });
-                        break;
-                }
-                break;
-            case 'duelRequest':
-                const targetClient = [...wss.clients].find(client =>
-                    users.get(client).id === data.targetId
-                );
-                const targetUser = users.get(targetClient);
-                const challengerUser = user;
-
-                if (targetUser && !targetUser.isInDuel && !challengerUser.isInDuel) {
-                    console.log('Enviando solicitud de duelo:', {
-                        from: challengerUser.id,
-                        to: targetUser.id
-                    });
-
-                    // Añadir mensaje al chat global
-                    const duelRequestMessage = {
-                        type: 'userChat',
-                        userId: 'system',
-                        username: 'Sistema',
-                        message: `${challengerUser.username} ha retado a ${targetUser.username} a un duelo`,
-                        isEmote: true
-                    };
-                    broadcastAll(duelRequestMessage);
-
-                    targetClient.send(JSON.stringify({
-                        type: 'duelRequest',
-                        targetId: data.targetId,
-                        challengerId: challengerUser.id,
-                        challengerName: data.challengerName
-                    }));
-                }
-                break;
-
-            case 'duelAccepted':
-                const challengerClient = [...wss.clients].find(client =>
-                    users.get(client).id === data.challengerId
-                );
-                if (challengerClient) {
-                    user.isInDuel = true;
-                    user.duelOpponent = data.challengerId;
-                    const challenger = users.get(challengerClient);
-                    challenger.isInDuel = true;
-                    challenger.duelOpponent = user.id;
-
-                    challengerClient.send(JSON.stringify({
-                        type: 'duelAccepted',
-                        targetId: user.id,
-                        challengerId: data.challengerId
-                    }));
-                }
-                break;
-
-            case 'duelRejected':
-                const rejectedClient = [...wss.clients].find(client =>
-                    users.get(client).id === data.challengerId
-                );
-                if (rejectedClient) {
-                    rejectedClient.send(JSON.stringify({
-                        type: 'duelRejected',
-                        challengerId: data.challengerId
-                    }));
-                }
-                break;
-
-            case 'duelChoice':
-                if (user.isInDuel && user.duelOpponent) {
-                    user.duelChoice = data.choice;
-                    const opponentClient = [...wss.clients].find(client =>
-                        users.get(client).id === user.duelOpponent
-                    );
-
-                    if (opponentClient) {
-                        const opponent = users.get(opponentClient);
-
-                        // Enviar la elección al oponente
-                        opponentClient.send(JSON.stringify({
-                            type: 'duelChoice',
-                            playerId: user.id,
-                            choice: data.choice
-                        }));
-
-                        // Si ambos jugadores han elegido, enviar un mensaje de confirmación
-                        if (user.duelChoice && opponent.duelChoice) {
-                            const choiceEmojis = {
-                                piedra: '🪨',
-                                papel: '📄',
-                                tijera: '✂️',
-                                timeout: '⏰'
-                            };
-
-                            // Determinar el resultado
-                            let resultEmoji;
-                            if (user.duelChoice === opponent.duelChoice) {
-                                resultEmoji = "🤝";
-                            } else if (
-                                (user.duelChoice === 'piedra' && opponent.duelChoice === 'tijera') ||
-                                (user.duelChoice === 'papel' && opponent.duelChoice === 'piedra') ||
-                                (user.duelChoice === 'tijera' && opponent.duelChoice === 'papel')
-                            ) {
-                                resultEmoji = "🏆";
-                            } else {
-                                resultEmoji = "💔";
-                            }
-
-                            // Enviar resultado a ambos jugadores
-                            const result = {
-                                type: 'duelResult',
-                                player1: {
-                                    id: user.id,
-                                    choice: user.duelChoice,
-                                    username: user.username
-                                },
-                                player2: {
-                                    id: opponent.id,
-                                    choice: opponent.duelChoice,
-                                    username: opponent.username
-                                },
-                                choiceEmojis: choiceEmojis
-                            };
-
-                            ws.send(JSON.stringify(result));
-                            opponentClient.send(JSON.stringify(result));
-
-                            // Añadir el resultado al chat global con el formato deseado
-                            const duelResult = {
-                                type: 'userChat',
-                                userId: 'taberna',
-                                username: '',
-                                message: `${user.duelChoice === opponent.duelChoice ?
-                                    `¡${user.username} y ${opponent.username} han empatado como buenos bebedores!` :
-                                    (
-                                        (user.duelChoice === 'piedra' && opponent.duelChoice === 'tijera') ||
-                                        (user.duelChoice === 'papel' && opponent.duelChoice === 'piedra') ||
-                                        (user.duelChoice === 'tijera' && opponent.duelChoice === 'papel')
-                                    ) ?
-                                        `¡El borracho de ${user.username} ha ganado a ${opponent.username}!` :
-                                        `¡El borracho de ${opponent.username} ha ganado a ${user.username}!`
-                                    } (${choiceEmojis[user.duelChoice]}) vs (${choiceEmojis[opponent.duelChoice]}) ${resultEmoji}`,
-                                isTaberna: true,
-                                timestamp: Date.now()
-                            };
-
-                            // Añadir al historial y enviar a todos
-                            ChatLog.push(duelResult);
-                            broadcastAll(duelResult);
-
-                            // Mantener el límite del historial
-                            if (ChatLog.length > CHAT_LOG_HISTORY_MAX_LENGTH) {
-                                ChatLog.shift();
-                            }
-
-                            // Resetear el estado del duelo
-                            user.isInDuel = false;
-                            user.duelOpponent = null;
-                            user.duelChoice = null;
-                            opponent.isInDuel = false;
-                            opponent.duelOpponent = null;
-                            opponent.duelChoice = null;
-                        }
-                    }
-                }
-                break;
-
-            case 'setUsername':
-                user.setUsername(data.username);
-                user.selectedModel = data.selectedModel;
-                broadcastAll({
-                    type: 'userUsername',
-                    userId: user.id,
-                    username: data.username,
-                    selectedModel: data.selectedModel
-                });
-                break;
-            case 'userMoved':
-                user.position = data.position;
-                user.rotation = data.rotation;
-                broadcast(ws, {
-                    type: 'userMoved',
-                    userId: user.id,
-                    position: data.position,
-                    rotation: data.rotation
-                });
-                break;
-
-            case 'userSat':
-                if (seats.has(data.seatId)) {
-                    ws.send(JSON.stringify({
-                        type: 'error',
-                        message: 'Seat already occupied'
-                    }));
-                    return;
-                }
-
-                // Liberar asiento anterior si existe
-                if (user.seatId) {
-                    seats.delete(user.seatId);
-                }
-
-                // Ocupar nuevo asiento
-                user.seatId = data.seatId;
-                seats.set(data.seatId, user.id);
-                broadcast(ws, {
-                    type: 'userSat',
-                    userId: user.id,
-                    seatId: data.seatId
-                });
-                break;
-
-            case 'userStood':
-                if (user.seatId) {
-                    seats.delete(user.seatId);
-                    user.seatId = null;
-                    broadcast(ws, {
-                        type: 'userStood',
-                        userId: user.id
-                    });
-                }
-                break;
-
-            case 'userChat':
-                let messageData = {
-                    type: 'userChat',
-                    userId: user.id,
-                    username: user.username,
-                    message: data.message,
-                    isEmote: data.isEmote,
-                    emoji: data.emoji,
-                    timestamp: Date.now()
-                };
-
-                // Manejar comando de fútbol
-                if (data.message.toLowerCase() === '/furbo') {
-                    // Cambiar estado del juego
-                    const isGameActive = data.message.toLowerCase() === '/furbo';
-                    broadcastAll({
-                        type: 'startSoccerGame',
-                        initiatorId: user.id,
-                        active: isGameActive
-                    });
-                    return;
-                }
-
-                // Añadir mensaje al historial
-                ChatLog.push(messageData);
-
-                // Mantener el límite de mensajes en el historial
-                if (ChatLog.length > CHAT_LOG_HISTORY_MAX_LENGTH) {
-                    ChatLog.shift();
-                }
-
-                // Enviar a todos los usuarios conectados
-                broadcastAll(messageData);
-                break;
-
-            case 'initCompleted':
-                user.username = data.username;
-                user.selectedModel = data.selectedModel;
-
-                // Informar a todos los demás usuarios sobre el nuevo usuario
-                broadcast(ws, {
-                    type: 'userJoined',
-                    userId: user.id,
-                    username: user.username,
-                    position: user.position,
-                    rotation: user.rotation,
-                    selectedModel: data.selectedModel
-                });
-
-                // Enviar al nuevo usuario información sobre los usuarios existentes
-                users.forEach((existingUser, existingWs) => {
-                    if (existingWs !== ws) {
-                        ws.send(JSON.stringify({
-                            type: 'userJoined',
-                            userId: existingUser.id,
-                            username: existingUser.username,
-                            position: existingUser.position,
-                            rotation: existingUser.rotation,
-                            selectedModel: existingUser.selectedModel,
-                            seatId: existingUser.seatId
-                        }));
-                    }
-                });
-
-                // Enviar historial de chat al nuevo usuario
-                if (ChatLog.length > 0) {
-
-                    // Enviar todos los mensajes del historial
-                    ChatLog.forEach(chatMessage => {
-                        ws.send(JSON.stringify(chatMessage));
-                    });
-                }
-
-                // Añadir mensaje de bienvenida al chat después del historial
-                const welcomeMessage = {
-                    type: 'userChat',
-                    userId: 'taberna',
-                    message: `🍺 ¡El borracho de ${data.username} ha entrado!`,
-                    isTaberna: true,
-                    timestamp: Date.now()
-                };
-                ChatLog.push(welcomeMessage);
-                broadcastAll(welcomeMessage);
-                break;
-
-            case 'soccerBallUpdate':
-                // Reenviar la actualización de la pelota a todos los clientes excepto al remitente
-                broadcast(ws, {
-                    type: 'soccerBallUpdate',
-                    position: data.position,
-                    velocity: data.velocity
-                });
-                break;
+        // A throwing handler must not take the whole process down.
+        try {
+            handleMessage(ws, user, data);
+        } catch (error) {
+            console.error(`Error handling '${data.type}' from ${user.id}:`, error);
         }
     });
 
     ws.on('close', () => {
         const user = users.get(ws);
+        if (!user) return;
 
         // Añadir mensaje de despedida al chat
-        if (user && user.username) {
+        if (user.username) {
             const goodbyeMessage = {
                 type: 'userChat',
                 userId: 'taberna',
@@ -724,14 +786,12 @@ wss.on('connection', (ws, req) => {
                 isTaberna: true,
                 timestamp: Date.now()
             };
-            ChatLog.push(goodbyeMessage);
+            addToChatLog(goodbyeMessage);
             broadcastAll(goodbyeMessage);
         }
 
         if (user.isInDuel && user.duelOpponent) {
-            const opponentClient = [...wss.clients].find(client =>
-                users.get(client).id === user.duelOpponent
-            );
+            const opponentClient = findClientByUserId(user.duelOpponent);
             if (opponentClient) {
                 const opponent = users.get(opponentClient);
                 opponent.isInDuel = false;

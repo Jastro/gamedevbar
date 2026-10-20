@@ -3,7 +3,7 @@ import * as THREE from 'three';
 export class Scene {
     constructor() {
         this.scene = new THREE.Scene();
-        this.seats = new Map();
+        this.levelTemplate = null;
         this.isLoaded = false;
         this.load();
     }
@@ -13,47 +13,23 @@ export class Scene {
         
         try {
             const loadedScene = await new Promise((resolve, reject) => {
-                loader.load('level.json', 
-                    (loadedScene) => {
-                        // Procesar la escena cargada
-                        loadedScene.traverse((object) => {
-                            if (object.isMesh) {
-                                object.castShadow = true;
-                                object.receiveShadow = true;
-                            }
-
-                            // Procesar sillas y taburetes
-                            if (object.userData && object.userData.type === "seat") {
-                                this.seats.set(object.id, object);
-
-                                if (!object.userData.highlightMaterial) {
-                                    object.userData.highlightMaterial = new THREE.MeshStandardMaterial({
-                                        color: 0x7fff7f,
-                                        emissive: 0x2f2f2f,
-                                    });
-                                }
-
-                                // Guardar material original
-                                if (!object.userData.originalMaterial) {
-                                    object.traverse((child) => {
-                                        if (child.isMesh) {
-                                            child.userData.originalMaterial = child.material;
-                                        }
-                                    });
-                                }
-                            }
-                        });
-                        resolve(loadedScene);
-                    },
-                    undefined,
-                    reject
-                );
+                loader.load('level.json', resolve, undefined, reject);
             });
 
-            // Transferir objetos de la escena cargada a la escena principal
-            while(loadedScene.children.length > 0) {
-                this.scene.add(loadedScene.children[0]);
-            }
+            // level.json holds one room ("Taberna") plus the global lights.
+            // Lights go to the scene once; the rest is cloned per room.
+            const template = loadedScene.getObjectByName('Taberna') ?? loadedScene;
+            const lights = [];
+            template.traverse((object) => {
+                if (object.isLight) lights.push(object);
+            });
+            lights.forEach(light => this.scene.add(light));
+
+            // The front wall is rebuilt with a doorway by World.
+            const frontWall = template.getObjectByName('FrontWall');
+            if (frontWall) frontWall.removeFromParent();
+
+            this.levelTemplate = template;
             this.isLoaded = true;
         } catch (error) {
             console.error('Error loading scene:', error);
@@ -62,6 +38,37 @@ export class Scene {
             this.scene.add(ambientLight);
             this.isLoaded = true;
         }
+    }
+
+    // Returns a fresh copy of the level geometry for one room.
+    // clone() round-trips userData through JSON, so material references are
+    // (re)created here, after cloning.
+    createLevelInstance() {
+        if (!this.levelTemplate) return null;
+
+        const instance = this.levelTemplate.clone();
+        instance.traverse((object) => {
+            if (object.isMesh) {
+                object.castShadow = true;
+                object.receiveShadow = true;
+            }
+
+            // Procesar sillas y taburetes
+            if (object.userData && object.userData.type === "seat") {
+                object.userData.highlightMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x7fff7f,
+                    emissive: 0x2f2f2f,
+                });
+
+                // Guardar material original
+                object.traverse((child) => {
+                    if (child.isMesh) {
+                        child.userData.originalMaterial = child.material;
+                    }
+                });
+            }
+        });
+        return instance;
     }
 
     async waitForLoad() {
@@ -77,10 +84,6 @@ export class Scene {
                 checkLoaded();
             });
         }
-    }
-
-    getSeats() {
-        return this.seats;
     }
 
     add(object) {

@@ -29,6 +29,8 @@
       align-items: center;
       justify-content: flex-start;
       padding-top: 5vh;
+      overflow-y: auto;
+      box-sizing: border-box;
     }
 
     #username-dialog h3 {
@@ -433,6 +435,77 @@
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 
+    .room-selector {
+      margin: 5px 0 0 0;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    .room-selector h4 {
+      font-size: 1.2em;
+      margin: 0 0 0.8em 0;
+    }
+
+    .room-options {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .room-option {
+      min-width: 200px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 2px solid rgba(220, 90, 11, 0.1);
+      border-radius: 12px;
+      padding: 14px 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      outline: none;
+    }
+
+    .room-option:hover,
+    .room-option:focus-visible {
+      transform: translateY(-3px);
+      background: rgba(220, 90, 11, 0.1);
+      border-color: rgba(220, 90, 11, 0.3);
+    }
+
+    .room-option.selected {
+      border-color: #dc5a0b;
+      background: rgba(220, 90, 11, 0.15);
+      box-shadow: 0 0 20px rgba(220, 90, 11, 0.3);
+    }
+
+    .room-option .room-name {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .room-option .room-tagline {
+      font-size: 0.9em;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    #interaction-hint {
+      position: fixed;
+      left: 50%;
+      bottom: 90px;
+      transform: translateX(-50%);
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(220, 90, 11, 0.5);
+      color: #fff;
+      font-size: 15px;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
     @media (max-width: 1366px) {
       #chat-box {
         width: 420px;
@@ -564,9 +637,14 @@
         </div>
       </div>
     </div>
+    <div class="room-selector">
+      <h4>Elige tu bar:</h4>
+      <div class="room-options" id="room-options" role="radiogroup" aria-label="Bar"></div>
+    </div>
     <button id="start-button">Entrar al Bar</button>
   </div>
   <div id="chat-box" class="hidden"></div>
+  <div id="interaction-hint" class="hidden"></div>
   <div id="chat-container" class="hidden">
     <input type="text" id="chat-input" placeholder="Escribe tu mensaje... (Enter para enviar, /me para emotes)"
       maxlength="200" />
