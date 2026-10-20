@@ -61,9 +61,8 @@ Arcade sounds are plain `THREE.Audio` (not positional, not occluded).
 ## Radio (shared stations)
 
 Each room's radio (`src/world/Radio.js`) plays the room's **shared station**: live Spanish internet
-radio (`src/audio/radioStations.js`), or *Taberna FM*, the old El Fary loop. Taberna FM starts at
-`serverTime % duration`, so everyone hears the same bit. A live stream is the same broadcast for everyone
-anyway (± the browser's buffer). Clicking a radio opens the station picker (`src/ui/RadioUI.js`). A change goes
+radio only (`src/audio/radioStations.js`), so everyone hears the same broadcast (± the browser's buffer).
+Defaults: Gamedev LOS40 Classic, Desarrollo Rock FM. The old El Fary mp3 loop was removed (2026-10-21). Clicking a radio opens the station picker (`src/ui/RadioUI.js`). A change goes
 `radioSet` → server → `radioState` to everyone, with a 📻 chat line; newcomers get `radioStates`. Rooms
 nobody has changed play their `RoomLayout` `radioStation`. *Silenciar para mí* is local.
 

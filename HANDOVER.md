@@ -11,6 +11,8 @@ Next step: Jastro merges both PRs, adds the `TURN_SECRET` repo secret and opens 
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Removed the El Fary mp3 loop ("Taberna FM"): radios play live stations only; Gamedev
+  defaults to LOS40 Classic.
 - 2026-10-21 Shared radio (13 live Spanish stations + Taberna FM synced to the server clock, per-room
   station picked by clicking the radio) and a shared YouTube projector on each room's right wall (CSS3D
   iframe behind a hole in the canvas, server-clock sync, pause/resume/stop, volume by distance/walls).

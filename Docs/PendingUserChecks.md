@@ -31,7 +31,7 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       hear without dropping, *Desactivar micrófono* turns off the browser's mic indicator, choice survives reload.
 - [ ] **Shared radio.** Two players in the same bar: click the radio, pick a station; both hear it
       switch (📻 line in chat). Check each station plays (list in `src/audio/radioStations.js`), volume vs.
-      voices, muffling from the street, "Silenciar para mí", Taberna FM at the same point for both.
+      voices, muffling from the street, "Silenciar para mí".
 - [ ] **Projector.** Click the right-wall screen, paste a YouTube link: everyone in the bar sees it at the
       same moment (±1-2 s), pause/resume/off from either side, a late joiner jumps to the right spot.
       Check: the video looks right on the wall from different angles, players walking in front cover it,

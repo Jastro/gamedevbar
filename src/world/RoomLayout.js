@@ -26,7 +26,7 @@ export const ROOMS = [
         tagline: 'La taberna de siempre',
         barSign: 'Gamedev MV',
         paintings: true,
-        radioStation: 'taberna-fm', // until someone changes it (src/audio/radioStations.js)
+        radioStation: 'los40-classic', // until someone changes it (src/audio/radioStations.js)
         origin: { x: 0, z: 0 },
         rotationY: 0
     },

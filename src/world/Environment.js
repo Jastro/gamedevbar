@@ -68,7 +68,7 @@ export class Environment {
         if (this.audioListener) return;
         this.audioListener = new THREE.AudioListener();
         camera.add(this.audioListener);
-        this.rooms.forEach(({ radio }) => radio.initializeAudio(this.audioListener, this.serverClock));
+        this.rooms.forEach(({ radio }) => radio.initializeAudio(this.audioListener));
     }
 
     update(deltaTime, listenerPosition) {

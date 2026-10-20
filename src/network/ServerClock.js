@@ -1,5 +1,5 @@
-// Estimate of the server's clock, so shared media (Taberna FM loop, projector
-// videos) play at the same position for everyone. Each server timestamp is
+// Estimate of the server's clock, so shared media (projector videos) play at
+// the same position for everyone. Each server timestamp is
 // already a bit old when it arrives; the largest (serverTime - localTime)
 // seen is the one with the least network delay, so keep that.
 export class ServerClock {

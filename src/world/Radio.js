@@ -19,7 +19,6 @@ export class Radio {
         this.radio = null;
         this.stationId = null;
         this.mutedLocally = false;
-        this.serverClock = null;
     }
 
     create() {
@@ -108,10 +107,9 @@ export class Radio {
     }
 
     // Called once the player has entered (audio needs that click).
-    initializeAudio(listener, serverClock) {
+    initializeAudio(listener) {
         if (this.sound) return;
         this.audioListener = listener;
-        this.serverClock = serverClock;
 
         this.element = new Audio();
         // Required for Web Audio to get the samples of a cross-origin stream.
@@ -119,7 +117,6 @@ export class Radio {
         this.element.preload = 'none';
         this.element.addEventListener('error', () => this.scheduleRetry());
         this.element.addEventListener('ended', () => this.scheduleRetry());
-        this.element.addEventListener('loadedmetadata', () => this.alignLoop());
 
         this.sound = new THREE.PositionalAudio(listener);
         this.sound.setVolume(this.mutedLocally ? 0 : RADIO_VOLUME);
@@ -155,22 +152,13 @@ export class Radio {
             this.element.load();
             return;
         }
-        this.element.loop = Boolean(station.loop);
         this.element.src = station.url;
         this.element.play().catch(error => console.warn(`Radio: can't play ${station.id}`, error));
     }
 
-    // Taberna FM is a file, not a broadcast: start it where the server clock
-    // says, so the whole bar hears the same bit of the song.
-    alignLoop() {
-        const duration = this.element.duration;
-        if (!this.station?.loop || !Number.isFinite(duration) || duration <= 0) return;
-        this.element.currentTime = (this.serverClock.now() / 1000) % duration;
-    }
-
     // Live streams drop now and then; reconnect to the same station.
     scheduleRetry() {
-        if (!this.station || this.station.loop) return;
+        if (!this.station) return;
         clearTimeout(this.retryTimer);
         this.retryTimer = setTimeout(() => this.playCurrent(), RETRY_DELAY);
     }
