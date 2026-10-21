@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { LightSwitches, DEFAULT_LIGHTS } from './LightSwitches';
+import { Car } from './Car';
 import { Bar } from './Bar';
 import { Furniture } from './Furniture';
 import { Radio } from './Radio';
@@ -65,6 +66,10 @@ export class Environment {
             this.doors.set(contents.door.id, contents.door);
         });
 
+        // The street's car (world coordinates, not part of a room).
+        this.car = new Car(this.world.scene, this.world.collisionManager);
+        this.car.create();
+
         // Gamedev room shortcuts, kept for code that predates multiple rooms.
         const main = this.rooms.get(DEFAULT_ROOM_ID);
         this.radio = main.radio;
@@ -109,6 +114,7 @@ export class Environment {
     }
 
     update(deltaTime, listenerPosition) {
+        this.car?.update(deltaTime);
         this.doors.forEach(door => door.update(deltaTime));
         if (listenerPosition) this.updateAudioOcclusion(listenerPosition);
         this.rooms.forEach(({ projector }) => projector.update(listenerPosition, this, this.world));

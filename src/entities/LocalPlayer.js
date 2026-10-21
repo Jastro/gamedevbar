@@ -70,11 +70,13 @@ export class LocalPlayer extends Player {
         this.isJumping = false;
         this.verticalSpeed = 0;
 
-        // Face the table (chairs), or the bar for stools
-        // (stools sit at room-local z < 0; the counter is at room-local z = -3)
+        // Face the table (chairs), a fixed way (car seats), or the bar for
+        // stools (stools sit at room-local z < 0; the counter is at z = -3)
         const room = this.game.world.getRoomForObject(seat);
         const faceTarget = seat.userData.faceTarget;
-        if (room && faceTarget) {
+        if (seat.userData.faceYaw !== undefined) {
+            this.rotation = seat.userData.faceYaw;
+        } else if (room && faceTarget) {
             const target = room.toWorld(faceTarget.x, this.position.y, faceTarget.z);
             this.rotation = Math.atan2(target.x - this.position.x, target.z - this.position.z);
         } else if (room && seat.position.z < 0) {
@@ -83,23 +85,31 @@ export class LocalPlayer extends Player {
             this.rotation = Math.atan2(direction.x, direction.z);
         }
 
+        this.seat = seat;
         // Notificar al servidor
         this.game.network.send('userSat', {
-            seatId: seat.id
+            seatId: seat.userData.seatId ?? seat.id
         });
     }
 
-    standUp() {
+    // landAt: stand up somewhere else (the car's teleport) instead of where
+    // we sat down from.
+    standUp(landAt = null) {
         if (!this.isSitting) return;
 
         // Restaurar posición anterior
-        if (this.previousPosition) {
+        if (landAt) {
+            this.position.copy(landAt);
+        } else if (this.previousPosition) {
             this.position.copy(this.previousPosition);
             this.rotation = this.previousRotation;
         }
 
+        const seat = this.seat;
+        this.seat = null;
         this.game.network.send('userStood', {});
         this.isSitting = false;
+        seat?.userData.onStand?.(this);
     }
     // Frame-rate independent: speeds are per second. The velocity eases
     // toward the input (no instant start/stop), the avatar turns smoothly,
