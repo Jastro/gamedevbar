@@ -7,7 +7,11 @@ export class CollisionManager {
 
     addCollider(mesh, type = 'box') {
         const box = new THREE.Box3();
-        box.setFromObject(mesh);
+        // Every collider is static (doors toggle `enabled` instead of moving
+        // their blocker), so the box is measured once, on the first check,
+        // when the room groups are in place. Re-measuring every collider on
+        // every check used to cost frames while walking.
+        let measured = false;
         const collider = {
             mesh,
             box,
@@ -15,7 +19,12 @@ export class CollisionManager {
             // Doors toggle this instead of being added/removed.
             enabled: true,
             update: () => {
+                mesh.updateWorldMatrix(true, false);
                 box.setFromObject(mesh);
+                measured = true;
+            },
+            ensureMeasured: () => {
+                if (!measured) collider.update();
             }
         };
         this.colliders.push(collider);
@@ -32,7 +41,7 @@ export class CollisionManager {
 
         for (const collider of this.colliders) {
             if (!collider.enabled) continue;
-            collider.update();
+            collider.ensureMeasured();
             if (playerBox.intersectsBox(collider.box)) {
                 return true;
             }

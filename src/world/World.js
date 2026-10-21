@@ -182,11 +182,11 @@ export class World {
         return gradientMap;
     }
 
-    update() {
-        this.collisionManager.update();
-    }
+    // Colliders are static and measured once (CollisionManager), so there's
+    // nothing to refresh per frame.
+    update() {}
 
-    checkCollision(position) {
-        return this.collisionManager.checkCollision(position);
+    checkCollision(position, radius) {
+        return this.collisionManager.checkCollision(position, radius);
     }
 }
