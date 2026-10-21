@@ -1,6 +1,6 @@
 import { PTT_KEY } from './VoiceUI';
 
-const VOLUME_LABELS = { radio: '📻 Radio', video: '📽️ Proyector', voice: '🗣️ Voces' };
+const VOLUME_LABELS = { radio: '📻 Radio', video: '📽️ Proyector', voice: '🗣️ Voces', arcade: '🕹️ Arcade' };
 
 // Sound settings panel, opened with the ⚙️ button next to the mic button:
 // volume sliders (radio, projector, voices; remembered per player), input

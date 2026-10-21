@@ -178,6 +178,16 @@ export class VirconCabinet {
         }
     }
 
+    // The emulator page's audio tap ({ context, tap, output, stream }), once
+    // SDL2 has created its AudioContext (see tools/vircon32/shell.html).
+    getEmulatorAudio() {
+        try {
+            return this.iframe?.contentWindow?.virconAudio ?? null;
+        } catch {
+            return null;
+        }
+    }
+
     getScreenCenter() {
         return this.group.localToWorld(new THREE.Vector3(0, SCREEN_Y, SCREEN_Z));
     }

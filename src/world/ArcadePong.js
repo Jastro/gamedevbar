@@ -94,6 +94,12 @@ export class ArcadePong {
         if (window.game && window.game.camera) {
             window.game.camera.getCamera().add(listener);
         }
+        // Its own listener, so the Arcade volume slider is its master gain.
+        const settings = window.game?.audioSettings;
+        listener.setMasterVolume(settings?.get('arcade') ?? 1);
+        settings?.on('change', ({ category, value }) => {
+            if (category === 'arcade') listener.setMasterVolume(value);
+        });
 
         const audioLoader = new THREE.AudioLoader();
 
