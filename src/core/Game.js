@@ -15,6 +15,9 @@ import { VirconSync } from '../world/VirconSync';
 import { LightsSync } from '../world/LightsSync';
 import { RoomLighting } from '../rendering/RoomLighting';
 import { createLightSwitchInteraction } from '../interactions/lightSwitchInteraction';
+import { createWebGameInteraction } from '../interactions/webGameInteraction';
+import { createCarInteraction } from '../interactions/carInteraction';
+import { CarSync } from '../world/CarSync';
 import { VirconSpectating } from '../vircon/VirconSpectating';
 import { ServerClock } from '../network/ServerClock';
 import { AudioSettings } from '../audio/AudioSettings';
@@ -75,6 +78,7 @@ export class Game {
         this.projectorSync = new ProjectorSync(this);
         this.virconSync = new VirconSync(this);
         this.lightsSync = new LightsSync(this);
+        this.carSync = new CarSync(this);
         this.lighting = new RoomLighting(this);
         this.virconSpectating = new VirconSpectating(this);
         // Set while the local player is at an arcade screen ({ hint }): movement
@@ -94,6 +98,8 @@ export class Game {
         this.interactions.register(createProjectorInteraction(this));
         this.interactions.register(createVirconInteraction(this));
         this.interactions.register(createLightSwitchInteraction(this));
+        this.interactions.register(createWebGameInteraction(this));
+        this.interactions.register(createCarInteraction(this));
 
         this.clock = new THREE.Clock();
 
@@ -186,6 +192,7 @@ export class Game {
         this.projectorSync.bind();
         this.virconSync.bind();
         this.lightsSync.bind();
+        this.carSync.bind();
         this.virconSpectating.bind();
         bindArcadeNetwork(this);
 

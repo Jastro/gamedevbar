@@ -2,8 +2,9 @@
 
 ## Start here
 2026-10-21. Working toward forum embeds. Direct links, 👤 menu, arcade spectating and the controls/movement
-rework are merged (#18-#20). `feature/interactions-tables-lights` (PR open): F everywhere, run, tables,
-chairs, empty-room pause, light switches. Next: Borja's checks in `Docs/PendingUserChecks.md`.
+rework, interactions/tables/lights and appearance part 1 are merged (#18-#21, #23). `feature/car-pokebonk`
+(#22, open; main merged in): chairs face tables, shorter jump, Enter to chat, Pokebonk cabinet, the smoke
+car. Next: Borja's checks in `Docs/PendingUserChecks.md`.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
@@ -16,6 +17,18 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Car, Pokebonk, small fixes (plan `Docs/Plans done/2026-10-21-car-pokebonk-plan.md`):
+  - **Chairs:** they faced sideways and now face their table (verified for all 24).
+  - **Jump:** 1.43 high and 0.6 s in the air.
+  - **Chat:** Enter focuses it.
+  - **Cabinets:** the Vircon32 moved to x 12.5, and a Pokebonk cabinet plays the site on its screen
+    (verified: it loads in the frame, and Salir restores everything). The Vircon32 still plays.
+  - **Smoke car** (verified with two clients):
+    - countdown 5→3, then smoke and hiss;
+    - fade at 3 s, and the two passengers land at different spots in Desarrollo;
+    - the seats are freed.
+  - **Not judged:** the look of the smoke and car, the hiss volume, and Pokebonk's playability on the
+    cabinet.
 - 2026-10-21 Appearance, part 1 (plan `Docs/Plans done/2026-10-21-appearance-plan.md`):
   - **Items:** 27 accessories built in code: 13 hats (cap, top hat, viking helmet, crown, beret, gamer
     headset, mushroom, ? block, halo, horns, beer helmet, pirate hat, chef hat), 6 face items, and 8 hand

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { LightSwitches, DEFAULT_LIGHTS } from './LightSwitches';
+import { Car } from './Car';
 import { Bar } from './Bar';
 import { Furniture } from './Furniture';
 import { Radio } from './Radio';
@@ -9,7 +10,7 @@ import { ArcadeSnake } from './ArcadeSnake';
 import { Door, DOOR_INTERACT_DISTANCE } from './Door';
 import { Projector } from './Projector';
 import { PresenceBoard } from './PresenceBoard';
-import { VirconCabinet } from './VirconCabinet';
+import { VirconCabinet, CABINETS } from './VirconCabinet';
 import { DEFAULT_ROOM_ID } from './RoomLayout';
 
 // Props and interactive objects. Every room gets its own full set, built in
@@ -42,7 +43,8 @@ export class Environment {
                 door: new Door(room, this.world.collisionManager),
                 projector: new Projector(room, this.serverClock, this.audioSettings),
                 presenceBoard: new PresenceBoard(room),
-                vircon: new VirconCabinet(room, this.world.collisionManager),
+                vircon: new VirconCabinet(room, this.world.collisionManager, CABINETS.vircon),
+                pokebonk: new VirconCabinet(room, this.world.collisionManager, CABINETS.pokebonk),
                 lightSwitches: new LightSwitches(room)
             };
 
@@ -56,12 +58,17 @@ export class Environment {
             contents.projector.create();
             contents.presenceBoard.create();
             contents.vircon.create();
+            contents.pokebonk.create();
             contents.lightSwitches.create();
             if (contents.paintings) this.loadPaintings(contents.paintings);
 
             this.rooms.set(room.id, contents);
             this.doors.set(contents.door.id, contents.door);
         });
+
+        // The street's car (world coordinates, not part of a room).
+        this.car = new Car(this.world.scene, this.world.collisionManager);
+        this.car.create();
 
         // Gamedev room shortcuts, kept for code that predates multiple rooms.
         const main = this.rooms.get(DEFAULT_ROOM_ID);
@@ -107,6 +114,7 @@ export class Environment {
     }
 
     update(deltaTime, listenerPosition) {
+        this.car?.update(deltaTime);
         this.doors.forEach(door => door.update(deltaTime));
         if (listenerPosition) this.updateAudioOcclusion(listenerPosition);
         this.rooms.forEach(({ projector }) => projector.update(listenerPosition, this, this.world));
@@ -133,6 +141,18 @@ export class Environment {
 
     getDoor(doorId) {
         return this.doors.get(doorId);
+    }
+
+    // Every page-playing cabinet (Vircon32, Pokebonk) in every room.
+    getCabinets() {
+        const cabinets = [];
+        this.rooms.forEach(({ vircon, pokebonk }) => cabinets.push(vircon, pokebonk));
+        return cabinets;
+    }
+
+    // By the id the server knows it by (see VirconCabinet.id).
+    getCabinet(cabinetId) {
+        return this.getCabinets().find(cabinet => cabinet.id === cabinetId) ?? null;
     }
 
     // Room lights (LightsSync → here → switches; RoomLighting reads them).

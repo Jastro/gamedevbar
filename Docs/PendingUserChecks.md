@@ -66,6 +66,14 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       `src/vircon/VirconSpectating.js`).
 - [ ] **🕹️ Arcade slider (⚙️).** Changes the Vircon32 sound while you play, a watched game's sound, and
       Snake/Pong sounds; kept after reload.
+- [ ] **Smoke car** (street, between the doors). Two players click it: countdown 🚗💨 5…1, smoke fills
+      the cabin and leaks out, hiss, fade to black, each of you wakes up somewhere different. Does the
+      smoke look good from outside too? Is the hiss too loud or too quiet? Timing OK?
+- [ ] **Pokebonk cabinet** (next to the Vircon32). Click it: the game shows on its screen and takes mouse
+      and keyboard; *✕ Salir* returns you to the bar. If the site refuses to load in the frame, try
+      *↗ Abrir en otra pestaña*. Is the screen big enough to play this way?
+- [ ] **Chairs and jump.** Chairs face their table. The jump is shorter and snappier (still reaches tables?).
+      Enter starts typing in the chat.
 - [ ] **Accessories** (👤 → Accesorios / Color). Try hats, face items and hand items on all six
       characters. Do they sit right (especially hats on the chicken, officer and Santa, which have their
       own headgear)? Too big or too small? Hand items while walking? Does the tint look good, and is the
