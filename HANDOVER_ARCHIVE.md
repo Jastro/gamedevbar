@@ -2,6 +2,55 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-21: spectating, direct links)
+- 2026-10-21 Vircon32 spectating + 🕹️ Arcade slider (plan `Docs/Plans done/2026-10-21-vircon-spectating-plan.md`):
+  - **Who watches:** people within 4.5 of a cabinet see and hear the player's game on its screen (WebRTC
+    from the player: canvas at 30 fps capped at 1 Mbps, plus the emulator's audio tap). At most 6
+    watchers, nearest first. Bundled games only.
+  - **Slider:** the Arcade slider drives the emulator's gain, watched games and Snake/Pong.
+  - **Verified (three in-app clients):**
+    - B at 4 units gets 640×360 frames advancing at about 30 fps, plus audio packets, and its screen
+      shows the game;
+    - out of range → idle, and back in → watching again; the player keeps 1 connection, so none leak;
+    - Esc → idle; the player's socket dropping ends their game, and the watcher → idle;
+    - with the cap set to 1, a nearer C took the slot and B was refused with back-off;
+    - an uploaded cart is not watchable;
+    - an offer to a ghost cabinet is refused by the server at once;
+    - the slider moves the emulator gain and the Snake/Pong master gains.
+  - **Not verified:** two real networks or TURN, quality or delay by eye, and the player's frame rate
+    while streaming.
+  - **Bug fix (old):** the `virconStates` join snapshot never cleared cabinets freed during a reconnect.
+- 2026-10-21 Direct links + customization (plan `Docs/Plans done/2026-10-21-direct-join-plan.md`):
+  - **Links:** `/<roomId>` skips the start dialog. You see a loading card, then the bar.
+  - **First visit:** `Parroquiano NNNN` and a random character, both remembered, plus a one-time
+    *¿Quieres personalizar tu personaje?* popup.
+  - **👤 menu:** changes nick and character live for everyone.
+  - **Shared memory:** `/` pre-fills the remembered nick.
+  - **Sound:** on a direct link it starts on the first click or key.
+  - **Bug fix:** below ~900 px the 😊/🎙️/⚙️ buttons were off-screen. They now sit in a row above the chat
+    input.
+  - **Verified (two in-app clients):**
+    - production routes (`/Gamedev/`, `/foo` → app; files still served; `/a/b` 404);
+    - a fresh `/desarrollo` gives a placeholder and a random model in Desarrollo with no preview canvases;
+    - a reload keeps both;
+    - `/` shows the dialog pre-filled;
+    - `/foo` shows the dialog;
+    - the profile functions work with `localStorage` throwing;
+    - popup *Sí* opens the menu, and B saw A's new name and model live;
+    - an empty nick is ignored, and reopening keeps 6 canvases;
+    - the buttons are on screen at 375 and 820 px.
+  - **Not verified:** the autoplay unlock, because the in-app browser doesn't block autoplay, so the
+    suspended → running path was never exercised.
+  - **Fixed after review:**
+    - `/gamedev/` redirects to `/gamedev`, and `level.json` plus the bathroom sounds now load from absolute
+      paths. Before, a trailing slash gave an empty scene.
+    - The audio unlock retries until the context runs.
+    - ⚙️ fits on phones.
+    - A model change mid-load keeps the latest pick, and the menu previews resize.
+    - The popup can't open twice on reconnect.
+  - **Bug fix:** every model change kept the previous model attached to the avatar (`Player.loadModel`
+    matched it as an undefined "chat sprite"). Verified: after three quick changes, one model is left.
+
 ## Done (2026-10-21, before direct links)
 - 2026-10-21 Camera controls: middle-drag pans (clamped to 3 units), R resets zoom/angle/pan (also from
   inside the emulator), the wheel zooms only over the 3D view (no zoom while scrolling panels like the

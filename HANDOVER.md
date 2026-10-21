@@ -1,9 +1,9 @@
 # Handover
 
 ## Start here
-2026-10-21. Working toward forum embeds. Direct links, 👤 menu and arcade spectating are merged
-(#18, #19). `feature/controls-and-movement` (PR open) adds the controls change and the movement rework.
-Next: Borja's checks in `Docs/PendingUserChecks.md`, on the server.
+2026-10-21. Working toward forum embeds. Direct links, 👤 menu, arcade spectating and the controls/movement
+rework are merged (#18-#20). `feature/interactions-tables-lights` (PR open): F everywhere, run, tables,
+chairs, empty-room pause, light switches. Next: Borja's checks in `Docs/PendingUserChecks.md`.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
@@ -16,6 +16,28 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Interactions, tables, lights (plan `Docs/Plans done/2026-10-21-interactions-tables-lights-plan.md`):
+  - **F everywhere:** F works for everything, and the target is the nearest thing in front of you.
+  - **Chairs:** they're seats now, at chair height, facing the table.
+  - **Running:** Shift (5.5 units/s).
+  - **Tables:** you can stand on them, and all other colliders block at any height.
+  - **Empty rooms:** their radio and projector pause after 30 s and resume live.
+  - **Light switches:** normal / low / disco, shared per room.
+  - **Bug fixes:** stools and chairs never highlighted on hover; jumping onto a table landed you inside
+    it; a jump could carry you over the bar or a fence.
+  - **Verified in-app:**
+    - F hints for chair, stool, radio (when facing it), Pong, Snake, projector, door, Vircon32, the three
+      switches, and nothing in open space;
+    - Shift: 5.1 units in the first second;
+    - you can't walk through a table; jumping onto one stands you at y 2.03, and walking off drops you
+      to the floor;
+    - jumping at the bar doesn't land you on it;
+    - a chair sits you at y 1 facing the table;
+    - the radio goes dormant 30 s after the room empties and comes back live on entry (projector logic
+      checked with a stub player; the in-app browser's YouTube player never became ready);
+    - switches sync between two clients, a late joiner gets the snapshot, and the lighting follows
+      (low: ambient 0.18 warm; disco: three moving colored lights; all off: dark).
+  - **Not judged:** the look and feel.
 - 2026-10-21 Controls and movement (`feature/controls-and-movement`):
   - **Controls:** Q/E rotate the camera, F interacts (E did before), a right click opens the emojis at the
     cursor (a right drag still rotates), and a ❔ button lists every control. *Guardar* closes the 👤 menu,
@@ -43,53 +65,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     - the radio label is readable;
     - a second client sees the moved player converge, rotation included.
   - **Not judged:** the feel. That's for Borja.
-- 2026-10-21 Vircon32 spectating + 🕹️ Arcade slider (plan `Docs/Plans done/2026-10-21-vircon-spectating-plan.md`):
-  - **Who watches:** people within 4.5 of a cabinet see and hear the player's game on its screen (WebRTC
-    from the player: canvas at 30 fps capped at 1 Mbps, plus the emulator's audio tap). At most 6
-    watchers, nearest first. Bundled games only.
-  - **Slider:** the Arcade slider drives the emulator's gain, watched games and Snake/Pong.
-  - **Verified (three in-app clients):**
-    - B at 4 units gets 640×360 frames advancing at about 30 fps, plus audio packets, and its screen
-      shows the game;
-    - out of range → idle, and back in → watching again; the player keeps 1 connection, so none leak;
-    - Esc → idle; the player's socket dropping ends their game, and the watcher → idle;
-    - with the cap set to 1, a nearer C took the slot and B was refused with back-off;
-    - an uploaded cart is not watchable;
-    - an offer to a ghost cabinet is refused by the server at once;
-    - the slider moves the emulator gain and the Snake/Pong master gains.
-  - **Not verified:** two real networks or TURN, quality or delay by eye, and the player's frame rate
-    while streaming.
-  - **Bug fix (old):** the `virconStates` join snapshot never cleared cabinets freed during a reconnect.
-- 2026-10-21 Direct links + customization (plan `Docs/Plans done/2026-10-21-direct-join-plan.md`):
-  - **Links:** `/<roomId>` skips the start dialog. You see a loading card, then the bar.
-  - **First visit:** `Parroquiano NNNN` and a random character, both remembered, plus a one-time
-    *¿Quieres personalizar tu personaje?* popup.
-  - **👤 menu:** changes nick and character live for everyone.
-  - **Shared memory:** `/` pre-fills the remembered nick.
-  - **Sound:** on a direct link it starts on the first click or key.
-  - **Bug fix:** below ~900 px the 😊/🎙️/⚙️ buttons were off-screen. They now sit in a row above the chat
-    input.
-  - **Verified (two in-app clients):**
-    - production routes (`/Gamedev/`, `/foo` → app; files still served; `/a/b` 404);
-    - a fresh `/desarrollo` gives a placeholder and a random model in Desarrollo with no preview canvases;
-    - a reload keeps both;
-    - `/` shows the dialog pre-filled;
-    - `/foo` shows the dialog;
-    - the profile functions work with `localStorage` throwing;
-    - popup *Sí* opens the menu, and B saw A's new name and model live;
-    - an empty nick is ignored, and reopening keeps 6 canvases;
-    - the buttons are on screen at 375 and 820 px.
-  - **Not verified:** the autoplay unlock, because the in-app browser doesn't block autoplay, so the
-    suspended → running path was never exercised.
-  - **Fixed after review:**
-    - `/gamedev/` redirects to `/gamedev`, and `level.json` plus the bathroom sounds now load from absolute
-      paths. Before, a trailing slash gave an empty scene.
-    - The audio unlock retries until the context runs.
-    - ⚙️ fits on phones.
-    - A model change mid-load keeps the latest pick, and the menu previews resize.
-    - The popup can't open twice on reconnect.
-  - **Bug fix:** every model change kept the previous model attached to the avatar (`Player.loadModel`
-    matched it as an undefined "chat sprite"). Verified: after three quick changes, one model is left.
+- 2026-10-21 Vircon32 spectating + Arcade slider (#19), and direct links + 👤 menu (#18). Details in
+  [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - Earlier 2026-10-21 (details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md)):
   - camera pan/reset, with Vircon32 played on the arcade screen;
   - 21 bundled Vircon32 games;

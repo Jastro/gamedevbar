@@ -66,6 +66,15 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       `src/vircon/VirconSpectating.js`).
 - [ ] **🕹️ Arcade slider (⚙️).** Changes the Vircon32 sound while you play, a watched game's sound, and
       Snake/Pong sounds; kept after reload.
+- [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a
+      friend: both of you see the same thing. Does low look cosy, all off dark enough, disco fun
+      (`RoomLighting.js`: `LEVELS`, `DISCO_*`)? Frame rate with disco on?
+- [ ] **Tables and chairs.** Jump onto a table and walk around on it, then off; you can't walk through one.
+      Sit on a chair (click or F): lower than a stool, facing the table. Shift runs: speed OK?
+- [ ] **F everywhere.** F near a chair, stool, the radio (facing it), the projector, Pong, Snake and a
+      light switch: the hint names the right thing.
+- [ ] **Empty bar pauses.** From Gamedev with the doors open, Desarrollo's radio is faintly audible; 30 s
+      after the last person leaves Desarrollo it goes quiet, and walking in brings it back live.
 - [ ] **Movement feel** (reworked 2026-10-21). Walk around both bars, through the doors and along the
       walls. Expected: the same speed whatever the frame rate, a short ramp up and down instead of an
       instant start/stop, smooth turning, sliding along walls, and getting eased through a door when
