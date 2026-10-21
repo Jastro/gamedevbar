@@ -23,6 +23,8 @@ const DISCO_RADIUS = { x: 8, z: 5 }; // room-local ellipse they circle
 const DISCO_SPEED = 0.8; // rad/s
 const DISCO_INTENSITY = 14;
 const DISCO_DISTANCE = 22;
+const LEVEL_COLORS = Object.fromEntries(Object.entries(LEVELS).map(([name, level]) => [name, new THREE.Color(level.ambientColor)]));
+const scratch = new THREE.Vector3();
 
 export class RoomLighting {
     constructor(game) {
@@ -62,10 +64,11 @@ export class RoomLighting {
         const room = position ? world.getRoomAt(position) : null;
         const state = room ? environment.getLights(room.id) : DEFAULT_LIGHTS;
 
-        const level = state.normal ? LEVELS.normal : state.low ? LEVELS.low : LEVELS.off;
+        const levelName = state.normal ? 'normal' : state.low ? 'low' : 'off';
+        const level = LEVELS[levelName];
         const t = 1 - Math.exp(-FADE_RATE * dt);
         if (this.ambient) {
-            const targetColor = level === LEVELS.normal ? this.base.ambientColor : new THREE.Color(level.ambientColor);
+            const targetColor = levelName === 'normal' ? this.base.ambientColor : LEVEL_COLORS[levelName];
             this.ambient.color.lerp(targetColor, t);
             this.ambient.intensity += (this.base.ambient * level.ambient - this.ambient.intensity) * t;
         }
@@ -80,9 +83,8 @@ export class RoomLighting {
                 return;
             }
             const angle = this.time * DISCO_SPEED + (i * Math.PI * 2) / DISCO_LIGHTS;
-            light.position.copy(room.toWorld(
-                Math.cos(angle) * DISCO_RADIUS.x, DISCO_HEIGHT, Math.sin(angle * 1.3) * DISCO_RADIUS.z
-            ));
+            scratch.set(Math.cos(angle) * DISCO_RADIUS.x, DISCO_HEIGHT, Math.sin(angle * 1.3) * DISCO_RADIUS.z);
+            light.position.copy(room.root.localToWorld(scratch));
             light.color.setHSL((this.time * 0.15 + i / DISCO_LIGHTS) % 1, 1, 0.5);
             const pulse = 0.6 + 0.4 * Math.sin(this.time * 7 + i * 2);
             light.intensity = DISCO_INTENSITY * this.discoLevel * pulse;

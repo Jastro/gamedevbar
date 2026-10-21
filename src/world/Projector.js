@@ -188,6 +188,11 @@ export class Projector {
                     onReady: () => {
                         this.playerReady = true;
                         this.player.setVolume(0);
+                        // The room emptied while YouTube was loading.
+                        if (this.dormant) {
+                            this.player.stopVideo();
+                            return;
+                        }
                         // A different video may have been chosen while loading.
                         if (this.state && this.state.videoId !== videoId) {
                             this.player.loadVideoById({ videoId: this.state.videoId, startSeconds: this.expectedPosition() });

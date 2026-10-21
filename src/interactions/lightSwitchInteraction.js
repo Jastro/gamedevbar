@@ -12,7 +12,9 @@ export function createLightSwitchInteraction(game) {
             const { switches, light } = object.userData;
             const player = game.players.localPlayer;
             if (!player || player.isSitting) return;
-            if (switches.distanceTo(player.position, light) > SWITCH_REACH) {
+            // From inside that bar only (clicks can pick it through the wall).
+            const inside = game.world.getRoomAt(player.position) === switches.room;
+            if (!inside || switches.distanceTo(player.position, light) > SWITCH_REACH) {
                 game.ui.chat?.addMessage({ type: 'system', message: '¡Acércate más al interruptor!' });
                 return;
             }

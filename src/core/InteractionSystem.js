@@ -114,9 +114,14 @@ export class InteractionSystem {
             const object = interaction.findNearby(position);
             if (object) consider(interaction, object);
         }
+        // Only things in the space you're in (a light switch is 0.6 away
+        // from the street, through the wall).
+        const world = this.game.world;
+        const here = world.getRoomAt(position);
         for (const object of this.getInteractables()) {
             const interaction = this.interactions.get(object.userData.type);
             if (!interaction?.range || interaction.findNearby) continue;
+            if (world.getRoomForObject(object) !== here) continue;
             if (horizontalDistance(position, object.getWorldPosition(scratch)) <= interaction.range) {
                 consider(interaction, object);
             }
