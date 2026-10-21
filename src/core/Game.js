@@ -12,6 +12,9 @@ import { DoorSync } from '../world/DoorSync';
 import { RadioSync } from '../world/RadioSync';
 import { ProjectorSync } from '../world/ProjectorSync';
 import { VirconSync } from '../world/VirconSync';
+import { LightsSync } from '../world/LightsSync';
+import { RoomLighting } from '../rendering/RoomLighting';
+import { createLightSwitchInteraction } from '../interactions/lightSwitchInteraction';
 import { VirconSpectating } from '../vircon/VirconSpectating';
 import { ServerClock } from '../network/ServerClock';
 import { AudioSettings } from '../audio/AudioSettings';
@@ -71,6 +74,8 @@ export class Game {
         this.radioSync = new RadioSync(this);
         this.projectorSync = new ProjectorSync(this);
         this.virconSync = new VirconSync(this);
+        this.lightsSync = new LightsSync(this);
+        this.lighting = new RoomLighting(this);
         this.virconSpectating = new VirconSpectating(this);
         // Set while the local player is at an arcade screen ({ hint }): movement
         // and world clicks are off, the camera is fixed.
@@ -88,6 +93,7 @@ export class Game {
         this.interactions.register(createDoorInteraction(this));
         this.interactions.register(createProjectorInteraction(this));
         this.interactions.register(createVirconInteraction(this));
+        this.interactions.register(createLightSwitchInteraction(this));
 
         this.clock = new THREE.Clock();
 
@@ -165,6 +171,7 @@ export class Game {
         this.network.connect();
         this.world.create();
         this.environment.create();
+        this.lighting.init();
         this.radioSync.applyDefaults();
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
         this.bindNetwork();
@@ -178,6 +185,7 @@ export class Game {
         this.radioSync.bind();
         this.projectorSync.bind();
         this.virconSync.bind();
+        this.lightsSync.bind();
         this.virconSpectating.bind();
         bindArcadeNetwork(this);
 
@@ -264,6 +272,7 @@ export class Game {
         this.soccerGame.update(deltaTime);
         this.environment.update(deltaTime, playerPosition);
         this.environment.updateDormancy(this.players.players.values());
+        this.lighting.update(deltaTime);
         this.voice.update(playerPosition);
         this.ui.vircon.update();
         this.virconSpectating.update(playerPosition);

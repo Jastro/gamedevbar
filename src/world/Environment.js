@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { LightSwitches, DEFAULT_LIGHTS } from './LightSwitches';
 import { Bar } from './Bar';
 import { Furniture } from './Furniture';
 import { Radio } from './Radio';
@@ -41,7 +42,8 @@ export class Environment {
                 door: new Door(room, this.world.collisionManager),
                 projector: new Projector(room, this.serverClock, this.audioSettings),
                 presenceBoard: new PresenceBoard(room),
-                vircon: new VirconCabinet(room, this.world.collisionManager)
+                vircon: new VirconCabinet(room, this.world.collisionManager),
+                lightSwitches: new LightSwitches(room)
             };
 
             contents.bar.create();
@@ -54,6 +56,7 @@ export class Environment {
             contents.projector.create();
             contents.presenceBoard.create();
             contents.vircon.create();
+            contents.lightSwitches.create();
             if (contents.paintings) this.loadPaintings(contents.paintings);
 
             this.rooms.set(room.id, contents);
@@ -130,6 +133,15 @@ export class Environment {
 
     getDoor(doorId) {
         return this.doors.get(doorId);
+    }
+
+    // Room lights (LightsSync → here → switches; RoomLighting reads them).
+    setLights(roomId, state) {
+        this.rooms.get(roomId)?.lightSwitches.setState(state);
+    }
+
+    getLights(roomId) {
+        return this.rooms.get(roomId)?.lightSwitches.state ?? DEFAULT_LIGHTS;
     }
 
     setDoorState(doorId, isOpen, instant = false) {
