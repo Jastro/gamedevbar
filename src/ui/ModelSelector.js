@@ -1,49 +1,63 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { loadProfile, saveModel } from '../core/PlayerProfile';
 
+// Character tiles (the `.model-option` elements) with a live 3D preview each.
+// Used by the start dialog and, after entering, by the customization menu.
 export class ModelSelector {
     constructor() {
         this.selectedModel = null;
         this.modelPreviews = new Map();
         this.onModelChangeCallbacks = new Set();
+        this.initialized = false;
+        // Previews render only while their tiles are on screen.
+        this.previewsActive = true;
         this.modelSelectedPromise = new Promise(resolve => {
             this.resolveModelSelection = resolve;
         });
     }
 
+    // Creates the previews (one WebGL context each), so call it while the
+    // tiles are visible, and only once.
     init() {
+        if (this.initialized) return;
+        this.initialized = true;
         const options = document.querySelectorAll('.model-option');
-        
+
         options.forEach(option => {
             const modelId = option.dataset.model;
             const previewContainer = option.querySelector('.model-preview');
-            
+
             if (previewContainer) {
                 this.createModelPreview(modelId, previewContainer);
             }
 
             option.addEventListener('click', () => {
-                options.forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                this.selectedModel = modelId;
-                
-                if (this.resolveModelSelection) {
-                    this.resolveModelSelection(modelId);
-                    this.resolveModelSelection = null;
-                }
-                
+                if (modelId === this.selectedModel) return;
+                this.setSelectedModel(modelId);
                 this.notifyModelChange(modelId);
-                
-                // Guardar el modelo seleccionado en localStorage
-                localStorage.setItem('selectedModel', modelId);
             });
-
-            // Restaurar la selección previa si existe
-            const savedModel = localStorage.getItem('selectedModel');
-            if (savedModel === modelId) {
-                option.click();
-            }
         });
+
+        // A model chosen before the tiles existed (direct join), else the saved one.
+        const initial = this.selectedModel ?? loadProfile().model;
+        if (initial) this.setSelectedModel(initial);
+    }
+
+    setSelectedModel(modelId) {
+        this.selectedModel = modelId;
+        saveModel(modelId);
+        document.querySelectorAll('.model-option').forEach(option => {
+            option.classList.toggle('selected', option.dataset.model === modelId);
+        });
+        if (this.resolveModelSelection) {
+            this.resolveModelSelection(modelId);
+            this.resolveModelSelection = null;
+        }
+    }
+
+    setPreviewsActive(active) {
+        this.previewsActive = active;
     }
 
     createModelPreview(modelId, container) {
@@ -111,7 +125,7 @@ export class ModelSelector {
             requestAnimationFrame(animate);
             
             const preview = this.modelPreviews.get(modelId);
-            if (preview) {
+            if (preview && this.previewsActive) {
                 if (preview.model) {
                     preview.model.rotation.y += 0.01;
                 }
@@ -138,17 +152,6 @@ export class ModelSelector {
 
     notifyModelChange(modelId) {
         this.onModelChangeCallbacks.forEach(callback => callback(modelId));
-        
-        // Si hay un jugador local, actualizar su modelo
-        if (this.game?.players?.localPlayer) {
-            this.game.players.localPlayer.setModel(modelId).then(() => {
-                // Notificar al servidor del cambio de modelo
-                this.game.network.send('setUsername', {
-                    username: this.game.players.localPlayer.username,
-                    selectedModel: modelId
-                });
-            });
-        }
     }
 
     cleanup() {
