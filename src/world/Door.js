@@ -5,7 +5,7 @@ const OPEN_ANGLE = Math.PI / 2;      // swings inward (towards local -z)
 const SWING_SPEED = Math.PI;         // radians per second
 export const DOOR_INTERACT_DISTANCE = 3;
 
-// Front door of a room. Clicking it (or pressing E nearby) asks the server to
+// Front door of a room. Clicking it (or pressing F nearby) asks the server to
 // toggle it; the server broadcasts the new state so everyone sees the same door.
 export class Door {
     constructor(room, collisionManager) {

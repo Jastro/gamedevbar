@@ -1,6 +1,6 @@
 import { VIRCON_INTERACT_DISTANCE } from '../world/VirconCabinet';
 
-// Vircon32 cabinets: click (or E) when close to open the game picker.
+// Vircon32 cabinets: click (or F) when close to open the game picker.
 export function createVirconInteraction(game) {
     const nearestCabinet = (position) => {
         let nearest = null;

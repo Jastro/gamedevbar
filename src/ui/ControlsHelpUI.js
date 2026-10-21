@@ -9,7 +9,8 @@ const SECTIONS = [
         rows: [
             ['W A S D', 'Andar'],
             ['Espacio', 'Saltar'],
-            ['F o clic', 'Usar puertas, sillas, radio, proyector y máquinas'],
+            ['F o clic', 'Abrir puertas, jugar a la Vircon32'],
+            ['Clic', 'Sentarse, radio, proyector, recreativas'],
             ['Q / E', 'Girar la cámara'],
             ['Clic derecho + arrastrar', 'Girar la cámara'],
             ['Rueda', 'Acercar / alejar'],
@@ -17,8 +18,8 @@ const SECTIONS = [
             ['R', 'Centrar la cámara'],
             ['Clic derecho', 'Emojis'],
             ['V (mantener)', 'Hablar por micrófono (en ⚙️: micrófono abierto)'],
-            ['Enter', 'Escribir en el chat (/me para acciones)'],
-            ['Esc', 'Cerrar paneles']
+            ['Clic en el chat', 'Escribir (Enter envía, /me para acciones)'],
+            ['Esc', 'Cerrar paneles y emojis']
         ]
     },
     {

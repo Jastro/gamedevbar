@@ -255,6 +255,9 @@ export class Radio {
         const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.labelTexture, transparent: true }));
         label.position.set(0, LABEL_HEIGHT_ABOVE, 0);
         label.scale.set(LABEL_SCALE, LABEL_SCALE * LABEL_HEIGHT / LABEL_WIDTH, 1);
+        // Just a sign: its (mostly transparent) quad mustn't catch clicks
+        // meant for things behind it, like the Pong cabinet.
+        label.raycast = () => {};
         radioGroup.add(label);
         this.drawLabel();
     }

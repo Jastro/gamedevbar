@@ -49,6 +49,8 @@ export class LocalPlayer extends Player {
     }
     sitDown(seat) {
         if (this.isSitting) return;
+        // Sat down mid-stride: no walking in place on the seat.
+        this.stopMoving();
 
         // Guardar estado anterior
         this.previousPosition = this.position.clone();

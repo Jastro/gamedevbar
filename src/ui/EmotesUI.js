@@ -57,6 +57,10 @@ export class EmotesUI {
             this.openAt(button.right, button.top - EDGE_MARGIN, 'above');
         });
 
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) this.closePanel();
+        });
+
         // Cerrar panel al hacer click fuera
         document.addEventListener('click', (e) => {
             if (!this.emotesPanel.contains(e.target) && !this.emoteButton.contains(e.target)) {
