@@ -348,6 +348,23 @@
       transition: all 0.15s ease;
     }
 
+    #customize-button {
+      position: absolute;
+      right: -205px;
+      bottom: 4px;
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(40, 40, 40, 0.9);
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      z-index: 1002;
+      transition: all 0.15s ease;
+    }
+
+    #customize-button:hover,
     #voice-settings-button:hover,
     #voice-settings-button.active {
       background: rgba(220, 90, 11, 0.9);
@@ -581,6 +598,49 @@
     .floating-panel-button:disabled {
       opacity: 0.4;
       cursor: default;
+    }
+
+    #customize-panel {
+      width: min(560px, calc(100% - 32px));
+    }
+
+    #customize-panel .model-selector h4 {
+      font-size: 14px;
+      margin: 4px 0 0;
+    }
+
+    #customize-panel .model-options {
+      gap: 8px;
+      padding: 4px 0;
+    }
+
+    #customize-panel .model-option {
+      padding: 4px;
+    }
+
+    #customize-panel .model-preview {
+      height: 110px;
+    }
+
+    #customize-panel .model-preview canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .customize-name-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .customize-name-row input {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 10px;
+      border: 1px solid rgba(220, 90, 11, 0.4);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-size: 14px;
     }
 
     .floating-panel-note {

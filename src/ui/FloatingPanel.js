@@ -46,6 +46,7 @@ export class FloatingPanel {
     }
 
     close() {
+        if (this.isOpen) this.onClose?.();
         this.isOpen = false;
         this.element.classList.add('hidden');
         if (this.element.contains(document.activeElement)) document.activeElement.blur();

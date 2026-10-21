@@ -18,6 +18,7 @@ import { SoccerGame } from '../world/SoccerGame';
 import { getRoomDefinition, getRoomIdFromPath } from '../world/RoomLayout';
 import { loadProfile, saveName, randomModel, placeholderName } from './PlayerProfile';
 import { LoadingScreen } from '../ui/LoadingScreen';
+import { CustomizeUI } from '../ui/CustomizeUI';
 import { VoiceChat } from '../voice/VoiceChat';
 import { ChatUI } from '@/ui/ChatUI';
 import { ModelSelector } from '../ui/ModelSelector';
@@ -74,6 +75,7 @@ export class Game {
         this.ui.radio = new RadioUI(this);
         this.ui.projector = new ProjectorUI(this);
         this.ui.vircon = new VirconUI(this);
+        this.ui.customize = new CustomizeUI(this);
 
         this.interactions = new InteractionSystem(this);
         this.interactions.register(createSeatInteraction(this));
@@ -123,7 +125,7 @@ export class Game {
     handleLocalPlayerReady() {
         this.loadingScreen?.hide();
         this.loadingScreen = null;
-        if (this.directJoin) this.ui.customize?.maybeAskOnFirstVisit();
+        if (this.directJoin) this.ui.customize.maybeAskOnFirstVisit();
     }
 
     // Typing (chat, or any text field/dropdown in a panel) suspends movement
