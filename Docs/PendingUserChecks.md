@@ -74,6 +74,11 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       *↗ Abrir en otra pestaña*. Is the screen big enough to play this way?
 - [ ] **Chairs and jump.** Chairs face their table. The jump is shorter and snappier (still reaches tables?).
       Enter starts typing in the chat.
+- [ ] **Accessories** (👤 → Accesorios / Color). Try hats, face items and hand items on all six
+      characters. Do they sit right (especially hats on the chicken, officer and Santa, which have their
+      own headgear)? Too big or too small? Hand items while walking? Does the tint look good, and is the
+      size slider range OK? A friend should see everything live. Tune per character in
+      `src/appearance/Accessories.js` (`HEADS`) and per item in `items.js`.
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a
       friend: both of you see the same thing. Does low look cosy, all off dark enough, disco fun
       (`RoomLighting.js`: `LEVELS`, `DISCO_*`)? Frame rate with disco on?

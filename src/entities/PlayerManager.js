@@ -1,4 +1,5 @@
 import { LocalPlayer } from './LocalPlayer';
+import { loadAppearance } from '../core/PlayerProfile';
 import { RemotePlayer } from './RemotePlayer';
 import { Vector3 } from 'three';
 import { getSpawnPosition } from '../world/RoomLayout';
@@ -29,21 +30,25 @@ export class PlayerManager {
         
         // Añadir el jugador al mapa inmediatamente para evitar duplicados
         this.players.set(data.userId, this.localPlayer);
+        this.localPlayer.setAppearance(loadAppearance());
         
         // Establecer el modelo
         this.localPlayer.setModel(selectedModel).then(() => {
             // The 👤 menu may have changed the model while it loaded.
             const model = this.localPlayer.selectedModel;
             // Enviar información al servidor después de cargar el modelo
+            const appearance = this.localPlayer.appearance;
             this.game.network.send('setUsername', {
                 username: this.game.username,
-                selectedModel: model
+                selectedModel: model,
+                appearance
             });
 
             // Enviar initCompleted después
             this.game.network.send('initCompleted', {
                 username: this.game.username,
-                selectedModel: model
+                selectedModel: model,
+                appearance
             });
             this.game.handleLocalPlayerReady();
         }).catch(error => {
@@ -60,6 +65,7 @@ export class PlayerManager {
         // Verificar si el jugador ya existe
         const existingPlayer = this.players.get(data.userId);
         if (existingPlayer) {
+            if (data.appearance) existingPlayer.setAppearance(data.appearance);
             if (data.username) existingPlayer.setUsername(data.username);
             if (data.selectedModel && existingPlayer.selectedModel !== data.selectedModel) {
                 existingPlayer.setModel(data.selectedModel);
@@ -76,6 +82,7 @@ export class PlayerManager {
 
         // Crear nuevo jugador remoto
         const player = new RemotePlayer(data.userId, position, this.game);
+        if (data.appearance) player.setAppearance(data.appearance);
         
         // Primero añadir al mapa de jugadores
         this.players.set(data.userId, player);
@@ -115,6 +122,7 @@ export class PlayerManager {
             const position = new Vector3(0, 1, 0);
             const newPlayer = new RemotePlayer(data.userId, position, this.game);
             this.players.set(data.userId, newPlayer);
+            if (data.appearance) newPlayer.setAppearance(data.appearance);
             
             if (data.selectedModel) {
                 newPlayer.setModel(data.selectedModel).then(() => {
@@ -129,6 +137,7 @@ export class PlayerManager {
         }
 
         // Actualizar jugador existente
+        if (data.appearance && player !== this.localPlayer) player.setAppearance(data.appearance);
         if (data.username) {
             player.setUsername(data.username);
         }

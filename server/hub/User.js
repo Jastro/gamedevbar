@@ -9,6 +9,7 @@ class User {
         this.position = [0, 1, 0]; // same [x, y, z] shape clients send in userMoved
         this.rotation = 0;
         this.selectedModel = 'pj'; // Modelo por defecto
+        this.appearance = null; // accessories etc. (validation.cleanAppearance)
     }
 
     // What other clients get in userJoined.
@@ -19,6 +20,7 @@ class User {
             position: this.position,
             rotation: this.rotation,
             selectedModel: this.selectedModel,
+            appearance: this.appearance,
             seatId: this.seatId ?? null
         };
     }

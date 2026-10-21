@@ -2,8 +2,9 @@
 
 ## Start here
 2026-10-21. Working toward forum embeds. Direct links, 👤 menu, arcade spectating and the controls/movement
-rework are merged (#18-#21). `feature/car-pokebonk` (PR open): chairs face tables, shorter jump, Enter
-to chat, Pokebonk cabinet, the smoke car. Next: Borja's checks in `Docs/PendingUserChecks.md`.
+rework, interactions/tables/lights and appearance part 1 are merged (#18-#21, #23). `feature/car-pokebonk`
+(#22, open; main merged in): chairs face tables, shorter jump, Enter to chat, Pokebonk cabinet, the smoke
+car. Next: Borja's checks in `Docs/PendingUserChecks.md`.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
@@ -28,6 +29,20 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     - the seats are freed.
   - **Not judged:** the look of the smoke and car, the hiss volume, and Pokebonk's playability on the
     cabinet.
+- 2026-10-21 Appearance, part 1 (plan `Docs/Plans done/2026-10-21-appearance-plan.md`):
+  - **Items:** 27 accessories built in code: 13 hats (cap, top hat, viking helmet, crown, beret, gamer
+    headset, mushroom, ? block, halo, horns, beer helmet, pirate hat, chef hat), 6 face items, and 8 hand
+    items (beer, wine, bottle, tortilla pincho, gamepad, pixel sword, mic, 1UP mushroom).
+  - **Also:** a color tint, a size slider and name colors; the 👤 menu has tabs. Everything is saved and
+    synced.
+  - **Verified in-app:**
+    - items on the bones of pj, pj2, pj3, pj4, pj5 and pj6, checked by eye on screenshots (a mustache and
+      the chicken/Santa hat heights were fixed);
+    - a second client sees crown + monocle + gamepad + tint live;
+    - the appearance comes back after a reload;
+    - the server shape check drops bad ids and colors.
+  - **Not judged:** item fit and feel at play distance.
+  - **Next step:** part 2, more characters (find the asset pack and its license) and per-part colors.
 - 2026-10-21 Interactions, tables, lights (plan `Docs/Plans done/2026-10-21-interactions-tables-lights-plan.md`):
   - **F everywhere:** F works for everything, and the target is the nearest thing in front of you.
   - **Chairs:** they're seats now, at chair height, facing the table.
