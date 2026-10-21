@@ -1,12 +1,93 @@
 [
   {
+    "id": "oceanstorm",
+    "title": "Ocean Storm",
+    "file": "OceanStorm.v32",
+    "author": "Jastro",
+    "description": "Helicóptero de acción táctica: arrasa las defensas de las islas.",
+    "license": "Incluido con permiso del autor (2026-10-21)",
+    "source": "https://github.com/Jastro/OceanStorm/releases/tag/1.0",
+    "sizeMB": 97.2
+  },
+  {
     "id": "crisp-game-lib",
     "title": "crisp-game-lib (266 minijuegos)",
     "file": "crisp-game-lib.v32",
-    "author": "ABA Games, port de joyrider3774",
+    "author": "ABA Games, port de joyrider3774 (Willems Davy)",
     "description": "Cientos de minijuegos arcade de un botón.",
     "license": "MIT",
-    "source": "https://github.com/joyrider3774/crisp-game-lib-portable_vircon32/releases/tag/v4.0"
+    "source": "https://github.com/joyrider3774/crisp-game-lib-portable_vircon32/releases/tag/v4.0",
+    "sizeMB": 2.0
+  },
+  {
+    "id": "asteroids",
+    "title": "AsteroidsV32",
+    "file": "AsteroidsV32.v32",
+    "author": "glebasos",
+    "description": "Asteroids de toda la vida.",
+    "license": "MIT",
+    "source": "https://github.com/vircon32/CommunityContent/tree/main/Games/AsteroidsV32",
+    "sizeMB": 0.3
+  },
+  {
+    "id": "battle-plane",
+    "title": "Battle Plane",
+    "file": "Battle_Plane.v32",
+    "author": "TheR",
+    "description": "Combate de aviones, hecho para la Second Vircon32 Jam.",
+    "license": "MIT",
+    "source": "https://github.com/vircon32/CommunityContent/tree/main/Games/BattlePlane",
+    "sizeMB": 6.3
+  },
+  {
+    "id": "blips",
+    "title": "Blips 2",
+    "file": "Blips2.v32",
+    "author": "joyrider3774 (Willems Davy)",
+    "description": "Remake del puzle de DOS Bips: empuja bloques hasta la meta.",
+    "license": "MIT; fuente de Vircon32 (Carra) CC BY 4.0",
+    "source": "https://github.com/joyrider3774/blips_vircon32/releases/tag/v2.0",
+    "sizeMB": 34.2
+  },
+  {
+    "id": "blockdude",
+    "title": "Blockdude",
+    "file": "Blockdude.v32",
+    "author": "joyrider3774 (Willems Davy)",
+    "description": "Puzle de mover bloques para llegar a la puerta.",
+    "license": "MIT; fuente de Vircon32 (Carra) CC BY 4.0",
+    "source": "https://github.com/joyrider3774/blockdude_vircon32/releases/tag/v1.0",
+    "sizeMB": 28.2
+  },
+  {
+    "id": "electron-cat",
+    "title": "Erwin Schrödinger's Electron Cat",
+    "file": "electron_cat.v32",
+    "author": "Palta",
+    "description": "Plataformas con efecto túnel cuántico. ¡A por el Nobel!",
+    "license": "MIT",
+    "source": "https://github.com/vircon32/CommunityContent/tree/main/Games/Electron-cat",
+    "sizeMB": 6.9
+  },
+  {
+    "id": "fifteen",
+    "title": "Fifteen",
+    "file": "Fifteen.v32",
+    "author": "Carra y joyrider3774 (Willems Davy)",
+    "description": "El puzle deslizante del 15.",
+    "license": "BSD-3-Clause",
+    "source": "https://github.com/joyrider3774/fifteen_vircon32/releases/tag/v1.1",
+    "sizeMB": 27.2
+  },
+  {
+    "id": "flappy-bird",
+    "title": "Flappy Bird (texto)",
+    "file": "FlappyBird_Vircon32.v32",
+    "author": "glebasos",
+    "description": "Flappy Bird hecho solo con texto.",
+    "license": "MIT",
+    "source": "https://github.com/vircon32/CommunityContent/tree/main/Games/FlappyBird",
+    "sizeMB": 0.0
   },
   {
     "id": "formula1",
@@ -15,16 +96,28 @@
     "author": "joyrider3774 (Willems Davy)",
     "description": "Esquiva el tráfico en una maquinita estilo Game & Watch.",
     "license": "MIT (código); gráficos con crédito al autor; sonidos con licencias abiertas",
-    "source": "https://github.com/joyrider3774/formula1_vircon32/releases/tag/v1.1"
+    "source": "https://github.com/joyrider3774/formula1_vircon32/releases/tag/v1.1",
+    "sizeMB": 1.8
   },
   {
-    "id": "worm",
-    "title": "Worm",
-    "file": "Worm.v32",
-    "author": "joyrider3774 (Willems Davy)",
-    "description": "El clásico del helicóptero/gusano por la cueva.",
-    "license": "MIT (código); fuente de Vircon32 CC BY 4.0",
-    "source": "https://github.com/joyrider3774/worm_vircon32/releases/tag/v1.2"
+    "id": "gamebuino",
+    "title": "Gamebuino Classic",
+    "file": "gamebuino_classic.v32",
+    "author": "Varios, port de joyrider3774 (Willems Davy)",
+    "description": "Colección de juegos de la Gamebuino Classic en un menú.",
+    "license": "GPL-3.0 (cada juego conserva su licencia; código en el enlace)",
+    "source": "https://github.com/joyrider3774/gamebuino_classic_vircon32/releases/tag/v1.0",
+    "sizeMB": 22.3
+  },
+  {
+    "id": "jellyfish",
+    "title": "JellyFish",
+    "file": "JellyFish.v32",
+    "author": "TheR",
+    "description": "Arcade submarino con una medusa.",
+    "license": "MIT",
+    "source": "https://github.com/vircon32/CommunityContent/tree/main/Games/JellyFish",
+    "sizeMB": 9.9
   },
   {
     "id": "mazethingie",
@@ -32,7 +125,88 @@
     "file": "Mazethingie.v32",
     "author": "joyrider3774 (Willems Davy)",
     "description": "Laberintos generados al momento.",
-    "license": "MIT (código); fuente de Vircon32 CC BY 4.0",
-    "source": "https://github.com/joyrider3774/mazethingie_vircon32/releases/tag/v1.2"
+    "license": "MIT; fuente de Vircon32 (Carra) CC BY 4.0",
+    "source": "https://github.com/joyrider3774/mazethingie_vircon32/releases/tag/v1.2",
+    "sizeMB": 0.4
+  },
+  {
+    "id": "puztrix",
+    "title": "Puztrix",
+    "file": "Puztrix.v32",
+    "author": "joyrider3774 (Willems Davy)",
+    "description": "Remake del Gravnic de Puznic: junta las piezas iguales.",
+    "license": "MIT; fuente de Vircon32 (Carra) CC BY 4.0",
+    "source": "https://github.com/joyrider3774/puztrix_vircon32/releases/tag/v1.0",
+    "sizeMB": 26.0
+  },
+  {
+    "id": "rubido",
+    "title": "Rubido",
+    "file": "Rubido.v32",
+    "author": "joyrider3774 (Willems Davy)",
+    "description": "Solitario de damas chinas con cuatro dificultades.",
+    "license": "MIT; fuente de Vircon32 (Carra) CC BY 4.0",
+    "source": "https://github.com/joyrider3774/rubido_vircon32/releases/tag/v1.0",
+    "sizeMB": 64.3
+  },
+  {
+    "id": "simple-tennis",
+    "title": "Simple Tennis",
+    "file": "SimpleTennis.v32",
+    "author": "Jack Brian",
+    "description": "Tenis tipo Pong.",
+    "license": "BSD-3-Clause",
+    "source": "https://github.com/vircon32/CommunityContent/tree/main/Games/SimpleTennis",
+    "sizeMB": 0.7
+  },
+  {
+    "id": "tinyjoypad",
+    "title": "TinyJoypad",
+    "file": "tinyjoypad.v32",
+    "author": "Varios, port de joyrider3774 (Willems Davy)",
+    "description": "Juegos de consolas diminutas ATtiny/OLED en un menú.",
+    "license": "GPL-3.0 (cada juego conserva su licencia; código en el enlace)",
+    "source": "https://github.com/joyrider3774/tinyjoypad_vircon32/releases/tag/v1.0",
+    "sizeMB": 16.2
+  },
+  {
+    "id": "vircoban",
+    "title": "Vircoban",
+    "file": "Vircoban.v32",
+    "author": "joyrider3774 (Willems Davy)",
+    "description": "Sokoban: empuja las cajas a su sitio.",
+    "license": "MIT; fuente de Vircon32 (Carra) CC BY 4.0",
+    "source": "https://github.com/joyrider3774/sokoban_vircon32/releases/tag/v1.1",
+    "sizeMB": 87.4
+  },
+  {
+    "id": "waternet",
+    "title": "Waternet",
+    "file": "Waternet.v32",
+    "author": "joyrider3774 (Willems Davy)",
+    "description": "Puzle de conectar tuberías.",
+    "license": "MIT; fuente de Vircon32 (Carra) CC BY 4.0",
+    "source": "https://github.com/joyrider3774/waternet_vircon32/releases/tag/v1.0",
+    "sizeMB": 18.8
+  },
+  {
+    "id": "worm",
+    "title": "Worm",
+    "file": "Worm.v32",
+    "author": "joyrider3774 (Willems Davy)",
+    "description": "El clásico del helicóptero/gusano por la cueva.",
+    "license": "MIT; fuente de Vircon32 (Carra) CC BY 4.0",
+    "source": "https://github.com/joyrider3774/worm_vircon32/releases/tag/v1.2",
+    "sizeMB": 0.4
+  },
+  {
+    "id": "znax",
+    "title": "Znax",
+    "file": "Znax.v32",
+    "author": "joyrider3774 (Willems Davy)",
+    "description": "Remake del juego flash Znax: cierra cuadrados de colores.",
+    "license": "MIT; fuente de Vircon32 (Carra) CC BY 4.0",
+    "source": "https://github.com/joyrider3774/znax_vircon32/releases/tag/v1.0",
+    "sizeMB": 31.6
   }
 ]

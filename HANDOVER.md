@@ -12,6 +12,9 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Vircon32: 17 more games, for 21 bundled (~480 MB): Ocean Storm (Jastro's permission), all
+  of joyrider3774's licensed games under 100 MB, and six community games. Picker shows each game's size.
+  `public/vircon32/roms/LICENSES.md` lists license and source per game.
 - 2026-10-21 Vircon32 cabinet in every room (plan `Docs/Plans done/2026-10-21-openmic-board-vircon32.md`):
   web emulator built with emsdk into `public/vircon32/` (`tools/vircon32/build.sh`, own shell), four MIT
   games + upload of your own `.v32`, one player per cabinet (server), game on the cabinet's 3D screen with
@@ -88,8 +91,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 
 ## Decisions to review
 - Vircon32 cabinet at room-local (11, 2, -8), back-right corner. Emulator audio is not positional.
-- Only 4 small MIT games bundled. Bigger MIT ones (Puzzleland 140 MB, Retrotime 222 MB…) need hosting
-  outside git. Carra's games and OceanStorm have no license stated.
+- Every licensed game under 100 MB is bundled in git (~480 MB in history and in the Docker image), per
+  Borja's "no LFS" rule. If the image size hurts deploys, move the ROMs to a server volume or CDN.
 - Doors centered on the front wall, rooms straight across the street (per Borja, 2026-10-20). The board
   moved from x = 1.09 to x = 7 on the same wall to make room for the door.
 - Desarrollo is a copy without the paintings: own board, own radio, own local
@@ -99,8 +102,7 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 - Git: per the request, work went to a branch + PR instead of straight to `main`.
 
 ## Open questions
-- Jastro: may OceanStorm's `.v32` be bundled (no license in its repo)?
-- Host the bigger Vircon32 games (server volume / CDN), or keep only small ones?
+- Carra's own Vircon32 games (BSD-3) are only on itch.io as zips: download them by hand to add them?
 - Should chat become per-room (or show which bar someone is in)?
 - Desarrollo's identity: different decoration, default music?
 

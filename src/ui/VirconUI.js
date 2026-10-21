@@ -82,7 +82,9 @@ export class VirconUI {
             name.textContent = rom.title;
             const info = document.createElement('span');
             info.className = 'radio-station-genre';
-            info.textContent = `${rom.description} · ${rom.author}`;
+            // Big cartridges take a while to download; say so up front.
+            const size = rom.sizeMB >= 1 ? ` · ${Math.round(rom.sizeMB)} MB` : '';
+            info.textContent = `${rom.description} · ${rom.author}${size}`;
             button.append(name, info);
             button.addEventListener('click', () => this.play({ title: rom.title, url: `roms/${rom.file}` }));
             this.list.appendChild(button);

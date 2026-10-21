@@ -23,15 +23,23 @@ arcade cabinet that plays the console's games on its 3D screen.
 - Controls (fixed): arrows = D-pad, X / Z / S / A = buttons A / B / X / Y, Q / W = L / R, Enter = Start.
 
 ## Bundled games
-`public/vircon32/roms/roms.json` lists them for the selector. `LICENSES.md` next to it lists the author,
-license and source of each. Only games whose license allows redistribution are added. The current four
-are joyrider3774's MIT games (crisp-game-lib with 266 mini games, Formula 1, Worm, Mazethingie), all
-under 2 MB.
+`public/vircon32/roms/roms.json` lists them for the selector (title, author, description, size).
+`LICENSES.md` next to it lists the author, license and source of each. Only games whose license allows
+redistribution are added, plus Ocean Storm, included with Jastro's permission (2026-10-21). Files must
+stay under GitHub's 100 MB per-file limit, because the repo doesn't use Git LFS.
 
-Left out for now:
-- **Large MIT games** by the same author: Puztrix 26 MB, Vircoban 87 MB, Puzzleland 140 MB, Retrotime
-  222 MB, and others. They're too big for git and would need hosting outside the repo.
-- **Carra's official games** and **Jastro's OceanStorm**: no license stated.
+As of 2026-10-21: 21 games, ~480 MB.
+- Ocean Storm (Jastro).
+- 13 by joyrider3774 (MIT, BSD-3, and two GPL-3 collections).
+- 6 from Carra's CommunityContent repo (MIT/BSD-3).
+
+Those ~480 MB live in git history and in every Docker image. Clients only download the game they pick.
+
+Licensed but not bundled:
+- **Over 100 MB:** Puzzleland, Retrotime.
+- **Only as itch.io zips:** Carra's own games (BSD-3 / CC BY 4.0). Download them by hand, then add them
+  the usual way, with their music credits.
+- **No license stated:** four community games.
 
 ## In the bar
 - **Cabinet:** one per room at room-local (11, 2, -8), the back-right corner (`src/world/VirconCabinet.js`).
