@@ -46,10 +46,11 @@ export class Furniture {
 
         // Crear sillas alrededor
         const chairPositions = [
-            { x: 1, z: 0, angle: 0 },
-            { x: -1, z: 0, angle: Math.PI },
-            { x: 0, z: 1, angle: -Math.PI/2 },
-            { x: 0, z: -1, angle: Math.PI/2 }
+            // The seat faces local +z (backrest at -z): each angle points it at the table.
+            { x: 1, z: 0, angle: -Math.PI / 2 },
+            { x: -1, z: 0, angle: Math.PI / 2 },
+            { x: 0, z: 1, angle: Math.PI },
+            { x: 0, z: -1, angle: 0 }
         ];
 
         chairPositions.forEach(pos => {

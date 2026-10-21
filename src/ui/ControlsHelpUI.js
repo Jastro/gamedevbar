@@ -17,7 +17,7 @@ const SECTIONS = [
             ['R', 'Centrar la cámara'],
             ['Clic derecho', 'Emojis'],
             ['V (mantener)', 'Hablar por micrófono (en ⚙️: micrófono abierto)'],
-            ['Clic en el chat', 'Escribir (Enter envía, /me para acciones)'],
+            ['Enter', 'Escribir en el chat (Enter envía, /me para acciones)'],
             ['Esc', 'Cerrar paneles y emojis']
         ]
     },

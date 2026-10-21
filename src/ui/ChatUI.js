@@ -53,6 +53,17 @@ export class ChatUI {
             this.chatActive = false;
         });
 
+        // Enter anywhere starts typing (not while another field has focus or
+        // while at an arcade screen). preventDefault keeps this Enter from
+        // also reaching the input as "send".
+        window.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' || this.chatActive || e.repeat) return;
+            if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(document.activeElement?.tagName)) return;
+            if (window.game?.playMode) return;
+            e.preventDefault();
+            this.chatInput.focus();
+        });
+
         // Prevent game controls while typing
         this.chatInput.addEventListener('keydown', (e) => {
             if (this.chatActive && (

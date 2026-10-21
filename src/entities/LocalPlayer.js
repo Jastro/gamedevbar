@@ -9,8 +9,9 @@ const DECELERATION = 16;          // 1/s: how fast it stops when keys are releas
 const STOP_SPEED = 0.05;          // units/s below which a released player stops
 const TURN_RATE = 14;             // 1/s: how fast the avatar turns to face the way it walks
 const WALK_ANIMATION_SPEED = 0.4; // units/s above which the walk animation plays
-const JUMP_SPEED = 10.8;          // units/s
-const GRAVITY = -18;              // units/s²
+// About 1.5 high and 0.6 s in the air (tables, 1.0 high, stay reachable).
+const JUMP_SPEED = 10;            // units/s
+const GRAVITY = -33;              // units/s²
 const STANDING_HEIGHT = 1;        // position.y above the ground (the collision box is 2 tall)
 const SEAT_HEIGHT = 1.4;          // position.y above a seat's origin (bar stools)
 const PLAYER_RADIUS = 0.4;        // half the collision box (0.5 caught on door frames)
