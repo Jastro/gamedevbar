@@ -1,6 +1,10 @@
 # Handover
 
 ## Start here
+2026-10-21. Working toward forum embeds. `feature/direct-join` (PR open, see Done) adds `/gamedev` and
+`/desarrollo` links and the 👤 menu. Next: arcade spectating
+(`Docs/Plans to be done/2026-10-21-vircon-spectating-design.md`), on its own branch.
+
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
 In production, voice failed between different networks: there was no TURN relay. `fix/voice-turn` adds
@@ -12,6 +16,27 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Direct links + customization (plan `Docs/Plans done/2026-10-21-direct-join-plan.md`):
+  - **Links:** `/<roomId>` skips the start dialog. You see a loading card, then the bar.
+  - **First visit:** `Parroquiano NNNN` and a random character, both remembered, plus a one-time
+    *¿Quieres personalizar tu personaje?* popup.
+  - **👤 menu:** changes nick and character live for everyone.
+  - **Shared memory:** `/` pre-fills the remembered nick.
+  - **Sound:** on a direct link it starts on the first click or key.
+  - **Bug fix:** below ~900 px the 😊/🎙️/⚙️ buttons were off-screen. They now sit in a row above the chat
+    input.
+  - **Verified (two in-app clients):**
+    - production routes (`/Gamedev/`, `/foo` → app; files still served; `/a/b` 404);
+    - a fresh `/desarrollo` gives a placeholder and a random model in Desarrollo with no preview canvases;
+    - a reload keeps both;
+    - `/` shows the dialog pre-filled;
+    - `/foo` shows the dialog;
+    - the profile functions work with `localStorage` throwing;
+    - popup *Sí* opens the menu, and B saw A's new name and model live;
+    - an empty nick is ignored, and reopening keeps 6 canvases;
+    - the buttons are on screen at 375 and 820 px.
+  - **Not verified:** the autoplay unlock, because the in-app browser doesn't block autoplay, so the
+    suspended → running path was never exercised.
 - 2026-10-21 Camera controls: middle-drag pans (clamped to 3 units), R resets zoom/angle/pan (also from
   inside the emulator), the wheel zooms only over the 3D view (no zoom while scrolling panels like the
   ROM list). Vircon32 play mode now plays on the arcade: camera locked, screen at ~50% of the view,
@@ -98,6 +123,11 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   snapshot, stool facing in the rotated room, occlusion levels per position. Audio not listened to.
 
 ## Decisions to review
+- Direct links (away mode, 2026-10-21):
+  - **Any way of closing the first-visit popup counts as answered** (✕, Esc, clicking outside). If wrong:
+    people who click past it never see it again.
+  - **No automated tests.** The repo has no test runner, and adding Vitest is a separate decision; checks
+    were done in the in-app browser instead.
 - Vircon32 cabinet at room-local (11, 2, -8), back-right corner. Emulator audio is not positional.
 - Every licensed game under 100 MB is bundled in git (~480 MB in history and in the Docker image), per
   Borja's "no LFS" rule. If the image size hurts deploys, move the ROMs to a server volume or CDN.

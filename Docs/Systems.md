@@ -3,6 +3,26 @@
 Detail notes per system. Last updated 2026-10-20. Structure and extension points:
 [Architecture.md](Architecture.md). Messages: [Protocol.md](Protocol.md).
 
+## Entry: direct links and customization
+
+- **Two ways in.** `/` shows the start dialog: nick, character, bar. `/<roomId>` (`/gamedev`, `/desarrollo`,
+  case and trailing slash ignored) skips it. The server sends `index.html` for any single-segment path.
+  Unknown names fall back to the dialog.
+- **First visit through a direct link:**
+  - `Parroquiano NNNN` and a random character, both saved;
+  - after the avatar loads, a one-time popup *¿Quieres personalizar tu personaje?* (any way of closing it
+    counts as answered).
+- **Shared memory.** Both ways in share the remembered nick and character (`PlayerProfile`, localStorage
+  keys `playerName`, `selectedModel`, `customizePromptSeen`). In a cross-site iframe that storage is
+  partitioned. That's acceptable until the forum provides identity.
+- **👤 menu** (`CustomizeUI`, next to ⚙️):
+  - a nick field (*Guardar*/Enter) and the start dialog's character tiles, moved into the panel;
+  - previews are created on first open and paused while it's closed;
+  - changes go out as `setUsername` → `userUsername` to everyone.
+  - The nick field goes away when forum usernames arrive.
+- **Sound on direct links.** With no dialog click, the browser keeps audio suspended. The first
+  `pointerdown`/`keydown` resumes the context and kicks the radios (`Radio.kick`).
+
 ## World layout and rooms
 
 All room content is authored in one **room-local frame** (the original bar): x ∈ [-15, 15], z ∈ [-10, 10],

@@ -20,7 +20,8 @@ Dev: Vite on 5148, server on 3000. Media for voice goes peer to peer (WebRTC); t
 ## Client (`src/`)
 
 ```
-core/          Game (composition root + main loop), InteractionSystem (hover/click/E), EventEmitter, Config
+core/          Game (composition root + main loop), InteractionSystem (hover/click/E), EventEmitter, Config,
+               PlayerProfile (remembered nick/character/popup flag; all identity storage goes through it)
 rendering/     Scene (level.json template), Renderer, Camera
 network/       WebSocketManager: transport only (JSON in → emit(type), send(type, data))
 entities/      Player, LocalPlayer (input + collisions), RemotePlayer, PlayerManager
@@ -30,10 +31,13 @@ world/         RoomLayout (where rooms are), Room, World (shells, colliders, str
 interactions/  one file per clickable type: seat, radio, arcade, door
 audio/         OcclusionChain (wall/door muffling shared by radios and voices)
 voice/         VoiceChat (mesh, PTT, positional voices), VoicePeer (one RTCPeerConnection)
-ui/            StartScreen, ModelSelector, RoomSelector, ChatUI, EmotesUI, VoiceUI
+ui/            StartScreen, LoadingScreen, ModelSelector, RoomSelector, CustomizeUI (👤 menu), ChatUI,
+               EmotesUI, VoiceUI, VoiceSettingsUI, RadioUI, ProjectorUI, VirconUI, FloatingPanel
 ```
 
-Flow: `Game` builds every system in its constructor, and `StartScreen` collects name/model/room. Then
+Flow: `Game` builds every system in its constructor. The path picks the entry: `/<roomId>`
+(`getRoomIdFromPath`) → `Game.joinDirectly` (loading card, remembered or placeholder identity, no dialog);
+anything else → `StartScreen` collects name/model/room. Then
 `Game.start` → `init` (load level, connect, build world + props, `bindNetwork`) → `setupInput` → loop. Each
 frame: players → colliders → soccer → environment (doors, music occlusion) → voice (positions, occlusion)
 → interaction hint → camera.

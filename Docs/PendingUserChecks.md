@@ -52,6 +52,12 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       window, sound, all controls (arrows, X Z S A, Q W, Enter), Esc returns you to the bar. A second
       player gets "ya está jugando"; the cabinet shows "🎮 name · game" to others. Try *Cargar mi .v32*
       with a file of your own. Clicking the chat while playing still lets you type?
+- [ ] **Direct links.** Open http://localhost:5148/desarrollo in a private window (and on a phone).
+      Expected: the loading card, then Desarrollo; the popup *¿Quieres personalizar tu personaje?* once;
+      the radio starts on your first click or key. Reload: no popup, same nick and character. Is the
+      loading card too plain?
+- [ ] **👤 menu.** Change the character and nick with a friend watching: they see it at once. On a phone,
+      do the tiles fit, and are the buttons above the chat input easy to hit?
 - [ ] **Vircon32 play camera.** Start a game: the cabinet stays visible with its screen at about half
       the view (not fullscreen), the wheel doesn't zoom (also while scrolling the ROM list), middle-drag
       pans, R re-centers. Is the framing comfortable to play on desktop and on a narrow window? Tune

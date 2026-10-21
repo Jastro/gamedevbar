@@ -1020,6 +1020,18 @@
       }
     }
 
+    /* Below ~900px the round buttons (emotes, mic, settings, customize) no
+       longer fit to the right of the chat input: they sit in a row above it,
+       right-aligned, and the chat log moves up to make room. */
+    @media (max-width: 900px) {
+      #emote-button { right: 0; bottom: 55px; }
+      #voice-button { right: 52px; bottom: 55px; }
+      #voice-settings-button { right: 104px; bottom: 59px; }
+      #customize-button { right: 149px; bottom: 59px; }
+      #emotes-panel { right: 0; bottom: 110px; }
+      #chat-box { bottom: 125px; }
+    }
+
     @media (max-width: 768px) {
       .model-options {
         grid-template-columns: repeat(2, 1fr);
@@ -1031,14 +1043,14 @@
 
       #chat-box {
         width: 320px;
-        height: 300px;
+        height: 260px;
         left: 10px;
-        bottom: 80px;
       }
 
       #chat-container {
         width: 400px;
       }
+
 
       .chat-message {
         font-size: 13px;
@@ -1063,10 +1075,10 @@
 
       #chat-box {
         width: calc(100% - 20px);
-        height: 250px;
+        height: 220px;
         left: 10px;
         right: 10px;
-        bottom: 70px;
+        bottom: 125px;
       }
 
       #chat-container {
