@@ -189,4 +189,8 @@ export class World {
     checkCollision(position, radius) {
         return this.collisionManager.checkCollision(position, radius);
     }
+
+    getGroundHeight(position, radius) {
+        return this.collisionManager.getGroundHeight(position, radius);
+    }
 }

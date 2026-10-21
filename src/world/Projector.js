@@ -33,6 +33,7 @@ export class Projector {
         this.state = null; // { videoId, startedAt, pausedAt } or null
         this.player = null;
         this.playerReady = false;
+        this.dormant = false; // room empty a while: video stopped locally
         this.lastSync = 0;
         this.lastVolume = 0;
         this.onError = null;
@@ -148,6 +149,8 @@ export class Projector {
             this.player?.stopVideo?.();
             return;
         }
+        // Nobody in the room: remember the state, load it when someone enters.
+        if (this.dormant) return;
         if (!this.player) {
             this.createPlayer(state.videoId);
         } else if (this.playerReady && previous?.videoId !== state.videoId) {
@@ -185,6 +188,11 @@ export class Projector {
                     onReady: () => {
                         this.playerReady = true;
                         this.player.setVolume(0);
+                        // The room emptied while YouTube was loading.
+                        if (this.dormant) {
+                            this.player.stopVideo();
+                            return;
+                        }
                         // A different video may have been chosen while loading.
                         if (this.state && this.state.videoId !== videoId) {
                             this.player.loadVideoById({ videoId: this.state.videoId, startSeconds: this.expectedPosition() });
@@ -224,7 +232,25 @@ export class Projector {
     // Browsers may block the first autoplay with sound; any later click in the
     // page counts as a gesture, so retry then.
     kick() {
-        if (this.state && this.state.pausedAt === null && this.playerReady) this.player.playVideo();
+        if (this.state && this.state.pausedAt === null && this.playerReady && !this.dormant) this.player.playVideo();
+    }
+
+    // Empty room (Environment.updateDormancy): stop the video here (no
+    // download, no decoding); on waking, jump back to the shared position.
+    setDormant(dormant) {
+        if (dormant === this.dormant) return;
+        this.dormant = dormant;
+        if (dormant) {
+            if (this.playerReady) this.player.stopVideo();
+            return;
+        }
+        if (!this.state) return;
+        if (!this.player) {
+            this.createPlayer(this.state.videoId);
+        } else if (this.playerReady) {
+            this.player.loadVideoById({ videoId: this.state.videoId, startSeconds: this.expectedPosition() });
+        }
+        this.lastSync = 0;
     }
 
     getWorldCenter() {
@@ -232,7 +258,7 @@ export class Projector {
     }
 
     update(listenerPosition, environment, world) {
-        if (!this.state || !this.playerReady || !listenerPosition) return;
+        if (!this.state || !this.playerReady || !listenerPosition || this.dormant) return;
         const now = performance.now();
         if (now - this.lastSync > SYNC_INTERVAL) {
             this.lastSync = now;

@@ -7,10 +7,9 @@ const SECTIONS = [
     {
         title: 'En el bar',
         rows: [
-            ['W A S D', 'Andar'],
-            ['Espacio', 'Saltar'],
-            ['F o clic', 'Abrir puertas, jugar a la Vircon32'],
-            ['Clic', 'Sentarse, radio, proyector, recreativas'],
+            ['W A S D', 'Andar (Mayús: correr)'],
+            ['Espacio', 'Saltar (también a las mesas)'],
+            ['F o clic', 'Puertas, sillas, radio, proyector, máquinas e interruptores de luz'],
             ['Q / E', 'Girar la cámara'],
             ['Clic derecho + arrastrar', 'Girar la cámara'],
             ['Rueda', 'Acercar / alejar'],

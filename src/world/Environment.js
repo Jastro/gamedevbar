@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { LightSwitches, DEFAULT_LIGHTS } from './LightSwitches';
 import { Bar } from './Bar';
 import { Furniture } from './Furniture';
 import { Radio } from './Radio';
@@ -13,6 +14,10 @@ import { DEFAULT_ROOM_ID } from './RoomLayout';
 
 // Props and interactive objects. Every room gets its own full set, built in
 // room-local coordinates (see RoomLayout.js).
+// Empty rooms stop their streams after this long (see updateDormancy).
+const EMPTY_ROOM_DELAY = 30000; // ms
+const DORMANCY_INTERVAL = 1000; // ms between checks
+
 export class Environment {
     constructor(scene, world, serverClock, audioSettings) {
         this.scene = scene;
@@ -29,7 +34,7 @@ export class Environment {
             const contents = {
                 room,
                 bar: new Bar(room, room.definition.barSign),
-                furniture: new Furniture(room),
+                furniture: new Furniture(room, this.world.collisionManager),
                 radio: new Radio(room),
                 paintings: hasPaintings ? new Paintings(room) : null,
                 arcadePong: new ArcadePong(room),
@@ -37,7 +42,8 @@ export class Environment {
                 door: new Door(room, this.world.collisionManager),
                 projector: new Projector(room, this.serverClock, this.audioSettings),
                 presenceBoard: new PresenceBoard(room),
-                vircon: new VirconCabinet(room, this.world.collisionManager)
+                vircon: new VirconCabinet(room, this.world.collisionManager),
+                lightSwitches: new LightSwitches(room)
             };
 
             contents.bar.create();
@@ -50,6 +56,7 @@ export class Environment {
             contents.projector.create();
             contents.presenceBoard.create();
             contents.vircon.create();
+            contents.lightSwitches.create();
             if (contents.paintings) this.loadPaintings(contents.paintings);
 
             this.rooms.set(room.id, contents);
@@ -76,6 +83,27 @@ export class Environment {
         this.audioListener = new THREE.AudioListener();
         camera.add(this.audioListener);
         this.rooms.forEach(({ radio }) => radio.initializeAudio(this.audioListener, this.audioSettings));
+    }
+
+    // A room nobody has been inside for EMPTY_ROOM_DELAY stops streaming here
+    // (radio download, projector video); it resumes, live, as soon as anyone
+    // (us or someone else) is inside again. Shared choices stay on the server.
+    // players: everyone here, local player included (anything with a position).
+    updateDormancy(players) {
+        const now = performance.now();
+        if (now - (this.lastDormancyCheck ?? 0) < DORMANCY_INTERVAL) return;
+        this.lastDormancyCheck = now;
+        const occupied = new Set();
+        for (const player of players) {
+            const room = this.world.getRoomAt(player.position);
+            if (room) occupied.add(room.id);
+        }
+        this.rooms.forEach((contents, roomId) => {
+            if (occupied.has(roomId) || contents.lastOccupied === undefined) contents.lastOccupied = now;
+            const dormant = now - contents.lastOccupied >= EMPTY_ROOM_DELAY;
+            contents.radio.setDormant(dormant);
+            contents.projector.setDormant(dormant);
+        });
     }
 
     update(deltaTime, listenerPosition) {
@@ -105,6 +133,15 @@ export class Environment {
 
     getDoor(doorId) {
         return this.doors.get(doorId);
+    }
+
+    // Room lights (LightsSync → here → switches; RoomLighting reads them).
+    setLights(roomId, state) {
+        this.rooms.get(roomId)?.lightSwitches.setState(state);
+    }
+
+    getLights(roomId) {
+        return this.rooms.get(roomId)?.lightSwitches.state ?? DEFAULT_LIGHTS;
     }
 
     setDoorState(doorId, isOpen, instant = false) {

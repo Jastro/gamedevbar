@@ -3,6 +3,7 @@ import * as THREE from 'three';
 
 // Movement tuning, per second (the old per-frame values at 60 fps).
 const WALK_SPEED = 3.2;           // units/s
+const RUN_SPEED = 5.5;            // units/s with Shift held
 const ACCELERATION = 12;          // 1/s: how fast the velocity reaches the input
 const DECELERATION = 16;          // 1/s: how fast it stops when keys are released
 const STOP_SPEED = 0.05;          // units/s below which a released player stops
@@ -10,6 +11,8 @@ const TURN_RATE = 14;             // 1/s: how fast the avatar turns to face the 
 const WALK_ANIMATION_SPEED = 0.4; // units/s above which the walk animation plays
 const JUMP_SPEED = 10.8;          // units/s
 const GRAVITY = -18;              // units/s²
+const STANDING_HEIGHT = 1;        // position.y above the ground (the collision box is 2 tall)
+const SEAT_HEIGHT = 1.4;          // position.y above a seat's origin (bar stools)
 const PLAYER_RADIUS = 0.4;        // half the collision box (0.5 caught on door frames)
 const MAX_STEP = 0.15;            // longest collision-checked step, so nothing is skipped
 // Walking straight into a door frame's edge: if a sideways shift this small
@@ -60,14 +63,20 @@ export class LocalPlayer extends Player {
         const seatPosition = new THREE.Vector3();
         seat.getWorldPosition(seatPosition);
 
-        // Ajustar posición al sentarse
+        // Ajustar posición al sentarse (chairs are lower than stools)
         this.position.copy(seatPosition);
-        this.position.y += 1.4;
+        this.position.y += seat.userData.sitHeight ?? SEAT_HEIGHT;
+        this.isJumping = false;
+        this.verticalSpeed = 0;
 
-        // Calcular rotación hacia la barra si es un taburete
+        // Face the table (chairs), or the bar for stools
         // (stools sit at room-local z < 0; the counter is at room-local z = -3)
         const room = this.game.world.getRoomForObject(seat);
-        if (room && seat.position.z < 0) {
+        const faceTarget = seat.userData.faceTarget;
+        if (room && faceTarget) {
+            const target = room.toWorld(faceTarget.x, this.position.y, faceTarget.z);
+            this.rotation = Math.atan2(target.x - this.position.x, target.z - this.position.z);
+        } else if (room && seat.position.z < 0) {
             const barPosition = room.toWorld(0, this.position.y, -3);
             const direction = barPosition.sub(this.position).normalize();
             this.rotation = Math.atan2(direction.x, direction.z);
@@ -108,7 +117,8 @@ export class LocalPlayer extends Player {
             return;
         }
 
-        const target = input ? input.clone().multiplyScalar(WALK_SPEED) : new THREE.Vector3();
+        const speed = this.keysPressed.shift ? RUN_SPEED : WALK_SPEED;
+        const target = input ? input.clone().multiplyScalar(speed) : new THREE.Vector3();
         const rate = input ? ACCELERATION : DECELERATION;
         this.velocity.lerp(target, 1 - Math.exp(-rate * dt));
         if (!input && this.velocity.lengthSq() < STOP_SPEED * STOP_SPEED) this.velocity.set(0, 0, 0);
@@ -197,21 +207,35 @@ export class LocalPlayer extends Player {
         this.isMoving = false;
     }
 
+    // Jumping, falling off a table and landing on one. The ground is the
+    // floor or the top of a platform (CollisionManager.getGroundHeight).
     handleJump(dt) {
-        if (this.keysPressed[' '] && !this.isJumping && !this.game.chatActive && !this.game.playMode) {
+        if (this.isSitting || this.game.playMode) return;
+        const world = this.game.world;
+        const ground = world.getGroundHeight(this.position, PLAYER_RADIUS);
+        const feet = this.position.y - STANDING_HEIGHT;
+        const onGround = !this.isJumping && feet <= ground + 0.001;
+
+        if (onGround && this.keysPressed[' '] && !this.game.chatActive) {
             this.isJumping = true;
             this.verticalSpeed = JUMP_SPEED;
+        } else if (onGround) {
+            this.position.y = ground + STANDING_HEIGHT;
+            return;
         }
 
-        if (this.isJumping) {
-            this.position.y += this.verticalSpeed * dt;
-            this.verticalSpeed += GRAVITY * dt;
-
-            if (this.position.y <= 1) {
-                this.position.y = 1;
-                this.isJumping = false;
-                this.verticalSpeed = 0;
-            }
+        // In the air: jumped, or walked off a table.
+        this.isJumping = true;
+        this.verticalSpeed += GRAVITY * dt;
+        const nextFeet = feet + this.verticalSpeed * dt;
+        // Landing: the ground under us now, caught even if a fast fall would
+        // pass the table top within one frame.
+        if (this.verticalSpeed <= 0 && nextFeet <= ground) {
+            this.position.y = ground + STANDING_HEIGHT;
+            this.isJumping = false;
+            this.verticalSpeed = 0;
+        } else {
+            this.position.y = nextFeet + STANDING_HEIGHT;
         }
     }
 

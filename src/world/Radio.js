@@ -33,6 +33,7 @@ export class Radio {
         this.mutedLocally = false;
         this.settings = null;    // AudioSettings (radio slider)
         this.suspended = false;  // stream stopped because nobody here can hear it
+        this.dormant = false;    // stream stopped because the room has been empty a while
         this.quietSince = null;
         this.lastAudibilityCheck = 0;
     }
@@ -162,12 +163,21 @@ export class Radio {
         return getStation(this.stationId);
     }
 
-    // (Re)connects to the live stream, or stops downloading when off or suspended.
+    // Empty room (Environment.updateDormancy): stop downloading; back to the
+    // live broadcast when someone walks in.
+    setDormant(dormant) {
+        if (dormant === this.dormant) return;
+        this.dormant = dormant;
+        this.playCurrent();
+    }
+
+    // (Re)connects to the live stream, or stops downloading when off,
+    // inaudible or dormant.
     playCurrent() {
         if (!this.element) return;
         clearTimeout(this.retryTimer);
         const station = this.station;
-        if (!station || this.suspended) {
+        if (!station || this.suspended || this.dormant) {
             this.element.pause();
             this.element.removeAttribute('src');
             this.element.load();
@@ -181,12 +191,12 @@ export class Radio {
     // Before any click or key press the browser refuses to play (autoplay
     // policy); called on the first interaction to start it then.
     kick() {
-        if (this.element?.paused && this.station && !this.suspended) this.playCurrent();
+        if (this.element?.paused && this.station && !this.suspended && !this.dormant) this.playCurrent();
     }
 
     // Live streams drop now and then; reconnect to the same station.
     scheduleRetry() {
-        if (!this.station || this.suspended) return;
+        if (!this.station || this.suspended || this.dormant) return;
         clearTimeout(this.retryTimer);
         this.retryTimer = setTimeout(() => this.playCurrent(), RETRY_DELAY);
     }

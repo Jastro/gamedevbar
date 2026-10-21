@@ -6,7 +6,9 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
 ## Controls and movement
 
 - **Keys** (the full list is in the ❔ panel, `src/ui/ControlsHelpUI.js`; keep it in sync):
-  - WASD walk, Space jump, F interact (`INTERACT_KEY` in `InteractionSystem.js`);
+  - WASD walk (Shift runs, 5.5 vs 3.2 units/s), Space jump, F interact (`INTERACT_KEY` in
+    `InteractionSystem.js`). F picks the best interactable over every type: near and in front of you
+    (custom `findNearby` for doors and the Vircon32, otherwise each type's `range`);
   - Q/E rotate the camera, right-drag rotates, a right click (moving under 5 px) opens the emojis at the
     cursor;
   - wheel zoom, middle-drag pan, R re-center;
@@ -17,10 +19,38 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
   - Steps are collision-checked in pieces of at most 0.15. A blocked step slides along the free axis; when
     fully blocked, a sideways nudge of up to 0.45 eases you round door frames.
   - The player's collision box is 0.8 wide (it was 1.0).
+- **Colliders** (`CollisionManager`):
+  - blockers (walls, bar, fences, cabinets, door) block at any height, so a jump can't land you inside
+    one;
+  - tables are round platforms: they block walking, but you can jump onto one, stand on it
+    (`getGroundHeight`) and fall off it;
+  - chairs have no collider.
+- **Seats:** stools, chairs (sit lower, facing their table) and the toilet. Clicking or F sits you down,
+  and WASD stands you up.
 - **Network smoothing.** The position goes out at most 20 times a second. Other players ease toward the
   latest position and rotation (`RemotePlayer`, frame-rate independent) and snap after a teleport (> 5).
 - **Colliders** are static and measured once (`CollisionManager`). Before, every collider's box was
   recomputed on every check and every frame.
+
+## Light switches
+
+- **Switches:** three switches on the inside of each bar's front wall (`LightSwitches.js`): 💡 normal
+  and 🕯️ low on one side of the door, 🪩 disco on the other. Click or F.
+- **Shared per room**, like doors: `lightsToggle` → `lightsState`, snapshot `lightsStates`
+  (`server/features/lights.js`, `LightsSync.js`). Default: normal on.
+- **Rendering** (`src/rendering/RoomLighting.js`): the scene's single ambient + directional light
+  (from level.json) follow the bar the local player is in; the street keeps the default.
+  - normal (with or without low) = full light;
+  - low alone = warm and dim;
+  - all off = almost dark;
+  - disco = three colored point lights circling that bar's ceiling. They always exist (intensity 0
+    when off), so the light count never changes and no material recompiles.
+
+## Empty rooms
+
+`Environment.updateDormancy` (1 s checks): a room nobody (local or remote) has been inside for 30 s stops
+its radio download (`Radio.setDormant`) and projector video (`Projector.setDormant`) on this client. Both
+come back at the live point when anyone is inside again. Choices stay on the server.
 
 ## Entry: direct links and customization
 
