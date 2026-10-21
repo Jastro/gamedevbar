@@ -22,8 +22,9 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       for the mic; the other player hears you from your avatar's position and sees 🎙️ over your head.
       Check: latency, volume vs. the radio (`VOICE_REF_DISTANCE`/`VOICE_ROLLOFF` in `VoiceChat.js`),
       echo without headphones, muffling when one of you is outside / behind a closed door.
-- [ ] **Voice over the internet.** Two different networks (e.g. phone hotspot). If it never connects, a
-      TURN server is needed (`ICE_SERVERS`).
+- [ ] **Voice over the internet (after coturn is deployed, Docs/TURN.md).** Two different homes, plus one
+      phone on mobile data. ⚙️ → *Conexiones de voz* shows `conectado` for each other and you hear each
+      other. Before TURN (2026-10-20): different networks never connected, two tabs on one PC did.
 - [ ] **🎙️ button.** Hold it with mouse and touch; releasing anywhere stops talking.
 - [ ] **Mic settings (⚙️).** With 2+ real mics (e.g. webcam + headset): the dropdown lists them by name
       after permission, the meter moves when you speak, switching while someone listens changes what they

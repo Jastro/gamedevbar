@@ -2,14 +2,20 @@
 
 ## Start here
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
-proximity voice chat, and a modular client/server layout. Branches on the `borjafac` fork:
-PRs Jastro/gamedevbar#10 (rooms) and #11 (voice + refactor) merged 2026-10-20; `feature/mic-settings`
-(mic device picker + meter) in a new PR. Docs: [Architecture](Docs/Architecture.md) (code map + how to add things),
-[Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
-Next step: Borja tries voice + mic settings with real mics ([Docs/PendingUserChecks.md](Docs/PendingUserChecks.md)),
-then merge the mic-settings PR.
+proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
+In production, voice failed between different networks: there was no TURN relay. `fix/voice-turn` adds
+per-user TURN credentials + connection status/errors, and the coturn setup guide in [Docs/TURN.md](Docs/TURN.md).
+Next step: merge that PR, then Borja deploys coturn on the server (TURN.md steps 1-5) and retests with a friend.
+Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-20 Bug (production): voice silent between players on different networks; two tabs on one PC
+  worked. Root cause: STUN-only ICE can't cross carrier-grade/strict NATs, so no TURN relay = no path. Fix:
+  server issues coturn `use-auth-secret` credentials per user (`TURN_URLS`/`TURN_SECRET`); client gives up
+  after 15 s, says so in chat once, shows per-player status in ⚙️. Verified: credentials match `openssl`
+  HMAC; local repro (one client restricted to relay-only, no relay) → both sides "sin conexión" + one
+  message after retries; normal pair still "conectado"; client receives TURN entry in `init`. coturn itself
+  not tested (no Docker here).
 - 2026-10-20 Mic settings panel (⚙️): input device dropdown (remembered, live switch via replaceTrack),
   level meter, release-mic button, PTT ignored while typing in form fields. Verified in two in-app browser
   clients with two fake mics (440/880 Hz tones): device names hidden until permission, listener's peak moves

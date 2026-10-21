@@ -31,7 +31,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 
 | type | Fields | Client handling |
 |---|---|---|
-| `init` | `userId`, `iceServers` | create `LocalPlayer` at chosen room spawn, send `setUsername` + `initCompleted`; voice keeps id + ICE servers |
+| `init` | `userId`, `iceServers` (STUN + per-user TURN credentials when configured) | create `LocalPlayer` at chosen room spawn, send `setUsername` + `initCompleted`; voice keeps id + ICE servers |
 | `userJoined` | `userId`, `username`, `position`, `rotation`, `selectedModel`, `seatId` | create/update `RemotePlayer` |
 | `userLeft` | `userId` | remove player |
 | `userMoved` | `userId`, `position`, `rotation` | remote player target |

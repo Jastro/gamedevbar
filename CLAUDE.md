@@ -8,6 +8,7 @@ Multiplayer Three.js hangout for the Mediavida /gamedev/ community. Client in `s
 - `Docs/Architecture.md` – code map and "how to add a room / clickable / message / server feature".
 - `Docs/Systems.md` – rooms layout, doors, audio occlusion, voice chat, known issues.
 - `Docs/Protocol.md` – WebSocket messages.
+- `Docs/TURN.md` – coturn relay setup on the server (voice between different networks).
 
 ## Run
 - `npm install` (set `PUPPETEER_SKIP_DOWNLOAD=true` to skip the Chromium download), then `npm run dev`:

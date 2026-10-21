@@ -76,9 +76,15 @@ because the real one is muted between presses; the clone is never sent), and *De
 stops the track so the browser's recording indicator goes away; the next press reopens it. Switching device
 mid-call swaps the track on every peer with `replaceTrack`, without reconnecting.
 
-Limits: a mesh costs N-1 connections per player (fine for a bar of ~20); bigger rooms need an SFU. ICE
-servers come from the server (`ICE_SERVERS` env, JSON array; default Google STUN). Without a TURN server,
-some players behind strict NATs won't connect. Embedding in a forum thread needs
+Limits: a mesh costs N-1 connections per player (fine for a bar of ~20); bigger rooms need an SFU.
+
+Networks: STUN alone only connects players whose NATs allow it. Carrier-grade NAT (common in Spain:
+Digi, O2, mobile data) and strict routers need the **TURN relay** (coturn, self-hosted). Setup in
+[TURN.md](TURN.md). The server adds per-player, short-lived TURN credentials to `init` when `TURN_URLS` +
+`TURN_SECRET` are set (`server/config.js`). `ICE_SERVERS` (a JSON array) still replaces the default STUN. A
+connection that isn't up within 15 s counts as failed. The player gets one chat message per peer
+("No se ha podido conectar la voz con…"), the initiator retries 3 times, and ⚙️ → *Conexiones de voz*
+shows each player as conectando / conectado / sin conexión. Embedding in a forum thread needs
 `<iframe allow="microphone">` on the embedding page.
 
 ## Server state

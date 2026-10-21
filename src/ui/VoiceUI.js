@@ -15,6 +15,13 @@ export class VoiceUI {
         this.chat = chat;
         this.createButton();
         this.voice.on('talking', (isTalking) => this.button.classList.toggle('talking', isTalking));
+        this.voice.on('peerFailed', (remoteId) => {
+            const name = this.voice.game.players.players.get(remoteId)?.username ?? 'otro jugador';
+            this.chat?.addMessage({
+                type: 'system',
+                message: `🎙️ No se ha podido conectar la voz con ${name}. Puede ser vuestra red; se reintentará.`
+            });
+        });
         this.voice.on('error', (reason) => this.chat?.addMessage({
             type: 'system',
             message: `🎙️ ${ERROR_MESSAGES[reason] ?? ERROR_MESSAGES.unavailable}`

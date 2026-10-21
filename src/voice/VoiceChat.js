@@ -19,13 +19,17 @@ const MIC_PROCESSING = { echoCancellation: true, noiseSuppression: true, autoGai
 
 // Push-to-talk proximity voice chat over a WebRTC mesh; the game's WebSocket
 // only relays signaling. Events: 'talking' (bool), 'mic' (bool: mic open or
-// released), 'error' (reason), 'devices' (input device list may have changed).
+// released), 'error' (reason), 'devices' (input device list may have changed),
+// 'peers' (connection status changed), 'peerFailed' (remoteId, first failure only).
+// Statuses: 'connecting' | 'connected' | 'failed'.
 export class VoiceChat extends EventEmitter {
     constructor(game) {
         super();
         this.game = game;
         this.network = game.network;
         this.peers = new Map(); // remoteId -> { peer, stream, element, sound, occlusion, retries }
+        this.peerStatus = new Map(); // remoteId -> status; outlives failed connections for the UI
+        this.notifiedFailures = new Set();
         this.localId = null;
         this.iceServers = DEFAULT_ICE_SERVERS;
         this.micTrack = null;
@@ -50,7 +54,11 @@ export class VoiceChat extends EventEmitter {
         });
         this.network.on('userJoined', (data) => this.connectTo(data.userId));
         this.network.on('userUsername', (data) => this.connectTo(data.userId));
-        this.network.on('userLeft', (data) => this.disconnectFrom(data.userId));
+        this.network.on('userLeft', (data) => {
+            this.disconnectFrom(data.userId);
+            this.peerStatus.delete(data.userId);
+            this.emit('peers');
+        });
         this.network.on('voiceSignal', (data) => this.handleSignal(data.fromId, data.signal));
         this.network.on('voiceTalking', (data) => {
             this.game.players.players.get(data.userId)?.setTalking(data.talking === true);
@@ -75,11 +83,32 @@ export class VoiceChat extends EventEmitter {
             iceServers: this.iceServers,
             sendSignal: (signal) => this.network.send('voiceSignal', { targetId: remoteId, signal }),
             onTrack: (stream) => this.attachRemoteStream(entry, stream),
-            onFailed: () => this.handleFailure(remoteId)
+            onFailed: () => this.handleFailure(remoteId),
+            onConnected: () => this.setStatus(remoteId, 'connected')
         });
         if (this.micTrack) entry.peer.setLocalTrack(this.micTrack);
         this.peers.set(remoteId, entry);
+        this.setStatus(remoteId, 'connecting');
         return entry;
+    }
+
+    setStatus(remoteId, status) {
+        if (this.peerStatus.get(remoteId) === status) return;
+        this.peerStatus.set(remoteId, status);
+        this.emit('peers');
+        if (status === 'failed' && !this.notifiedFailures.has(remoteId)) {
+            this.notifiedFailures.add(remoteId);
+            this.emit('peerFailed', remoteId);
+        }
+    }
+
+    // [{ id, name, status }] for every remote player we tried to reach.
+    getPeerStatuses() {
+        return [...this.peerStatus].map(([id, status]) => ({
+            id,
+            name: this.game.players.players.get(id)?.username ?? '…',
+            status
+        }));
     }
 
     handleSignal(fromId, signal) {
@@ -99,6 +128,7 @@ export class VoiceChat extends EventEmitter {
         const entry = this.peers.get(remoteId);
         if (!entry) return;
         this.disconnectFrom(remoteId);
+        this.setStatus(remoteId, 'failed');
 
         if (this.localId < remoteId && entry.retries < MAX_RECONNECT_ATTEMPTS) {
             setTimeout(() => {
@@ -124,6 +154,9 @@ export class VoiceChat extends EventEmitter {
 
     closeAll() {
         [...this.peers.keys()].forEach(remoteId => this.disconnectFrom(remoteId));
+        this.peerStatus.clear();
+        this.notifiedFailures.clear();
+        this.emit('peers');
     }
 
     // --- Remote audio ------------------------------------------------------

@@ -16,6 +16,7 @@ export class VoiceSettingsUI {
             this.startMeter();
         });
         this.voice.on('devices', () => this.isOpen && this.refresh());
+        this.voice.on('peers', () => this.isOpen && this.renderPeers());
     }
 
     createElements() {
@@ -44,6 +45,8 @@ export class VoiceSettingsUI {
             <div class="voice-meter" aria-label="Nivel de entrada"><div class="voice-meter-fill"></div></div>
             <div class="voice-settings-hint"></div>
             <button type="button" class="voice-settings-action secondary" data-action="release">Desactivar micrófono</button>
+            <div class="voice-settings-label">Conexiones de voz</div>
+            <ul class="voice-peers"></ul>
         `;
         container?.appendChild(this.panel);
 
@@ -52,6 +55,7 @@ export class VoiceSettingsUI {
         this.releaseButton = this.panel.querySelector('[data-action="release"]');
         this.meterFill = this.panel.querySelector('.voice-meter-fill');
         this.hint = this.panel.querySelector('.voice-settings-hint');
+        this.peerList = this.panel.querySelector('.voice-peers');
 
         this.select.addEventListener('change', () => this.voice.setInputDevice(this.select.value));
         this.allowButton.addEventListener('click', () => this.voice.enableMic());
@@ -70,6 +74,7 @@ export class VoiceSettingsUI {
         this.panel.classList.remove('hidden');
         this.toggleButton.classList.add('active');
         this.refresh();
+        this.renderPeers();
         this.startMeter();
     }
 
@@ -108,6 +113,32 @@ export class VoiceSettingsUI {
         this.hint.textContent = hasMic
             ? `Habla para probar. Mantén ${PTT_KEY.toUpperCase()} para que te oigan.`
             : 'El micrófono está apagado; se activa al pulsar para hablar.';
+    }
+
+    // Who we can hear / be heard by. A failure usually means a network that
+    // needs the TURN relay (Docs/TURN.md).
+    renderPeers() {
+        const labels = { connecting: 'conectando…', connected: 'conectado', failed: 'sin conexión' };
+        const peers = this.voice.getPeerStatuses();
+        this.peerList.innerHTML = '';
+        if (peers.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'voice-peer-empty';
+            empty.textContent = 'Nadie más en el bar';
+            this.peerList.appendChild(empty);
+            return;
+        }
+        peers.forEach(({ name, status }) => {
+            const item = document.createElement('li');
+            item.className = `voice-peer ${status}`;
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = name;
+            const statusSpan = document.createElement('span');
+            statusSpan.className = 'voice-peer-status';
+            statusSpan.textContent = labels[status] ?? status;
+            item.append(nameSpan, statusSpan);
+            this.peerList.appendChild(item);
+        });
     }
 
     // Level from a clone of the mic track: the real one is muted (enabled =
