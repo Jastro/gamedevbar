@@ -1,5 +1,5 @@
 const { getIceServers } = require('../config');
-const { cleanUsername, cleanModelId } = require('../validation');
+const { cleanUsername, cleanModelId, cleanAppearance } = require('../validation');
 
 // Who is connected, their name/model and position.
 function registerPresence(hub) {
@@ -22,11 +22,13 @@ function registerPresence(hub) {
     hub.on('setUsername', ({ user }, data) => {
         user.username = cleanUsername(data.username);
         user.selectedModel = cleanModelId(data.selectedModel);
+        user.appearance = cleanAppearance(data.appearance);
         hub.broadcastAll({
             type: 'userUsername',
             userId: user.id,
             username: user.username,
-            selectedModel: user.selectedModel
+            selectedModel: user.selectedModel,
+            appearance: user.appearance
         });
     });
 
@@ -47,6 +49,7 @@ function registerPresence(hub) {
         const { ws, user } = ctx;
         user.username = cleanUsername(data.username);
         user.selectedModel = cleanModelId(data.selectedModel);
+        user.appearance = cleanAppearance(data.appearance);
 
         hub.broadcast({ type: 'userJoined', ...user.toPublic() }, ws);
         hub.users.forEach((existingUser, existingWs) => {

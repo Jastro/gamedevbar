@@ -2,6 +2,8 @@
 import { Group, Vector3, AnimationMixer, CanvasTexture, SpriteMaterial, Sprite } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as THREE from 'three';
+import { DEFAULT_APPEARANCE, normalizeAppearance } from '../appearance/catalog';
+import { prepareAnchors, applyAppearance } from '../appearance/Accessories';
 
 // Moves angle `from` toward `to` by fraction t (0..1) the short way round.
 export function lerpAngle(from, to, t) {
@@ -21,6 +23,9 @@ export class Player {
         this.isSitting = false;
 
         this.selectedModel = null;
+        // Accessories, tint, size, name color (src/appearance/catalog.js).
+        this.appearance = { ...DEFAULT_APPEARANCE };
+        this.model = null;
         
         this.animations = {
             mixer: null,
@@ -106,6 +111,10 @@ export class Player {
                 });
 
             this.mesh.add(model);
+            this.model = model;
+            // Rest pose, before the mixer moves anything: measure once.
+            prepareAnchors(model, this.mesh, modelId);
+            applyAppearance(model, modelId, this.appearance);
 
             // Configurar animaciones
             if (this.animations.mixer) {
@@ -238,7 +247,7 @@ export class Player {
         gradient.addColorStop(0, '#FFFFFF');
         gradient.addColorStop(1, '#DDDDDD');
 
-        this.nameContext.fillStyle = gradient;
+        this.nameContext.fillStyle = this.appearance.nameColor ?? gradient;
         this.nameContext.fillText(displayName, this.nameCanvas.width / 2, this.nameCanvas.height / 2);
 
         // Quitar sombra
@@ -250,9 +259,15 @@ export class Player {
         this.nameSprite.visible = true;
         
         // Ajustar posición y escala del nombre para todos los jugadores
-        this.nameSprite.position.y = 1.3;
+        this.nameSprite.position.y = 1.3 * (this.appearance.scale ?? 1);
         this.nameSprite.scale.set(2.5, 0.6, 1); // Escala más grande
         this.nameSprite.renderOrder = 999;
+    }
+
+    setAppearance(appearance) {
+        this.appearance = normalizeAppearance(appearance);
+        applyAppearance(this.model, this.selectedModel, this.appearance);
+        if (this.username) this.setUsername(this.username);
     }
 
     cleanup() {
