@@ -55,15 +55,18 @@ export class Scene {
 
             // Procesar sillas y taburetes
             if (object.userData && object.userData.type === "seat") {
-                object.userData.highlightMaterial = new THREE.MeshStandardMaterial({
+                const highlightMaterial = new THREE.MeshStandardMaterial({
                     color: 0x7fff7f,
                     emissive: 0x2f2f2f,
                 });
+                object.userData.highlightMaterial = highlightMaterial;
 
-                // Guardar material original
+                // Guardar material original (hover highlight is per mesh,
+                // see InteractionSystem.setHighlight)
                 object.traverse((child) => {
                     if (child.isMesh) {
                         child.userData.originalMaterial = child.material;
+                        child.userData.highlightMaterial = highlightMaterial;
                     }
                 });
             }

@@ -1,10 +1,14 @@
 import { ArcadePong } from '../world/ArcadePong';
 
-// Arcade cabinets: click when close to start (Pong: second click by another
-// player joins as player 2).
+// Arcade cabinets: click or F when close to start (Pong: second click by
+// another player joins as player 2).
 export function createArcadeInteraction(game) {
     return {
         type: 'arcade',
+        range: 3, // same as ArcadePong/ArcadeSnake.checkPlayerProximity
+        hint(object) {
+            return object.userData.arcade instanceof ArcadePong ? 'Jugar al Pong' : 'Jugar al Snake';
+        },
         use(object) {
             const arcade = object.userData.arcade;
             const player = game.players.localPlayer;

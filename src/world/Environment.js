@@ -29,7 +29,7 @@ export class Environment {
             const contents = {
                 room,
                 bar: new Bar(room, room.definition.barSign),
-                furniture: new Furniture(room),
+                furniture: new Furniture(room, this.world.collisionManager),
                 radio: new Radio(room),
                 paintings: hasPaintings ? new Paintings(room) : null,
                 arcadePong: new ArcadePong(room),

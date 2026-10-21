@@ -1,9 +1,17 @@
 import * as THREE from 'three';
 
+const TABLE_RADIUS = 0.8;
+// Chair seats are at 0.5 (stools at 0.9): the sitting avatar sits lower.
+const CHAIR_SIT_HEIGHT = 1.0;
+
+// Round tables you can jump onto (platform colliders) with four chairs each
+// (seats facing the table, no colliders).
 export class Furniture {
-    constructor(scene) {
+    constructor(scene, collisionManager) {
         this.scene = scene;
+        this.collisionManager = collisionManager;
         this.seats = new Map();
+        this.highlightMaterial = new THREE.MeshStandardMaterial({ color: 0x7fff7f, emissive: 0x2f2f2f });
     }
 
     create() {
@@ -20,17 +28,21 @@ export class Furniture {
 
     createTableSet(x, z) {
         // Crear mesa
-        const tableGeometry = new THREE.CylinderGeometry(0.8, 0.8, 0.05, 16);
+        const tableGroup = new THREE.Group();
+        tableGroup.position.set(x, 0, z);
+        const tableGeometry = new THREE.CylinderGeometry(TABLE_RADIUS, TABLE_RADIUS, 0.05, 16);
         const tableMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
         const table = new THREE.Mesh(tableGeometry, tableMaterial);
-        table.position.set(x, 1, z);
-        this.scene.add(table);
+        table.position.y = 1;
+        tableGroup.add(table);
 
         // Pata de la mesa
         const legGeometry = new THREE.CylinderGeometry(0.1, 0.1, 1, 8);
         const leg = new THREE.Mesh(legGeometry, tableMaterial);
-        leg.position.set(x, 0.5, z);
-        this.scene.add(leg);
+        leg.position.y = 0.5;
+        tableGroup.add(leg);
+        this.scene.add(tableGroup);
+        this.collisionManager?.addPlatform(tableGroup, TABLE_RADIUS);
 
         // Crear sillas alrededor
         const chairPositions = [
@@ -41,11 +53,11 @@ export class Furniture {
         ];
 
         chairPositions.forEach(pos => {
-            this.createChair(x + pos.x, z + pos.z, pos.angle);
+            this.createChair(x + pos.x, z + pos.z, pos.angle, { x, z });
         });
     }
 
-    createChair(x, z, angle) {
+    createChair(x, z, angle, tableCenter) {
         const chairGroup = new THREE.Group();
 
         // Asiento
@@ -79,14 +91,16 @@ export class Furniture {
         chairGroup.position.set(x, 0, z);
         chairGroup.rotation.y = angle;
 
+        // Hover highlight is per mesh (InteractionSystem.setHighlight).
+        chairGroup.traverse(child => {
+            if (!child.isMesh) return;
+            child.userData.originalMaterial = chairMaterial;
+            child.userData.highlightMaterial = this.highlightMaterial;
+        });
         chairGroup.userData = {
             type: "seat",
-            originalMaterial: chairMaterial,
-            highlightMaterial: new THREE.MeshStandardMaterial({
-                color: 0x7fff7f,
-                emissive: 0x2f2f2f,
-            }),
-            forwardDirection: new THREE.Vector3(0, 0, -1),
+            sitHeight: CHAIR_SIT_HEIGHT,
+            faceTarget: tableCenter, // room-local
         };
 
         this.scene.add(chairGroup);
