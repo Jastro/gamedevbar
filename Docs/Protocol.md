@@ -27,7 +27,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `projectorPause` / `projectorResume` / `projectorStop` | `roomId` | update/clear, `projectorState` to all |
 | `virconStart` | `roomId`, `romTitle`, `watchable` (bool; false for uploaded carts) | take the room's cabinet → `virconState` to all, or `virconBusy` to sender |
 | `virconStop` | `roomId` | free it (only its player) → `virconState` to all |
-| `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player |
+| `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, always with `peerId`; ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player; an offer that can't be relayed gets `{refused, peerId}` back (as if from the target) |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
 | `arcadeState` | `gameState`, `data` | re-broadcast (see known issues: Pong sync broken) |
 | `soccerBallUpdate` | `position`, `velocity` | relayed to others |

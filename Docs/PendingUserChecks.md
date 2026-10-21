@@ -58,6 +58,14 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       loading card too plain?
 - [ ] **👤 menu.** Change the character and nick with a friend watching: they see it at once. On a phone,
       do the tiles fit, and are the buttons above the chat input easy to hit?
+- [ ] **Watching the arcade.** Two machines (ideally different homes). A plays a bundled game; B walks up
+      to the cabinet. Expected: within ~1-2 s the game appears on B's cabinet screen with its sound coming
+      from the machine; B walking away (past ~4.5) brings back the "🎮 A · game" screen; A's Esc does too.
+      Judge: delay, picture quality, whether A's game slows down while streaming, A's upload on a home
+      connection, and whether 4.5 is the right "gathered round" distance (`WATCH_DISTANCE` in
+      `src/vircon/VirconSpectating.js`).
+- [ ] **🕹️ Arcade slider (⚙️).** Changes the Vircon32 sound while you play, a watched game's sound, and
+      Snake/Pong sounds; kept after reload.
 - [ ] **Vircon32 play camera.** Start a game: the cabinet stays visible with its screen at about half
       the view (not fullscreen), the wheel doesn't zoom (also while scrolling the ROM list), middle-drag
       pans, R re-centers. Is the framing comfortable to play on desktop and on a narrow window? Tune

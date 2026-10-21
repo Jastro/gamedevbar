@@ -111,13 +111,19 @@ changes. No server state. The forum scraper behind the old TV (Puppeteer + headl
 ## Vircon32 cabinet
 
 A Vircon32 fantasy-console cabinet in every room (back-right corner), playing on its own 3D screen with a
-ROM picker. Details: [Vircon32.md](Vircon32.md).
+ROM picker. People standing round it watch the game live (WebRTC from the player). Details:
+[Vircon32.md](Vircon32.md).
 
 ## Volume settings
 
-⚙️ (next to the mic button) also has per-player volume sliders: 📻 radio, 📽️ projector, 🗣️ voices
-(`src/audio/AudioSettings.js`, saved in `localStorage` `audioVolumes`, 0-100 %). Radios multiply their
-`PositionalAudio` volume, projectors their YouTube volume, and voices their `PositionalAudio` gain. A
+⚙️ (next to the mic button) also has per-player volume sliders: 📻 radio, 📽️ projector, 🗣️ voices,
+🕹️ arcade (`src/audio/AudioSettings.js`, saved in `localStorage` `audioVolumes`, 0-100 %).
+- Radios multiply their `PositionalAudio` volume, projectors their YouTube volume, and voices their
+  `PositionalAudio` gain.
+- Arcade drives:
+  - the Vircon32 emulator's output gain (the audio tap, see Vircon32.md);
+  - a spectated game's `PositionalAudio`;
+  - Snake and Pong's own `AudioListener` master volume. A
 slider releases focus when let go, so movement keys work right away.
 
 ## Projector (shared YouTube)

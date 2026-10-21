@@ -1,9 +1,9 @@
 # Handover
 
 ## Start here
-2026-10-21. Working toward forum embeds. `feature/direct-join` (PR open, see Done) adds `/gamedev` and
-`/desarrollo` links and the 👤 menu. Next: arcade spectating
-(`Docs/Plans to be done/2026-10-21-vircon-spectating-design.md`), on its own branch.
+2026-10-21. Working toward forum embeds. Two open PRs, stacked: `feature/direct-join` (Jastro/gamedevbar#18)
+and `feature/vircon-spectating` (on top of it; merge #18 first). Next: Borja's checks in
+`Docs/PendingUserChecks.md` (direct links on a phone, watching the arcade between two homes).
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
@@ -16,6 +16,23 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Vircon32 spectating + 🕹️ Arcade slider (plan `Docs/Plans done/2026-10-21-vircon-spectating-plan.md`):
+  - **Who watches:** people within 4.5 of a cabinet see and hear the player's game on its screen (WebRTC
+    from the player: canvas at 30 fps capped at 1 Mbps, plus the emulator's audio tap). At most 6
+    watchers, nearest first. Bundled games only.
+  - **Slider:** the Arcade slider drives the emulator's gain, watched games and Snake/Pong.
+  - **Verified (three in-app clients):**
+    - B at 4 units gets 640×360 frames advancing at about 30 fps, plus audio packets, and its screen
+      shows the game;
+    - out of range → idle, and back in → watching again; the player keeps 1 connection, so none leak;
+    - Esc → idle; the player's socket dropping ends their game, and the watcher → idle;
+    - with the cap set to 1, a nearer C took the slot and B was refused with back-off;
+    - an uploaded cart is not watchable;
+    - an offer to a ghost cabinet is refused by the server at once;
+    - the slider moves the emulator gain and the Snake/Pong master gains.
+  - **Not verified:** two real networks or TURN, quality or delay by eye, and the player's frame rate
+    while streaming.
+  - **Bug fix (old):** the `virconStates` join snapshot never cleared cabinets freed during a reconnect.
 - 2026-10-21 Direct links + customization (plan `Docs/Plans done/2026-10-21-direct-join-plan.md`):
   - **Links:** `/<roomId>` skips the start dialog. You see a loading card, then the bar.
   - **First visit:** `Parroquiano NNNN` and a random character, both remembered, plus a one-time
@@ -92,46 +109,24 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   synced + chat line, projector join snapshot / pause / resume / stop synced (clients 0.3-1.4 s apart),
   iframe aligned to the screen to the pixel, volume 100 → 3 across distance/doors. Not seen with eyes:
   the screenshot tool can't capture the video itself, and nothing was listened to.
-- 2026-10-20 TURN deploy automation: workflow ships `deploy/` and runs `deploy/remote-deploy.sh`; with
-  the `TURN_SECRET` secret it starts coturn (own compose project) and injects TURN env into the app via a
-  managed compose override, never editing the server's compose file; any TURN problem aborts before
-  `compose down`. Verified: workflow YAML parses; script run against a fake `docker` in 9 scenarios (no
-  secret / one service / two services ± variable / foreign override / bad secret / compose.yaml / re-run /
-  empty host var). Not run on the real server.
-- 2026-10-20 Bug (production): voice silent between players on different networks; two tabs on one PC
-  worked. Root cause: STUN-only ICE can't cross carrier-grade/strict NATs, so no TURN relay = no path. Fix:
-  server issues coturn `use-auth-secret` credentials per user (`TURN_URLS`/`TURN_SECRET`); client gives up
-  after 15 s, says so in chat once, shows per-player status in ⚙️. Verified: credentials match `openssl`
-  HMAC; local repro (one client restricted to relay-only, no relay) → both sides "sin conexión" + one
-  message after retries; normal pair still "conectado"; client receives TURN entry in `init`. coturn itself
-  not tested (no Docker here).
-- 2026-10-20 Mic settings panel (⚙️): input device dropdown (remembered, live switch via replaceTrack),
-  level meter, release-mic button, PTT ignored while typing in form fields. Verified in two in-app browser
-  clients with two fake mics (440/880 Hz tones): device names hidden until permission, listener's peak moves
-  445 → 879 Hz on a mid-talk switch with no reconnect, old track stopped, choice saved and reused after
-  release, meter fills while not talking. Real devices not tested.
-- 2026-10-20 Modular refactor (behavior unchanged): server split into `server/` (Hub + one module per
-  feature), client gets `InteractionSystem` + `src/interactions/`, `StartScreen`, `DoorSync`, transport-only
-  `WebSocketManager`. Fixed on the way: `ModelSelector.init()` ran twice (12 preview WebGL contexts instead
-  of 6). Docs: Architecture.md rewritten short, details moved to Systems.md. Verified: build; server smoke
-  test over ws; two in-app browser clients: join, chat both ways, door via E + hint + sync, sit, radio,
-  arcade range message, voice connect + PTT tone received/stopped, no console errors.
-- 2026-10-20 Push-to-talk proximity voice chat (WebRTC mesh, signaling over the game WS), plan
-  `Docs/Plans done/2026-10-20-voice-chat.md`. Verified with two in-app browser clients and a fake mic (a
-  440 Hz tone): peers connect, the tone reaches the listener's audio graph only while PTT is held, 🎙️ sprite
-  follows, occlusion levels for 6 positions/door combos, peers cleaned up on leave. Real mic not tested.
-- 2026-10-20 Security: WS handler no longer crashes on malformed/partial frames (try/catch, field checks,
-  safe user lookups), usernames/chat/emoji clamped server-side, chat history capped on join/leave too, chat
-  XSS fixed (`textContent`). Verified: `npm run build`; ws script sending 17 bad frames (old server dies on
-  `{"type":"userChat"}`, new one stays up); in-app browser with `<i>Pepe</i>` name + `<img onerror>` message
-  renders as text, no alert.
-- 2026-10-20 Repo docs: Architecture, Protocol, CLAUDE.md, this handover.
-- 2026-10-20 Rooms + street + doors + audio occlusion (plan: `Docs/Plans done/2026-10-20-rooms-and-doors.md`).
-  Verified in the in-app browser with the real server: spawn in each room, walking blocked by closed doors /
-  fences, walking out through open doors, door click/`E`/range, door sync between 2 clients + late-join
-  snapshot, stool facing in the rotated room, occlusion levels per position. Audio not listened to.
+- 2026-10-20 (details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md)):
+  - TURN deploy automation;
+  - voice-over-TURN fix (per-user coturn credentials);
+  - mic settings panel;
+  - modular refactor;
+  - push-to-talk voice chat;
+  - WS hardening and the chat XSS fix;
+  - repo docs;
+  - rooms, street, doors and audio occlusion.
 
 ## Decisions to review
+- Spectating (away mode, 2026-10-21):
+  - **Losing the connection ends your Vircon32 game**, rather than reclaiming the cabinet, because a
+    reconnect respawns the avatar anyway. If wrong: a short network blip kicks you out of the game.
+  - **`public/vircon32/index.html` audio tap edited by hand** (the same script as `shell.html`), with no
+    emsdk rebuild. If wrong: the next rebuild differs, though it should be identical.
+  - **Branch stacked on `feature/direct-join`.** Merge #18 first, otherwise the spectating PR also shows
+    #18's commits.
 - Direct links (away mode, 2026-10-21):
   - **Any way of closing the first-visit popup counts as answered** (✕, Esc, clicking outside). If wrong:
     people who click past it never see it again.
