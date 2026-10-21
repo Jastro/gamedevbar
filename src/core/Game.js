@@ -181,6 +181,7 @@ export class Game {
         this.environment.update(deltaTime, playerPosition);
         this.voice.update(playerPosition);
         this.interactions.update();
+        this.environment.rooms.forEach(({ presenceBoard }) => presenceBoard.update(this));
 
         // Actualizar posición de la cámara para seguir al jugador local
         if (this.players.localPlayer) {

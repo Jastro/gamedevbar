@@ -1,7 +1,7 @@
 # Taberna Virtual (gamedevbar)
 
 Multiplayer Three.js hangout for the Mediavida /gamedev/ community. Client in `src/` (Vite), Node server in
-`server/` (Express + `ws` + Puppeteer forum scraper; `server.js` is just the entry). UI text is Spanish.
+`server/` (Express + `ws`; `server.js` is just the entry). UI text is Spanish.
 
 ## Read first
 - `HANDOVER.md` – current state and next steps.
@@ -11,7 +11,7 @@ Multiplayer Three.js hangout for the Mediavida /gamedev/ community. Client in `s
 - `Docs/TURN.md` – coturn relay setup on the server (voice between different networks).
 
 ## Run
-- `npm install` (set `PUPPETEER_SKIP_DOWNLOAD=true` to skip the Chromium download), then `npm run dev`:
+- `npm install`, then `npm run dev`:
   Vite on 5148, server on 3000. `npm run build` is the only automated check (no tests).
 - When a tool injects `PORT` (e.g. preview servers), start the server with `PORT=3000` explicitly, since the
   client always connects to `:3000` in dev.

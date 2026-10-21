@@ -12,6 +12,10 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 The forum TV in each room is now a "who's here" board (players inside that room, 🎙️ when
+  talking, counts for the other room/street), computed client-side. Removed the Mediavida scraper:
+  `server/forumProxy.js`, `/mv-proxy` + `/proxy-image`, `puppeteer` and `node-fetch`, Chromium in the
+  Docker image, Vite proxies. Verified: build, server syntax; in-app (see slice commit).
 - 2026-10-21 Open-mic mode for voice (⚙️ checkbox, saved): mic always sent, V/🎙️ toggle mute, 🎙️
   indicator driven by speech detection. Verified with two in-app clients and a gated fake mic: heard with
   no key held, indicator on with speech / off 0.5 s after, mute → silence, back to PTT → silence, saved
@@ -76,9 +80,9 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   snapshot, stool facing in the rotated room, occlusion levels per position. Audio not listened to.
 
 ## Decisions to review
-- Doors centered on the front wall, rooms straight across the street (per Borja, 2026-10-20). The forum TV
+- Doors centered on the front wall, rooms straight across the street (per Borja, 2026-10-20). The board
   moved from x = 1.09 to x = 7 on the same wall to make room for the door.
-- Desarrollo is a copy without the paintings: own forum TV (same thread), own radio (same song), own local
+- Desarrollo is a copy without the paintings: own board, own radio, own local
   arcades.
 - Chat, `/furbo` and Snake high scores stay global across rooms.
 - No roofs (camera would clip on them); exterior is minimal.
@@ -86,7 +90,7 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 
 ## Open questions
 - Should chat become per-room (or show which bar someone is in)?
-- Desarrollo's identity: different decoration, music, TV feed (another subforum thread)?
+- Desarrollo's identity: different decoration, default music?
 
 ## Next
 - Pong sync (message `type` overwritten in `WebSocketManager.send`).

@@ -10,27 +10,8 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
-# Instalar dependencias necesarias para Puppeteer
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    freetype-dev \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    nodejs
-
-# Configuración de Puppeteer
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-
 # Crear usuario no root
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-# Configurar permisos para Puppeteer
-RUN mkdir -p /home/appuser/.cache/puppeteer && \
-    chown -R appuser:appgroup /home/appuser/.cache
 
 # Copiar archivos y establecer permisos
 COPY --chown=appuser:appgroup package*.json ./

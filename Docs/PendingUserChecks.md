@@ -16,7 +16,9 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Camera near doors/walls outside.** Walk along both facades and through the doorways rotating the
       camera (right mouse). Expected: camera doesn't end up behind a wall or a closed door.
 - [ ] **Room selector.** Layout on desktop and phone width; choice remembered after reload.
-- [ ] **Forum TV position.** It moved beside the door (x = 7 on the front wall). Still easy to read?
+- [ ] **"Who's here" board** (front wall, right of the door). Shows everyone inside that bar, 🎙️ while
+      they talk, and counts for the other bar / street; updates within ~0.5 s as people walk in and out.
+      Readable from the bar?
 - [ ] **Street look.** Exterior is plain (dark ground, fences, neon name signs, no roof). Good enough for now?
 - [ ] **Voice with a real mic.** Two machines (or two browsers with headphones). Hold `V`: first press asks
       for the mic; the other player hears you from your avatar's position and sees 🎙️ over your head.

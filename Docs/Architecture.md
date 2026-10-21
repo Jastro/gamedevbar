@@ -25,7 +25,8 @@ rendering/     Scene (level.json template), Renderer, Camera
 network/       WebSocketManager: transport only (JSON in → emit(type), send(type, data))
 entities/      Player, LocalPlayer (input + collisions), RemotePlayer, PlayerManager
 world/         RoomLayout (where rooms are), Room, World (shells, colliders, street), Environment (props per room),
-               Door + DoorSync, Bar/TV, Radio, Furniture, Paintings, arcades, SoccerGame, CollisionManager
+               Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, SoccerGame,
+               CollisionManager
 interactions/  one file per clickable type: seat, radio, arcade, door
 audio/         OcclusionChain (wall/door muffling shared by radios and voices)
 voice/         VoiceChat (mesh, PTT, positional voices), VoicePeer (one RTCPeerConnection)
@@ -48,10 +49,9 @@ Rules of thumb:
 ## Server (`server/`)
 
 ```
-index.js        Express app, static dist/, forum routes, Hub + feature registration (order matters)
+index.js        Express app, static dist/, Hub + feature registration (order matters)
 config.js       PORT, input LIMITS, ICE_SERVERS
 validation.js   cleanString / cleanUsername / cleanModelId
-forumProxy.js   Puppeteer scraper + /mv-proxy, /proxy-image
 hub/Hub.js      WebSocket lifecycle, routing by message type, chat commands, send/broadcast helpers
 hub/User.js     per-connection state (features add their own fields)
 features/       presence, doors, seats, chat, arcade, duel, soccer, voice: one register(hub) each
