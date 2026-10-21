@@ -3,6 +3,25 @@
 Detail notes per system. Last updated 2026-10-20. Structure and extension points:
 [Architecture.md](Architecture.md). Messages: [Protocol.md](Protocol.md).
 
+## Appearance (accessories, color, size, name color)
+
+- **Data:** `{ head, face, hand, tint, scale, nameColor }`, saved in `PlayerProfile` (`playerAppearance`),
+  sent with `setUsername`/`initCompleted` and relayed in `userJoined`/`userUsername`.
+  - The server only checks the shape (`cleanAppearance`).
+  - Clients normalize against `src/appearance/catalog.js` and drop unknown ids. Never rename an id.
+- **Accessories:** about 27, built from Three.js primitives in `items.js`, so no assets or licenses.
+  - Slots: head (hats), face (glasses, mustache, VR), right hand (drinks, a gamepad, a sword...).
+  - Attachment (`Accessories.js`): avatar-space anchors (skull top and face front per character in
+    `HEADS`, palm offset from `HandR`) are turned into bone-local transforms once per model in the rest
+    pose, so items follow the animations.
+  - They're re-applied after every model load and ignored by raycasts.
+- **Tint:** it pulls the texture 60% toward the color (`TINT_STRENGTH`); accessories keep their own colors.
+- **Size:** it scales the model 0.85–1.15 (feet stay on the ground, the collision box doesn't change). The
+  name tag moves with it.
+- **Menu:** 👤 has Personaje / Accesorios / Color tabs. On wide screens the panel sits on the left so you
+  can watch your avatar.
+- **Adding an item:** a builder in `items.js` (origin on the anchor) plus an entry in `ITEMS`.
+
 ## Controls and movement
 
 - **Keys** (the full list is in the ❔ panel, `src/ui/ControlsHelpUI.js`; keep it in sync):

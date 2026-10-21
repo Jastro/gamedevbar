@@ -9,6 +9,7 @@ export const MODEL_IDS = ['pj', 'pj2', 'pj3', 'pj4', 'pj5', 'pj6'];
 const NAME_KEY = 'playerName';
 const MODEL_KEY = 'selectedModel';
 const PROMPT_KEY = 'customizePromptSeen';
+const APPEARANCE_KEY = 'playerAppearance';
 
 function read(key) {
     try {
@@ -46,6 +47,19 @@ export function randomModel() {
 
 export function placeholderName() {
     return `Parroquiano ${1000 + Math.floor(Math.random() * 9000)}`;
+}
+
+// Raw saved appearance (normalized by the caller, see appearance/catalog.js).
+export function loadAppearance() {
+    try {
+        return JSON.parse(read(APPEARANCE_KEY) || 'null');
+    } catch {
+        return null;
+    }
+}
+
+export function saveAppearance(appearance) {
+    write(APPEARANCE_KEY, JSON.stringify(appearance));
 }
 
 export function hasSeenCustomizePrompt() {

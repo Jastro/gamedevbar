@@ -16,6 +16,20 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Appearance, part 1 (plan `Docs/Plans done/2026-10-21-appearance-plan.md`):
+  - **Items:** 27 accessories built in code: 13 hats (cap, top hat, viking helmet, crown, beret, gamer
+    headset, mushroom, ? block, halo, horns, beer helmet, pirate hat, chef hat), 6 face items, and 8 hand
+    items (beer, wine, bottle, tortilla pincho, gamepad, pixel sword, mic, 1UP mushroom).
+  - **Also:** a color tint, a size slider and name colors; the 👤 menu has tabs. Everything is saved and
+    synced.
+  - **Verified in-app:**
+    - items on the bones of pj, pj2, pj3, pj4, pj5 and pj6, checked by eye on screenshots (a mustache and
+      the chicken/Santa hat heights were fixed);
+    - a second client sees crown + monocle + gamepad + tint live;
+    - the appearance comes back after a reload;
+    - the server shape check drops bad ids and colors.
+  - **Not judged:** item fit and feel at play distance.
+  - **Next step:** part 2, more characters (find the asset pack and its license) and per-part colors.
 - 2026-10-21 Interactions, tables, lights (plan `Docs/Plans done/2026-10-21-interactions-tables-lights-plan.md`):
   - **F everywhere:** F works for everything, and the target is the nearest thing in front of you.
   - **Chairs:** they're seats now, at chair height, facing the table.

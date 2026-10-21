@@ -1,12 +1,19 @@
 import { FloatingPanel } from './FloatingPanel';
 import {
-    saveName, saveModel, hasSeenCustomizePrompt, markCustomizePromptSeen
+    saveName, saveModel, saveAppearance, hasSeenCustomizePrompt, markCustomizePromptSeen
 } from '../core/PlayerProfile';
+import { SLOTS, ITEMS, TINTS, NAME_COLORS, SCALE_RANGE } from '../appearance/catalog';
 
-// 👤 menu to change nick and character from inside the bar, applied live
-// (setUsername → userUsername to everyone). Reuses the start dialog's
-// character tiles; their previews are created the first time it opens.
-// The nick field goes away once the forum provides the username.
+const TABS = [
+    { id: 'character', name: 'Personaje' },
+    { id: 'accessories', name: 'Accesorios' },
+    { id: 'color', name: 'Color' }
+];
+
+// 👤 menu to change nick, character, accessories, color and size from inside
+// the bar, applied live (setUsername → userUsername to everyone). Reuses the
+// start dialog's character tiles; their previews are created the first time
+// it opens. The nick field goes away once the forum provides the username.
 export class CustomizeUI {
     constructor(game) {
         this.game = game;
@@ -34,6 +41,7 @@ export class CustomizeUI {
         nameRow.className = 'customize-name-row';
         nameRow.append(this.nameInput, saveButton);
         this.panel.body.append(label, nameRow);
+        this.createTabs();
 
         this.modelSelector.onModelChange((modelId) => this.applyModel(modelId));
 
@@ -50,13 +58,133 @@ export class CustomizeUI {
         document.getElementById('chat-container')?.appendChild(this.button);
     }
 
+    createTabs() {
+        const bar = document.createElement('div');
+        bar.className = 'customize-tabs';
+        this.tabButtons = new Map();
+        this.tabPages = new Map();
+        TABS.forEach(tab => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = tab.name;
+            button.addEventListener('click', () => this.showTab(tab.id));
+            bar.appendChild(button);
+            this.tabButtons.set(tab.id, button);
+            const page = document.createElement('div');
+            page.className = 'customize-page';
+            this.tabPages.set(tab.id, page);
+        });
+        this.panel.body.append(bar, ...this.tabPages.values());
+        this.choiceButtons = [];
+        this.buildAccessoriesPage(this.tabPages.get('accessories'));
+        this.buildColorPage(this.tabPages.get('color'));
+        this.showTab('character');
+    }
+
+    showTab(id) {
+        this.tabButtons.forEach((button, tabId) => button.classList.toggle('active', tabId === id));
+        this.tabPages.forEach((page, tabId) => page.classList.toggle('hidden', tabId !== id));
+    }
+
+    buildAccessoriesPage(page) {
+        Object.entries(SLOTS).forEach(([slot, { name }]) => {
+            const title = document.createElement('div');
+            title.className = 'customize-section';
+            title.textContent = name;
+            const grid = document.createElement('div');
+            grid.className = 'customize-items';
+            const options = [{ id: null, icon: '🚫', name: 'Nada' }, ...ITEMS.filter(item => item.slot === slot)];
+            options.forEach(item => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'customize-item';
+                button.title = item.name;
+                const icon = document.createElement('span');
+                icon.className = 'customize-item-icon';
+                icon.textContent = item.icon;
+                const label = document.createElement('span');
+                label.textContent = item.name;
+                button.append(icon, label);
+                button.addEventListener('click', () => this.updateAppearance({ [slot]: item.id }));
+                this.choiceButtons.push({ button, key: slot, value: item.id });
+                grid.appendChild(button);
+            });
+            page.append(title, grid);
+        });
+    }
+
+    buildColorPage(page) {
+        const swatchRow = (title, key, colors) => {
+            const heading = document.createElement('div');
+            heading.className = 'customize-section';
+            heading.textContent = title;
+            const row = document.createElement('div');
+            row.className = 'customize-swatches';
+            colors.forEach(color => {
+                const swatch = document.createElement('button');
+                swatch.type = 'button';
+                swatch.className = 'customize-swatch';
+                swatch.title = color ?? 'Original';
+                if (color) swatch.style.background = color;
+                else swatch.textContent = '✕';
+                swatch.addEventListener('click', () => this.updateAppearance({ [key]: color }));
+                this.choiceButtons.push({ button: swatch, key, value: color });
+                row.appendChild(swatch);
+            });
+            page.append(heading, row);
+        };
+        swatchRow('Color del personaje', 'tint', TINTS);
+        swatchRow('Color del nombre', 'nameColor', NAME_COLORS);
+
+        const heading = document.createElement('div');
+        heading.className = 'customize-section';
+        heading.textContent = 'Tamaño';
+        this.scaleInput = document.createElement('input');
+        this.scaleInput.type = 'range';
+        this.scaleInput.className = 'customize-scale';
+        this.scaleInput.min = String(SCALE_RANGE.min * 100);
+        this.scaleInput.max = String(SCALE_RANGE.max * 100);
+        this.scaleInput.step = '1';
+        // Live while dragging; saved and sent when let go.
+        this.scaleInput.addEventListener('input', () => {
+            this.updateAppearance({ scale: Number(this.scaleInput.value) / 100 }, false);
+        });
+        this.scaleInput.addEventListener('change', () => {
+            this.updateAppearance({ scale: Number(this.scaleInput.value) / 100 });
+            this.scaleInput.blur();
+        });
+        page.append(heading, this.scaleInput);
+    }
+
+    // Merge a change into the local player's appearance; save and share it
+    // unless it's a slider still being dragged.
+    updateAppearance(change, share = true) {
+        const player = this.game.players.localPlayer;
+        if (!player) return;
+        player.setAppearance({ ...player.appearance, ...change });
+        this.refreshChoices();
+        if (!share) return;
+        saveAppearance(player.appearance);
+        this.sendIdentity();
+    }
+
+    refreshChoices() {
+        const appearance = this.game.players.localPlayer?.appearance;
+        if (!appearance) return;
+        this.choiceButtons.forEach(({ button, key, value }) => {
+            button.classList.toggle('selected', appearance[key] === value);
+        });
+        this.scaleInput.value = String(Math.round((appearance.scale ?? 1) * 100));
+    }
+
     open() {
         if (!this.tiles) {
             // Move the character tiles out of the (hidden) start dialog.
             this.tiles = document.querySelector('.model-selector');
-            if (this.tiles) this.panel.body.appendChild(this.tiles);
+            if (this.tiles) this.tabPages.get('character').appendChild(this.tiles);
         }
         this.nameInput.value = this.game.username ?? '';
+        this.refreshChoices();
         this.panel.open();
         // After FloatingPanel.open unhides it: previews size themselves from
         // their (now visible) containers.
@@ -90,7 +218,8 @@ export class CustomizeUI {
     sendIdentity() {
         this.game.network.send('setUsername', {
             username: this.game.username,
-            selectedModel: this.modelSelector.getSelectedModel()
+            selectedModel: this.modelSelector.getSelectedModel(),
+            appearance: this.game.players.localPlayer?.appearance
         });
     }
 

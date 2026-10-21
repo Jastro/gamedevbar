@@ -66,6 +66,11 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       `src/vircon/VirconSpectating.js`).
 - [ ] **🕹️ Arcade slider (⚙️).** Changes the Vircon32 sound while you play, a watched game's sound, and
       Snake/Pong sounds; kept after reload.
+- [ ] **Accessories** (👤 → Accesorios / Color). Try hats, face items and hand items on all six
+      characters. Do they sit right (especially hats on the chicken, officer and Santa, which have their
+      own headgear)? Too big or too small? Hand items while walking? Does the tint look good, and is the
+      size slider range OK? A friend should see everything live. Tune per character in
+      `src/appearance/Accessories.js` (`HEADS`) and per item in `items.js`.
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a
       friend: both of you see the same thing. Does low look cosy, all off dark enough, disco fun
       (`RoomLighting.js`: `LEVELS`, `DISCO_*`)? Frame rate with disco on?

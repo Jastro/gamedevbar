@@ -14,8 +14,8 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 
 | type | Fields | Server reaction |
 |---|---|---|
-| `setUsername` | `username`, `selectedModel` | clamp/validate, store, `userUsername` to all |
-| `initCompleted` | `username`, `selectedModel` | `userJoined` to others, existing users + `doorStates` + chat history to sender, welcome chat to all |
+| `setUsername` | `username`, `selectedModel`, `appearance` (`{head, face, hand, tint, scale, nameColor}`, shape-checked by `cleanAppearance`) | clamp/validate, store, `userUsername` to all |
+| `initCompleted` | `username`, `selectedModel`, `appearance` | `userJoined` to others, existing users + `doorStates` + chat history to sender, welcome chat to all |
 | `userMoved` | `position: [x,y,z]`, `rotation` | store, `userMoved` to others |
 | `userChat` | `message`, `isEmote`, `emoji` | `/furbo` → `startSoccerGame` to all; else log + `userChat` to all |
 | `userSat` / `userStood` | `seatId` / – | seat bookkeeping, relayed to others (no client handler) |
@@ -39,10 +39,10 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | type | Fields | Client handling |
 |---|---|---|
 | `init` | `userId`, `iceServers` (STUN + per-user TURN credentials when configured), `serverTime` | create `LocalPlayer` at chosen room spawn, send `setUsername` + `initCompleted`; voice keeps id + ICE servers |
-| `userJoined` | `userId`, `username`, `position`, `rotation`, `selectedModel`, `seatId` | create/update `RemotePlayer` |
+| `userJoined` | `userId`, `username`, `position`, `rotation`, `selectedModel`, `appearance`, `seatId` | create/update `RemotePlayer` |
 | `userLeft` | `userId` | remove player |
 | `userMoved` | `userId`, `position`, `rotation` | remote player target |
-| `userUsername` | `userId`, `username`, `selectedModel` | update/create remote player |
+| `userUsername` | `userId`, `username`, `selectedModel`, `appearance` | update/create remote player |
 | `userChat` | `userId`, `username`, `message`, `isEmote`, `isTaberna`, `emoji`, `timestamp` | chat box + bubble |
 | `doorState` | `doorId`, `isOpen` | animate door |
 | `voiceSignal` | `fromId`, `signal` | WebRTC offer/answer/ICE candidate for that peer |
