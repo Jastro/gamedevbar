@@ -20,7 +20,7 @@ Dev: Vite on 5148, server on 3000. Media for voice goes peer to peer (WebRTC); t
 ## Client (`src/`)
 
 ```
-core/          Game (composition root + main loop), InteractionSystem (hover/click/E), EventEmitter, Config,
+core/          Game (composition root + main loop), InteractionSystem (hover/click/F), EventEmitter, Config,
                PlayerProfile (remembered nick/character/popup flag; all identity storage goes through it)
 rendering/     Scene (level.json template), Renderer, Camera
 network/       WebSocketManager: transport only (JSON in → emit(type), send(type, data))
@@ -31,7 +31,8 @@ world/         RoomLayout (where rooms are), Room, World (shells, colliders, str
 interactions/  one file per clickable type: seat, radio, arcade, door
 audio/         OcclusionChain (wall/door muffling shared by radios and voices)
 voice/         VoiceChat (mesh, PTT, positional voices), VoicePeer (one RTCPeerConnection)
-ui/            StartScreen, LoadingScreen, ModelSelector, RoomSelector, CustomizeUI (👤 menu), ChatUI,
+ui/            StartScreen, LoadingScreen, ModelSelector, RoomSelector, CustomizeUI (👤 menu),
+               ControlsHelpUI (❔ panel: the list of every control, keep it in sync), ChatUI,
                EmotesUI, VoiceUI, VoiceSettingsUI, RadioUI, ProjectorUI, VirconUI, FloatingPanel
 ```
 
@@ -71,7 +72,7 @@ logged). Lifecycle hooks: `onConnect`, `onJoin` (after `initCompleted`, in regis
   follow. Per-room flags (`barSign`, `paintings`) live on that entry.
 - **Something clickable**: give its root group `userData.type = '<type>'` (and `originalMaterial` /
   `highlightMaterial` on meshes for the hover glow). Add `src/interactions/<type>Interaction.js` returning
-  `{ type, use(object) }`, plus `findNearby(position)` and `hint(object)` if `E` should work near it. Register
+  `{ type, use(object) }`, plus `findNearby(position)` and `hint(object)` if `F` should work near it. Register
   it in `Game`'s constructor.
 - **A network message**: client `network.send('myThing', {...})` (don't put a `type` field in the data). On
   the server, `hub.on('myThing', (ctx, data) => ...)` in a feature: validate `data`, then reply with
