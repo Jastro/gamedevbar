@@ -4,7 +4,7 @@ const ROMS_URL = '/vircon32/roms/roms.json';
 const CONTROLS_HINT = 'Esc para salir · Flechas, X Z S A, Q W, Enter = Start · V: hablar · Rueda: mover cámara · R: centrar';
 // A web game from another site keeps its keys: Esc/V/R only work once you
 // click outside it, hence the exit button.
-const WEB_GAME_HINT = 'Ratón y teclado: el juego · ✕ Salir (arriba a la derecha) para volver al bar';
+const WEB_GAME_HINT = 'Ratón y teclado: el juego · Clic fuera del juego para hablar (V) o salir (Esc) · ✕ Salir arriba a la derecha';
 
 // Vircon32 cabinet UI: the ROM picker (bundled games from roms.json, or your
 // own .v32 file) and the play session. While playing, the camera frames the
@@ -50,8 +50,11 @@ export class VirconUI {
         });
         // A click in the page takes the keyboard from the game; give it back
         // (unless the click was into a text field, e.g. the chat).
+        // A web game is clicked directly, and clicking outside it is how you
+        // get the keyboard back for V/R/Esc, so it isn't refocused.
         document.addEventListener('pointerdown', (event) => {
             if (!this.session || ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target?.tagName)) return;
+            if (!this.session.cabinet.config.sameOrigin) return;
             setTimeout(() => this.session?.cabinet.focusGame(), 0);
         });
     }

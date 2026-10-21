@@ -1,7 +1,8 @@
 // The black car on the street: five seats shared by everyone. With two or
 // more people inside, a 5 s countdown starts (cancelled if they drop below
 // two); then everyone inside gets `carSmoke` (smoke, fade out, each lands
-// somewhere random, all on their clients) and the seats are cleared.
+// somewhere random, all on their clients). Seats are cleared at that moment;
+// `riding` keeps the car closed until the ride is over.
 const SLOTS = 5;
 const COUNTDOWN_MS = 5000;
 const RIDE_MS = 6000; // smoke + fade + teleport on the clients
@@ -35,10 +36,11 @@ function registerCar(hub) {
         countdownTimer = null;
         countdownEndsAt = null;
         riding = true;
-        hub.broadcastAll({ type: 'carSmoke', occupants: passengers() });
+        const occupants = passengers();
+        slots.fill(null);
+        hub.broadcastAll({ type: 'carSmoke', occupants });
         publish();
         setTimeout(() => {
-            slots.fill(null);
             riding = false;
             publish();
         }, RIDE_MS);
@@ -51,14 +53,17 @@ function registerCar(hub) {
         return true;
     };
 
+    // `slot` is optional: without it (the usual case) the server picks the
+    // first free seat, so two people getting in at once both fit.
     hub.on('carSit', ({ ws, user }, data) => {
-        const slot = data.slot;
-        if (!Number.isInteger(slot) || slot < 0 || slot >= SLOTS) return;
-        if (riding || (slots[slot] && slots[slot] !== user.id)) {
-            hub.send(ws, { type: 'carDenied', slot });
+        if (slots.includes(user.id)) return;
+        const slot = data.slot ?? slots.indexOf(null);
+        if (!Number.isInteger(slot) || slot < -1 || slot >= SLOTS) return;
+        const reason = riding ? 'riding' : slot === -1 ? 'full' : slots[slot] ? 'taken' : null;
+        if (reason) {
+            hub.send(ws, { type: 'carDenied', reason });
             return;
         }
-        freeSeatOf(user.id);
         slots[slot] = user.id;
         updateCountdown();
         publish();

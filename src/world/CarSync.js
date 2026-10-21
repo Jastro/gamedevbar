@@ -47,15 +47,23 @@ export class CarSync {
     bind() {
         const { network } = this.game;
         network.on('carState', (data) => this.applyState(data));
-        network.on('carDenied', () => {
-            this.game.ui.chat?.addMessage({ type: 'system', message: '🚗 Ese sitio ya está ocupado.' });
+        network.on('carDenied', (data) => {
+            const message = {
+                riding: '🚗 Ahora no, que ya van de viaje.',
+                full: '🚗 El coche está lleno.'
+            }[data.reason] ?? '🚗 Ese sitio ya está ocupado.';
+            this.game.ui.chat?.addMessage({ type: 'system', message });
         });
         network.on('carSmoke', (data) => this.startRide(Array.isArray(data.occupants) ? data.occupants : []));
         // Standing up from a car seat (WASD) gives it back, except when the
         // ride itself stands us up somewhere else.
         this.car.seats.forEach(seat => {
             seat.userData.onStand = () => {
-                if (!this.teleporting) this.game.network.send('carLeave', {});
+                if (this.teleporting) return;
+                // Until a carState without us arrives, ignore older ones
+                // that still list us (they'd sit us back down).
+                this.leaving = true;
+                this.game.network.send('carLeave', {});
             };
         });
     }
@@ -78,8 +86,10 @@ export class CarSync {
             this.game.ui.chat?.addMessage({ type: 'system', message: '🚗 El coche está lleno.' });
             return;
         }
+        this.leaving = false;
         if (this.game.network.isConnected) {
-            this.game.network.send('carSit', { slot });
+            // The server picks the seat (two people may click at once).
+            this.game.network.send('carSit', {});
         } else {
             this.sitIn(slot);
         }
@@ -102,7 +112,10 @@ export class CarSync {
 
         const mySlot = this.slots.indexOf(player.id);
         const inCar = this.car.seats.includes(player.seat);
-        if (mySlot !== -1) {
+        if (mySlot === -1) this.leaving = false;
+        if (mySlot !== -1 && this.leaving) {
+            // Stale: we already got out.
+        } else if (mySlot !== -1) {
             this.sitIn(mySlot);
         } else if (inCar) {
             // The server freed our seat (e.g. it reset): get out.
