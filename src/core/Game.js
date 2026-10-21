@@ -102,6 +102,7 @@ export class Game {
         this.selectedRoomId = roomId;
         // Same view on entry in every room: camera on the entrance side, facing the bar.
         this.camera.rotation.horizontal = getRoomDefinition(roomId).rotationY;
+        this.camera.defaultHorizontal = this.camera.rotation.horizontal;
 
         await this.init();
         // The window may have been resized (or been 0x0) since the page loaded.
@@ -164,6 +165,11 @@ export class Game {
 
         window.addEventListener('keydown', (e) => this.ui.voice.handleKey(e, true, this.chatActive));
         window.addEventListener('keyup', (e) => this.ui.voice.handleKey(e, false, this.chatActive));
+        // R: reset the camera (zoom, angle, pan).
+        window.addEventListener('keydown', (e) => {
+            if (this.chatActive || e.repeat || e.key.toLowerCase() !== 'r') return;
+            this.camera.reset();
+        });
         // A projector whose autoplay with sound was blocked starts on the next click.
         document.addEventListener('pointerdown', () => {
             this.environment.rooms.forEach(({ projector }) => projector.kick());

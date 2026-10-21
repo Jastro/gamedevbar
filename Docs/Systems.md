@@ -62,7 +62,7 @@ Arcade sounds are plain `THREE.Audio` (not positional, not occluded).
 
 Each room's radio (`src/world/Radio.js`) plays the room's **shared station**: live Spanish internet
 radio only (`src/audio/radioStations.js`), so everyone hears the same broadcast (± the browser's buffer).
-Defaults: Gamedev LOS40 Classic, Desarrollo Rock FM. The old El Fary mp3 loop was removed (2026-10-21). Clicking a radio opens the station picker (`src/ui/RadioUI.js`). A change goes
+Defaults: Gamedev Rock FM, Desarrollo Kiss FM. The old El Fary mp3 loop was removed (2026-10-21). Clicking a radio opens the station picker (`src/ui/RadioUI.js`). A change goes
 `radioSet` → server → `radioState` to everyone, with a 📻 chat line; newcomers get `radioStates`. Rooms
 nobody has changed play their `RoomLayout` `radioStation`. *Silenciar para mí* is local.
 
