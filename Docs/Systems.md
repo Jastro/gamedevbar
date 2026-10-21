@@ -169,6 +169,10 @@ see [Protocol.md](Protocol.md).
 - Seat ids are Three.js object ids (client-local), so server seat occupancy is meaningless across clients, and
   no client handles `userSat`/`userStood` (others don't see you sit).
 - Duel messages (`duelRequest`...) exist on the server but there is no client UI for them.
+- Fixed 2026-10-21: a page loaded hidden or zero-sized (background tab, hidden pane, collapsed iframe)
+  left the camera aspect at 0/0 = NaN until the next resize. The scene rendered black, and anything
+  using the aspect (the Vircon32 camera framing) got NaN positions. Camera now clamps the aspect and
+  `Game.start` re-syncs the size.
 - `window.game` is still used as a global by older modules (Bar, arcades, SoccerGame, ChatUI); new code
   gets `game` passed in.
 - Geometry is duplicated: `level.json`, `World` and `Bar` all create floor/walls/bar counter (z-fighting).

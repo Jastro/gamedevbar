@@ -1,12 +1,19 @@
 // src/rendering/Camera.js
 import * as THREE from 'three';
 
+// A page loaded hidden or zero-sized (background tab, collapsed iframe)
+// reports 0x0, and 0/0 would leave the camera with a NaN aspect: a black
+// scene, and NaN positions anywhere the aspect is used.
+function safeAspect(aspect) {
+    return Number.isFinite(aspect) && aspect > 0 ? aspect : 16 / 9;
+}
+
 export class Camera {
     constructor(scene) {
         this.scene = scene;
         this.camera = new THREE.PerspectiveCamera(
             75,
-            window.innerWidth / window.innerHeight,
+            safeAspect(window.innerWidth / window.innerHeight),
             0.1,
             1000
         );
@@ -142,7 +149,7 @@ export class Camera {
     }
 
     updateAspect(aspect) {
-        this.camera.aspect = aspect;
+        this.camera.aspect = safeAspect(aspect);
         this.camera.updateProjectionMatrix();
     }
 }

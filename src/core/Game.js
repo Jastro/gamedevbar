@@ -104,6 +104,8 @@ export class Game {
         this.camera.rotation.horizontal = getRoomDefinition(roomId).rotationY;
 
         await this.init();
+        // The window may have been resized (or been 0x0) since the page loaded.
+        this.handleResize();
         this.setupInput();
         this.animate();
 
