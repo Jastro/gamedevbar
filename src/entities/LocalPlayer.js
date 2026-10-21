@@ -76,7 +76,7 @@ export class LocalPlayer extends Player {
     handleMovement() {
         if (this.game.chatActive) return;
 
-        if (this.game.environment.isPlayingArcade(this.id)) {
+        if (this.game.playMode || this.game.environment.isPlayingArcade(this.id)) {
             return;
         }
         

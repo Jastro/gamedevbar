@@ -30,7 +30,7 @@ export class InteractionSystem {
         });
         window.addEventListener('click', (e) => this.handleClick(e));
         window.addEventListener('keydown', (e) => {
-            if (this.game.chatActive || e.repeat || e.key.toLowerCase() !== 'e') return;
+            if (this.game.chatActive || this.game.playMode || e.repeat || e.key.toLowerCase() !== 'e') return;
             const nearby = this.findNearby();
             if (nearby) nearby.interaction.use(nearby.object);
         });
@@ -51,7 +51,7 @@ export class InteractionSystem {
     }
 
     updateHover() {
-        if (this.game.chatActive) return;
+        if (this.game.chatActive || this.game.playMode) return;
         const object = this.pickInteractable();
         if (object === this.highlightedObject) return;
         this.setHighlight(this.highlightedObject, false);
@@ -68,7 +68,7 @@ export class InteractionSystem {
     }
 
     handleClick(event) {
-        if (this.game.chatActive || !this.highlightedObject) return;
+        if (this.game.chatActive || this.game.playMode || !this.highlightedObject) return;
         const clicked = document.elementFromPoint(event.clientX, event.clientY);
         const onUi = UI_ELEMENT_IDS.some(id => document.getElementById(id)?.contains(clicked));
         if (onUi) return;
@@ -89,8 +89,13 @@ export class InteractionSystem {
     }
 
     update() {
-        const nearby = this.game.chatActive ? null : this.findNearby();
-        const text = nearby?.interaction.hint ? `E · ${nearby.interaction.hint(nearby.object)}` : '';
+        let text = '';
+        if (this.game.playMode) {
+            text = this.game.playMode.hint;
+        } else {
+            const nearby = this.game.chatActive ? null : this.findNearby();
+            text = nearby?.interaction.hint ? `E · ${nearby.interaction.hint(nearby.object)}` : '';
+        }
         if (text === this.hintText || !this.hintElement) return;
         this.hintText = text;
         this.hintElement.textContent = text;

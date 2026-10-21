@@ -47,3 +47,8 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Open mic (⚙️ → Micrófono abierto).** Others hear you without holding V; 🎙️ over your head only
       while you speak (not with background noise). V / 🎙️ mutes (🔇) and unmutes. Kept after reload.
       Is the speech threshold right for your mic, or does the indicator flicker / miss quiet speech?
+- [ ] **Vircon32 cabinet** (back-right corner of each bar). Walk up, `E` or click → pick a game → the camera
+      frames the cabinet and the game runs on its screen. Check: speed/smoothness in a normal browser
+      window, sound, all controls (arrows, X Z S A, Q W, Enter), Esc returns you to the bar. A second
+      player gets "ya está jugando"; the cabinet shows "🎮 name · game" to others. Try *Cargar mi .v32*
+      with a file of your own. Clicking the chat while playing still lets you type?

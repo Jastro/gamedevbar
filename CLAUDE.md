@@ -9,6 +9,7 @@ Multiplayer Three.js hangout for the Mediavida /gamedev/ community. Client in `s
 - `Docs/Systems.md` – rooms layout, doors, audio occlusion, voice chat, known issues.
 - `Docs/Protocol.md` – WebSocket messages.
 - `Docs/TURN.md` – coturn relay setup on the server (voice between different networks).
+- `Docs/Vircon32.md` – Vircon32 cabinet: emulator build (`tools/vircon32/`), ROM licensing rules.
 
 ## Run
 - `npm install`, then `npm run dev`:

@@ -1,6 +1,6 @@
 # Open mic, "who's here" board, Vircon32 cabinet
 
-Status: in progress 2026-10-21 (branch `feature/openmic-board-vircon32`).
+Status: done 2026-10-21 (branch `feature/openmic-board-vircon32`).
 
 ## Goal
 1. Voice: a setting for an always-open mic instead of push-to-talk.
@@ -51,4 +51,9 @@ Status: in progress 2026-10-21 (branch `feature/openmic-board-vircon32`).
    `server/features/vircon.js`, `Game.js`, `Environment.js`, `index.html`, Docs.
 
 ## Deviations
-(none yet)
+- ROMs: only 4 small MIT games are bundled. The larger licensed ones (26-222 MB) were left out: too big
+  for git (Decisions to review / Open questions in HANDOVER).
+- Emulator page shell is our own (`tools/vircon32/shell.html`) instead of the upstream one, which had
+  fullscreen/FPS/info UI.
+- Added `Camera.setView`/`clearView` and `game.playMode` (a generic "at an arcade screen" state) for
+  the cabinet's play mode.

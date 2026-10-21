@@ -15,6 +15,7 @@ const { registerSoccer } = require('./features/soccer');
 const { registerVoice } = require('./features/voice');
 const { registerRadio } = require('./features/radio');
 const { registerProjector } = require('./features/projector');
+const { registerVircon } = require('./features/vircon');
 
 const DIST_DIR = path.join(__dirname, '..', 'dist');
 
@@ -33,6 +34,7 @@ registerPresence(hub);
 registerDoors(hub);
 registerRadio(hub);
 registerProjector(hub);
+registerVircon(hub);
 registerSeats(hub);
 registerChat(hub);
 registerArcade(hub);

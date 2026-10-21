@@ -87,6 +87,11 @@ positions it already knows (`World.getRoomAt`), checked every 500 ms, and redraw
 changes. No server state. The forum scraper behind the old TV (Puppeteer + headless Chromium,
 `/mv-proxy`) was removed on 2026-10-21; it's in git history if a forum feed is wanted again.
 
+## Vircon32 cabinet
+
+A Vircon32 fantasy-console cabinet in every room (back-right corner), playing on its own 3D screen with a
+ROM picker. Details: [Vircon32.md](Vircon32.md).
+
 ## Volume settings
 
 ⚙️ (next to the mic button) also has per-player volume sliders: 📻 radio, 📽️ projector, 🗣️ voices

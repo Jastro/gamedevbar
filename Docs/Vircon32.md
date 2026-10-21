@@ -32,3 +32,21 @@ Left out for now:
 - **Large MIT games** by the same author: Puztrix 26 MB, Vircoban 87 MB, Puzzleland 140 MB, Retrotime
   222 MB, and others. They're too big for git and would need hosting outside the repo.
 - **Carra's official games** and **Jastro's OceanStorm**: no license stated.
+
+## In the bar
+- **Cabinet:** one per room at room-local (11, 2, -8), the back-right corner (`src/world/VirconCabinet.js`).
+  The idle screen shows the logo, or "🎮 name · game" while someone plays.
+- **Picking a game:** click it or press `E` within 3 units → panel (`src/ui/VirconUI.js`). It lists the
+  bundled games (`roms.json`) and a *📂 Cargar mi .v32* button (the file plays only on your client).
+- **One player per cabinet:** `virconStart` → server → `virconState` (or `virconBusy`), handled in
+  `server/features/vircon.js` and `src/world/VirconSync.js`. Freed on Esc or disconnect. Others see the
+  player's name and game title, not the video.
+- **Play mode:** `game.playMode` is set, which turns off movement and world clicks/`E`, and the hint shows
+  the controls. The camera is fixed on the screen (`Camera.setView`, fitted to the camera's FOV and aspect
+  ratio). The avatar stands in front. Keyboard focus is moved into the iframe (same origin), so the game
+  gets the keys and the bar doesn't. Clicking the page gives focus back to the game, except when the click
+  is in a text field (chat). Esc, sent by the iframe or pressed in the page, ends the session and unloads
+  the emulator.
+- **Rendering:** the emulator iframe sits on the screen through the CSS3D layer, with a transparent "hole"
+  mesh like the projector's, so it's drawn only while you play. Emulator audio isn't positional; only the
+  player hears it.

@@ -12,6 +12,13 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Vircon32 cabinet in every room (plan `Docs/Plans done/2026-10-21-openmic-board-vircon32.md`):
+  web emulator built with emsdk into `public/vircon32/` (`tools/vircon32/build.sh`, own shell), four MIT
+  games + upload of your own `.v32`, one player per cabinet (server), game on the cabinet's 3D screen with
+  the camera framing it and keyboard in the emulator iframe; Esc leaves. Verified with two in-app clients:
+  E/hint/panel, Worm boots on the cabinet screen (BIOS logo seen), real key presses reach the game while
+  the avatar stays put, busy refusal, Esc frees, disconnect frees, upload loads the exact file. The pane
+  ran at 1.5 fps (throttled), so speed wasn't judged.
 - 2026-10-21 The forum TV in each room is now a "who's here" board (players inside that room, 🎙️ when
   talking, counts for the other room/street), computed client-side. Removed the Mediavida scraper:
   `server/forumProxy.js`, `/mv-proxy` + `/proxy-image`, `puppeteer` and `node-fetch`, Chromium in the
@@ -80,6 +87,9 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   snapshot, stool facing in the rotated room, occlusion levels per position. Audio not listened to.
 
 ## Decisions to review
+- Vircon32 cabinet at room-local (11, 2, -8), back-right corner. Emulator audio is not positional.
+- Only 4 small MIT games bundled. Bigger MIT ones (Puzzleland 140 MB, Retrotime 222 MB…) need hosting
+  outside git. Carra's games and OceanStorm have no license stated.
 - Doors centered on the front wall, rooms straight across the street (per Borja, 2026-10-20). The board
   moved from x = 1.09 to x = 7 on the same wall to make room for the door.
 - Desarrollo is a copy without the paintings: own board, own radio, own local
@@ -89,6 +99,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 - Git: per the request, work went to a branch + PR instead of straight to `main`.
 
 ## Open questions
+- Jastro: may OceanStorm's `.v32` be bundled (no license in its repo)?
+- Host the bigger Vircon32 games (server volume / CDN), or keep only small ones?
 - Should chat become per-room (or show which bar someone is in)?
 - Desarrollo's identity: different decoration, default music?
 

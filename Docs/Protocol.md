@@ -25,6 +25,8 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `radioSet` | `roomId`, `stationId` (or `null` = off) | store, `radioState` to all |
 | `projectorPlay` | `roomId`, `videoId` (11-char YouTube id) | start at server time now, `projectorState` to all |
 | `projectorPause` / `projectorResume` / `projectorStop` | `roomId` | update/clear, `projectorState` to all |
+| `virconStart` | `roomId`, `romTitle` | take the room's cabinet → `virconState` to all, or `virconBusy` to sender |
+| `virconStop` | `roomId` | free it (only its player) → `virconState` to all |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
 | `arcadeState` | `gameState`, `data` | re-broadcast (see known issues: Pong sync broken) |
 | `soccerBallUpdate` | `position`, `velocity` | relayed to others |
@@ -48,6 +50,9 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `projectorState` | `roomId`, `state` (`{ videoId, startedAt, pausedAt }` or `null`), `by`, `serverTime` | apply + 📽️ chat line |
 | `projectorStates` | `screens: { roomId: state }`, `serverTime` | join snapshot |
 | `doorStates` | `doors: { doorId: isOpen }` | apply instantly (join snapshot) |
+| `virconState` | `roomId`, `state` (`{ playerId, playerName, romTitle }` or `null`) | cabinet screen; the asker starts playing |
+| `virconStates` | `cabinets: { roomId: state }` | join snapshot |
+| `virconBusy` | `roomId`, `state` | "someone is already playing" chat line |
 | `snakeHighScores` | `scores` | all Snake machines |
 | `startSoccerGame` | `initiatorId` | start soccer for everyone |
 | `soccerBallUpdate` | `position`, `velocity` | ball sync |

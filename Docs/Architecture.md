@@ -25,8 +25,8 @@ rendering/     Scene (level.json template), Renderer, Camera
 network/       WebSocketManager: transport only (JSON in → emit(type), send(type, data))
 entities/      Player, LocalPlayer (input + collisions), RemotePlayer, PlayerManager
 world/         RoomLayout (where rooms are), Room, World (shells, colliders, street), Environment (props per room),
-               Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, SoccerGame,
-               CollisionManager
+               Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, VirconCabinet +
+               VirconSync, SoccerGame, CollisionManager
 interactions/  one file per clickable type: seat, radio, arcade, door
 audio/         OcclusionChain (wall/door muffling shared by radios and voices)
 voice/         VoiceChat (mesh, PTT, positional voices), VoicePeer (one RTCPeerConnection)
@@ -74,6 +74,8 @@ logged). Lifecycle hooks: `onConnect`, `onJoin` (after `initCompleted`, in regis
   `hub.send` / `hub.broadcast`. Document it in Protocol.md.
 - **A server feature**: `server/features/<name>.js` exporting `register<Name>(hub)`; call it in
   `server/index.js`. Keep its state inside the module. Use `onJoin` to send newcomers a snapshot.
+- **A Vircon32 game**: drop the `.v32` in `public/vircon32/roms/`, add it to `roms.json`, and add its
+  license/source to `LICENSES.md`. Redistributable licenses only (Docs/Vircon32.md).
 - **A radio station**: an entry in `src/audio/radioStations.js`. The stream must send CORS headers
   (`curl -I -H "Origin: https://example.com" <url>` shows `access-control-allow-origin`).
 - **Shared media in a room** (like the radio/projector): server feature with per-room state + join

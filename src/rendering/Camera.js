@@ -73,7 +73,23 @@ export class Camera {
         });
     }
 
+    // Fixed view (e.g. framing an arcade screen) that replaces the follow
+    // camera until clearView().
+    setView(position, lookAt) {
+        this.view = { position: position.clone(), lookAt: lookAt.clone() };
+    }
+
+    clearView() {
+        this.view = null;
+    }
+
     updatePosition(targetPosition) {
+        if (this.view) {
+            this.camera.position.copy(this.view.position);
+            this.camera.lookAt(this.view.lookAt);
+            return;
+        }
+
         const distance = this.distance;
         const height = distance * Math.sin(this.rotation.vertical);
         const radius = distance * Math.cos(this.rotation.vertical);
