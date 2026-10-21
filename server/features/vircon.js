@@ -38,16 +38,23 @@ function registerVircon(hub) {
 
     // Spectating signaling: only between a watchable cabinet's player and
     // someone else. Media goes peer to peer (or through TURN).
-    hub.on('virconSignal', ({ user }, data) => {
+    hub.on('virconSignal', ({ ws, user }, data) => {
         const { roomId, targetId, signal } = data;
         if (typeof roomId !== 'string' || typeof targetId !== 'string') return;
         if (!signal || typeof signal !== 'object') return;
         if (JSON.stringify(signal).length > LIMITS.voiceSignalBytes) return;
         const cabinet = cabinets.get(roomId);
-        if (!cabinet?.watchable || targetId === user.id) return;
-        if (cabinet.playerId !== user.id && cabinet.playerId !== targetId) return;
-        const target = hub.findUser(targetId);
-        if (!target) return;
+        const allowed = Boolean(cabinet?.watchable) && targetId !== user.id
+            && (cabinet.playerId === user.id || cabinet.playerId === targetId);
+        const target = allowed ? hub.findUser(targetId) : null;
+        if (!target) {
+            // A watcher asking a game that's no longer there: answer for the
+            // player, so it stops waiting instead of timing out.
+            if (signal.description?.type === 'offer') {
+                hub.send(ws, { type: 'virconSignal', roomId, fromId: targetId, signal: { refused: true, peerId: signal.peerId } });
+            }
+            return;
+        }
         hub.send(target.ws, { type: 'virconSignal', roomId, fromId: user.id, signal });
     });
 

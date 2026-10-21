@@ -3,17 +3,25 @@
 // player answers, sending the emulator canvas and its audio tap. Tracks can
 // be swapped later with replaceTrack (the game's audio context starts after
 // its first sound), so there's never a renegotiation. Signals ride on
-// `virconSignal`; `{ refused: true }` closes the other side at once.
+// `virconSignal`, each tagged with this connection's `peerId` so a late
+// message from an earlier connection is ignored; `{ refused: true }` closes
+// the other side at once.
 
 // Watching is optional: give up quietly if nothing connects.
 const CONNECT_TIMEOUT = 15000; // ms
 const MAX_VIDEO_BITRATE = 1_000_000; // bps, also through the TURN relay
 
+function newPeerId() {
+    return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export class VirconStreamPeer {
-    constructor({ remoteId, role, iceServers, sendSignal, onTrack, onClosed }) {
+    // id: the watcher creates it; the player reuses the one from the offer.
+    constructor({ id = newPeerId(), remoteId, role, iceServers, sendSignal, onTrack, onClosed }) {
+        this.id = id;
         this.remoteId = remoteId;
         this.role = role; // 'watcher' | 'player'
-        this.sendSignal = sendSignal;
+        this.sendSignal = (signal) => sendSignal({ ...signal, peerId: this.id });
         this.onTrack = onTrack;
         this.onClosed = onClosed;
         this.pendingCandidates = [];
@@ -86,7 +94,7 @@ export class VirconStreamPeer {
     }
 
     async handleSignal(signal) {
-        if (this.closed) return;
+        if (this.closed || signal.peerId !== this.id) return;
         if (signal.refused) {
             this.close('refused', false);
             return;

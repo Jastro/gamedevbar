@@ -19,9 +19,15 @@ export class VirconSync {
 
     bind() {
         const { network } = this.game;
+        // The join snapshot lists only busy cabinets; after a reconnect, the
+        // others must be cleared (they may have been freed meanwhile).
         network.on('virconStates', (data) => {
-            Object.entries(data.cabinets || {}).forEach(([roomId, state]) => this.cabinet(roomId)?.setOccupant(state));
+            const cabinets = data.cabinets || {};
+            this.game.environment.rooms.forEach(({ vircon }, roomId) => vircon.setOccupant(cabinets[roomId] ?? null));
         });
+        // The server frees the cabinet with the lost connection (and a
+        // reconnect respawns the avatar), so the game ends here too.
+        network.on('disconnect', () => this.game.ui.vircon.endPlay());
         network.on('virconState', (data) => {
             const cabinet = this.cabinet(data.roomId);
             if (!cabinet) return;

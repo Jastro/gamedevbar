@@ -15,7 +15,13 @@ export const WATCH_DISTANCE = VIRCON_INTERACT_DISTANCE + 1.5;
 const LEAVE_MARGIN = 0.3;
 const MAX_WATCHERS = 6;
 const UPDATE_INTERVAL = 250; // ms between range checks
-const RETRY_DELAY = 3000; // ms before asking again after a refusal/failure
+// After a refusal/failure, ask again after 3 s, doubling up to 30 s (a full
+// cabinet or a loading game shouldn't cost a connection every few seconds).
+const RETRY_DELAY = 3000; // ms
+const MAX_RETRY_DELAY = 30000; // ms
+// A newcomer must be this much nearer than the farthest watcher to take its
+// place, so two people at about the same distance don't swap back and forth.
+const EVICT_MARGIN = 0.5;
 const SOUND_REF_DISTANCE = 2;
 
 export class VirconSpectating {
@@ -24,6 +30,7 @@ export class VirconSpectating {
         // Watcher side: roomId -> { playerId, peer, video, audioElement, sound, occlusion }
         this.watching = new Map();
         this.retryAt = new Map(); // roomId -> time before which we don't ask again
+        this.retryDelay = new Map(); // roomId -> next back-off delay
         // Player side: watcherId -> VirconStreamPeer (we play one cabinet at a time).
         this.watchers = new Map();
         this.lastUpdate = 0;
@@ -98,11 +105,16 @@ export class VirconSpectating {
             role: 'watcher',
             iceServers: this.game.voice.iceServers,
             sendSignal: (signal) => this.game.network.send('virconSignal', { roomId, targetId: playerId, signal }),
-            onTrack: (track) => this.attachTrack(roomId, entry, track),
+            onTrack: (track) => {
+                this.retryDelay.delete(roomId);
+                this.attachTrack(roomId, entry, track);
+            },
             onClosed: () => {
                 if (this.watching.get(roomId) !== entry) return;
                 this.stopWatching(roomId);
-                this.retryAt.set(roomId, performance.now() + RETRY_DELAY);
+                const delay = this.retryDelay.get(roomId) ?? RETRY_DELAY;
+                this.retryAt.set(roomId, performance.now() + delay);
+                this.retryDelay.set(roomId, Math.min(delay * 2, MAX_RETRY_DELAY));
             }
         });
     }
@@ -155,7 +167,9 @@ export class VirconSpectating {
     handleState(roomId, state) {
         const entry = this.watching.get(roomId);
         if (entry && entry.playerId !== state?.playerId) this.stopWatching(roomId);
+        // A new game (or player) is worth asking again right away.
         this.retryAt.delete(roomId);
+        this.retryDelay.delete(roomId);
     }
 
     // --- Player side ---------------------------------------------------------
@@ -176,30 +190,31 @@ export class VirconSpectating {
         }
         if (roomId !== this.broadcastRoomId) {
             // Not (or no longer) ours to stream: let them stop waiting.
-            if (signal.description?.type === 'offer') this.refuse(roomId, fromId);
+            if (signal.description?.type === 'offer') this.refuse(roomId, fromId, signal.peerId);
             return;
         }
         if (signal.description?.type === 'offer') {
-            this.admit(roomId, fromId, signal.description);
+            this.admit(roomId, fromId, signal.peerId, signal.description);
         } else {
             this.watchers.get(fromId)?.handleSignal(signal);
         }
     }
 
-    refuse(roomId, watcherId) {
-        this.game.network.send('virconSignal', { roomId, targetId: watcherId, signal: { refused: true } });
+    refuse(roomId, watcherId, peerId) {
+        this.game.network.send('virconSignal', { roomId, targetId: watcherId, signal: { refused: true, peerId } });
     }
 
     watcherDistance(roomId, watcherId) {
         return this.distanceFrom(roomId, this.game.players.players.get(watcherId)?.position);
     }
 
-    admit(roomId, watcherId, offer) {
+    admit(roomId, watcherId, peerId, offer) {
+        if (typeof peerId !== 'string') return;
         this.watchers.get(watcherId)?.close('replaced', false);
         const distance = this.watcherDistance(roomId, watcherId);
         const tracks = this.cabinet(roomId).getCaptureTracks();
         if (distance > WATCH_DISTANCE + LEAVE_MARGIN || !tracks?.video) {
-            this.refuse(roomId, watcherId);
+            this.refuse(roomId, watcherId, peerId);
             return;
         }
         if (this.watchers.size >= MAX_WATCHERS) {
@@ -214,13 +229,14 @@ export class VirconSpectating {
                     farthestId = id;
                 }
             });
-            if (distance >= farthest) {
-                this.refuse(roomId, watcherId);
+            if (distance > farthest - EVICT_MARGIN) {
+                this.refuse(roomId, watcherId, peerId);
                 return;
             }
             this.watchers.get(farthestId).close('evicted');
         }
         const peer = new VirconStreamPeer({
+            id: peerId,
             remoteId: watcherId,
             role: 'player',
             iceServers: this.game.voice.iceServers,
@@ -260,5 +276,6 @@ export class VirconSpectating {
         [...this.watching.keys()].forEach(roomId => this.stopWatching(roomId));
         this.stopBroadcast();
         this.retryAt.clear();
+        this.retryDelay.clear();
     }
 }
