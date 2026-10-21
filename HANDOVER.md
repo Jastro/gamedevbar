@@ -15,7 +15,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 - 2026-10-21 Camera controls: middle-drag pans (clamped to 3 units), R resets zoom/angle/pan (also from
   inside the emulator), the wheel zooms only over the 3D view (no zoom while scrolling panels like the
   ROM list). Vircon32 play mode now plays on the arcade: camera locked, screen at ~50% of the view,
-  no zoom/rotation. Default radios: Gamedev Rock FM, Desarrollo Kiss FM. Verified in-app: wheel over
+  no zoom/rotation. Default radios: Gamedev Rock FM, Desarrollo MegaStar FM. Kiss FM and Hit FM removed
+  (their CDN's redirect has no CORS header → silence; the other 11 load with CORS). Verified in-app: wheel over
   the canvas zooms and over the ROM list doesn't, no zoom in play mode, middle-drag pans in and out of
   play mode, R (page and emulator iframe) resets, screenshot shows the cabinet with the screen at about
   half the view, defaults from the server. Feel not judged.
