@@ -13,6 +13,10 @@ import { DEFAULT_ROOM_ID } from './RoomLayout';
 
 // Props and interactive objects. Every room gets its own full set, built in
 // room-local coordinates (see RoomLayout.js).
+// Empty rooms stop their streams after this long (see updateDormancy).
+const EMPTY_ROOM_DELAY = 30000; // ms
+const DORMANCY_INTERVAL = 1000; // ms between checks
+
 export class Environment {
     constructor(scene, world, serverClock, audioSettings) {
         this.scene = scene;
@@ -76,6 +80,27 @@ export class Environment {
         this.audioListener = new THREE.AudioListener();
         camera.add(this.audioListener);
         this.rooms.forEach(({ radio }) => radio.initializeAudio(this.audioListener, this.audioSettings));
+    }
+
+    // A room nobody has been inside for EMPTY_ROOM_DELAY stops streaming here
+    // (radio download, projector video); it resumes, live, as soon as anyone
+    // (us or someone else) is inside again. Shared choices stay on the server.
+    // players: everyone here, local player included (anything with a position).
+    updateDormancy(players) {
+        const now = performance.now();
+        if (now - (this.lastDormancyCheck ?? 0) < DORMANCY_INTERVAL) return;
+        this.lastDormancyCheck = now;
+        const occupied = new Set();
+        for (const player of players) {
+            const room = this.world.getRoomAt(player.position);
+            if (room) occupied.add(room.id);
+        }
+        this.rooms.forEach((contents, roomId) => {
+            if (occupied.has(roomId) || contents.lastOccupied === undefined) contents.lastOccupied = now;
+            const dormant = now - contents.lastOccupied >= EMPTY_ROOM_DELAY;
+            contents.radio.setDormant(dormant);
+            contents.projector.setDormant(dormant);
+        });
     }
 
     update(deltaTime, listenerPosition) {

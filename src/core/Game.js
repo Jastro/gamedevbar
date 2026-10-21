@@ -263,6 +263,7 @@ export class Game {
         this.world.update(deltaTime);
         this.soccerGame.update(deltaTime);
         this.environment.update(deltaTime, playerPosition);
+        this.environment.updateDormancy(this.players.players.values());
         this.voice.update(playerPosition);
         this.ui.vircon.update();
         this.virconSpectating.update(playerPosition);
