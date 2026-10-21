@@ -9,7 +9,7 @@ import { ArcadeSnake } from './ArcadeSnake';
 import { Door, DOOR_INTERACT_DISTANCE } from './Door';
 import { Projector } from './Projector';
 import { PresenceBoard } from './PresenceBoard';
-import { VirconCabinet } from './VirconCabinet';
+import { VirconCabinet, CABINETS } from './VirconCabinet';
 import { DEFAULT_ROOM_ID } from './RoomLayout';
 
 // Props and interactive objects. Every room gets its own full set, built in
@@ -42,7 +42,8 @@ export class Environment {
                 door: new Door(room, this.world.collisionManager),
                 projector: new Projector(room, this.serverClock, this.audioSettings),
                 presenceBoard: new PresenceBoard(room),
-                vircon: new VirconCabinet(room, this.world.collisionManager),
+                vircon: new VirconCabinet(room, this.world.collisionManager, CABINETS.vircon),
+                pokebonk: new VirconCabinet(room, this.world.collisionManager, CABINETS.pokebonk),
                 lightSwitches: new LightSwitches(room)
             };
 
@@ -56,6 +57,7 @@ export class Environment {
             contents.projector.create();
             contents.presenceBoard.create();
             contents.vircon.create();
+            contents.pokebonk.create();
             contents.lightSwitches.create();
             if (contents.paintings) this.loadPaintings(contents.paintings);
 
@@ -133,6 +135,18 @@ export class Environment {
 
     getDoor(doorId) {
         return this.doors.get(doorId);
+    }
+
+    // Every page-playing cabinet (Vircon32, Pokebonk) in every room.
+    getCabinets() {
+        const cabinets = [];
+        this.rooms.forEach(({ vircon, pokebonk }) => cabinets.push(vircon, pokebonk));
+        return cabinets;
+    }
+
+    // By the id the server knows it by (see VirconCabinet.id).
+    getCabinet(cabinetId) {
+        return this.getCabinets().find(cabinet => cabinet.id === cabinetId) ?? null;
     }
 
     // Room lights (LightsSync → here → switches; RoomLighting reads them).

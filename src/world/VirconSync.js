@@ -9,8 +9,10 @@ export class VirconSync {
         this.pending = null; // { roomId, rom } waiting for the server
     }
 
-    cabinet(roomId) {
-        return this.game.environment.rooms.get(roomId)?.vircon;
+    // The server's "roomId" is the cabinet id (VirconCabinet.id): the room id
+    // for the Vircon32, `<room>-pokebonk` for the web game.
+    cabinet(cabinetId) {
+        return this.game.environment.getCabinet(cabinetId);
     }
 
     get localId() {
@@ -23,7 +25,7 @@ export class VirconSync {
         // others must be cleared (they may have been freed meanwhile).
         network.on('virconStates', (data) => {
             const cabinets = data.cabinets || {};
-            this.game.environment.rooms.forEach(({ vircon }, roomId) => vircon.setOccupant(cabinets[roomId] ?? null));
+            this.game.environment.getCabinets().forEach(cabinet => cabinet.setOccupant(cabinets[cabinet.id] ?? null));
         });
         // The server frees the cabinet with the lost connection (and a
         // reconnect respawns the avatar), so the game ends here too.
@@ -32,7 +34,7 @@ export class VirconSync {
             const cabinet = this.cabinet(data.roomId);
             if (!cabinet) return;
             cabinet.setOccupant(data.state);
-            const room = this.game.environment.rooms.get(data.roomId).room;
+            const room = cabinet.room;
             if (data.state && data.state.playerId !== this.localId) {
                 this.game.ui.chat?.addMessage({
                     type: 'system',
@@ -55,9 +57,10 @@ export class VirconSync {
         });
     }
 
-    // rom: { title, url, isBlob? }. Uploaded carts (blob URLs) aren't streamed.
+    // rom: { title, url?, isBlob? }. Uploaded carts (blob URLs) and web
+    // games from other sites aren't streamed.
     request(roomId, rom) {
-        const watchable = !rom.isBlob;
+        const watchable = !rom.isBlob && Boolean(this.cabinet(roomId)?.config.sameOrigin);
         if (!this.game.network.isConnected) {
             this.cabinet(roomId)?.setOccupant({ playerId: this.localId, playerName: this.game.username, romTitle: rom.title, watchable });
             this.game.ui.vircon.beginPlay(roomId, rom);

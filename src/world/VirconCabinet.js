@@ -1,16 +1,39 @@
 import * as THREE from 'three';
 import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer';
 
-// Room-local placement: back-right corner, facing into the room like the
-// other arcades (which sit at back-left).
-const CABINET_POSITION = { x: 11, y: 2, z: -8 };
-// Vircon32 outputs 640x360; the screen keeps that 16:9 shape.
+// Both screens are 16:9.
 const SCREEN_WIDTH = 1.8;
 const SCREEN_HEIGHT = SCREEN_WIDTH * 9 / 16;
 const SCREEN_Y = 0.55;
 const SCREEN_Z = 0.76;
+// Idle screen canvas size.
 const ELEMENT_WIDTH = 640;
 const ELEMENT_HEIGHT = 360;
+
+// The cabinets one room has. Placement is room-local, on the back wall right
+// of the back bar (which spans x -6..6), facing into the room like the
+// arcades at back-left.
+// - vircon: the Vircon32 emulator (same origin: keyboard focus, audio tap,
+//   spectating). Its id is the room id, as the server has always known it.
+// - pokebonk: a web game from another site in a plain iframe. No spectating
+//   (another site's canvas can't be captured), and its keys never reach us,
+//   so play mode shows an exit button.
+export const CABINETS = {
+    vircon: {
+        key: 'vircon', type: 'vircon', title: 'VIRCON32', position: { x: 12.5, y: 2, z: -8 },
+        colors: { body: 0x1d1b4b, marquee: ['#3a1c71', '#d76d77', '#ffaf7b'], idle: '#8be9fd' },
+        frame: { width: 640, height: 360 }, sameOrigin: true,
+        source: (rom) => `/vircon32/index.html?rom=${encodeURIComponent(rom.url)}`
+    },
+    pokebonk: {
+        key: 'pokebonk', type: 'webgame', title: 'POKEBONK', position: { x: 8.8, y: 2, z: -8 },
+        colors: { body: 0x7a1f1f, marquee: ['#c22e28', '#ee8130', '#f7d02c'], idle: '#ffcb05' },
+        // A 3D browser game: render it bigger, the CSS3D object scales it down.
+        frame: { width: 1280, height: 720 }, sameOrigin: false,
+        url: 'https://pokebonk.com/',
+        source: () => 'https://pokebonk.com/'
+    }
+};
 export const VIRCON_INTERACT_DISTANCE = 3;
 // Play-mode camera: share of the view the screen takes, and height above it.
 const PLAY_VIEW_FILL = 0.5;
@@ -18,14 +41,17 @@ const PLAY_VIEW_RISE = 0.3;
 // Frame rate of the picture streamed to people watching.
 const CAPTURE_FPS = 30;
 
-// A Vircon32 arcade cabinet. Idle, its screen shows the logo and who is
-// playing. For the local player, the emulator (public/vircon32/) runs in an
-// iframe placed on the screen with the CSS3D layer, the same technique as the
-// projector (see Projector.js). State comes from VirconSync.
+// An arcade cabinet that plays a page on its screen (CABINETS above). Idle,
+// its screen shows the logo and who is playing. For the local player, the
+// page runs in an iframe placed on the screen with the CSS3D layer, the same
+// technique as the projector (see Projector.js). State comes from VirconSync,
+// keyed by `id`.
 export class VirconCabinet {
-    constructor(room, collisionManager) {
+    constructor(room, collisionManager, config = CABINETS.vircon) {
         this.room = room;
         this.collisionManager = collisionManager;
+        this.config = config;
+        this.id = config.key === 'vircon' ? room.id : `${room.id}-${config.key}`;
         this.occupant = null; // { playerId, playerName, romTitle, watchable } from the server
         this.iframe = null;
         this.capture = null; // canvas MediaStream while streaming to watchers
@@ -35,9 +61,10 @@ export class VirconCabinet {
     create() {
         this.group = new THREE.Group();
         this.group.name = 'VirconCabinet';
-        this.group.position.set(CABINET_POSITION.x, CABINET_POSITION.y, CABINET_POSITION.z);
+        const { position, colors, frame } = this.config;
+        this.group.position.set(position.x, position.y, position.z);
 
-        const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x1d1b4b, roughness: 0.3, metalness: 0.6 });
+        const bodyMaterial = new THREE.MeshStandardMaterial({ color: colors.body, roughness: 0.3, metalness: 0.6 });
         const highlightMaterial = new THREE.MeshStandardMaterial({ color: 0x7fff7f, emissive: 0x2f2f2f });
         const body = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 1.5), bodyMaterial);
         body.userData = { originalMaterial: bodyMaterial, highlightMaterial };
@@ -80,15 +107,15 @@ export class VirconCabinet {
 
         this.frameElement = document.createElement('div');
         this.frameElement.className = 'vircon-screen';
-        this.frameElement.style.width = `${ELEMENT_WIDTH}px`;
-        this.frameElement.style.height = `${ELEMENT_HEIGHT}px`;
+        this.frameElement.style.width = `${frame.width}px`;
+        this.frameElement.style.height = `${frame.height}px`;
         this.cssObject = new CSS3DObject(this.frameElement);
         this.cssObject.position.set(0, SCREEN_Y, SCREEN_Z + 0.002);
-        this.cssObject.scale.setScalar(SCREEN_WIDTH / ELEMENT_WIDTH);
+        this.cssObject.scale.setScalar(SCREEN_WIDTH / frame.width);
         this.cssObject.visible = false;
         this.group.add(this.cssObject);
 
-        this.group.userData = { type: 'vircon', cabinet: this };
+        this.group.userData = { type: this.config.type, cabinet: this };
         this.room.add(this.group);
         this.group.updateMatrixWorld(true);
         this.collisionManager?.addCollider(body);
@@ -101,9 +128,10 @@ export class VirconCabinet {
         canvas.height = 128;
         const ctx = canvas.getContext('2d');
         const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
-        gradient.addColorStop(0, '#3a1c71');
-        gradient.addColorStop(0.5, '#d76d77');
-        gradient.addColorStop(1, '#ffaf7b');
+        const [left, middle, right] = this.config.colors.marquee;
+        gradient.addColorStop(0, left);
+        gradient.addColorStop(0.5, middle);
+        gradient.addColorStop(1, right);
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#ffffff';
@@ -112,7 +140,7 @@ export class VirconCabinet {
         ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0,0,0,0.6)';
         ctx.shadowBlur = 8;
-        ctx.fillText('VIRCON32', canvas.width / 2, canvas.height / 2 + 4);
+        ctx.fillText(this.config.title, canvas.width / 2, canvas.height / 2 + 4);
         return new THREE.CanvasTexture(canvas);
     }
 
@@ -122,9 +150,9 @@ export class VirconCabinet {
         ctx.fillRect(0, 0, ELEMENT_WIDTH, ELEMENT_HEIGHT);
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#8be9fd';
+        ctx.fillStyle = this.config.colors.idle;
         ctx.font = 'bold 56px monospace';
-        ctx.fillText('VIRCON32', ELEMENT_WIDTH / 2, 120);
+        ctx.fillText(this.config.title, ELEMENT_WIDTH / 2, 120);
         ctx.font = '26px monospace';
         if (this.occupant) {
             ctx.fillStyle = '#ffb347';
@@ -147,13 +175,14 @@ export class VirconCabinet {
         return Boolean(this.iframe);
     }
 
-    // Loads the emulator with that ROM on the cabinet screen (local only).
-    startLocal(romUrl) {
+    // Loads the page (the emulator with that ROM, or the web game) on the
+    // cabinet screen (local only).
+    startLocal(rom) {
         this.stopLocal();
         this.iframe = document.createElement('iframe');
-        this.iframe.src = `/vircon32/index.html?rom=${encodeURIComponent(romUrl)}`;
-        this.iframe.title = 'Vircon32';
-        this.iframe.allow = 'autoplay; gamepad';
+        this.iframe.src = this.config.source(rom);
+        this.iframe.title = this.config.title;
+        this.iframe.allow = 'autoplay; gamepad; fullscreen';
         this.frameElement.appendChild(this.iframe);
         this.hole.visible = true;
         this.cssObject.visible = true;
@@ -173,9 +202,19 @@ export class VirconCabinet {
         this.idleScreen.visible = true;
     }
 
+    // A web game needs the mouse: let clicks through to the iframe while
+    // it's being played (see the .interactive CSS and VirconUI.beginPlay).
+    setInteractive(interactive) {
+        this.frameElement.classList.toggle('interactive', interactive);
+    }
+
     // Gives the keyboard to the game (the iframe sits under the canvas and
     // can't be clicked, so focus is moved programmatically; same origin).
     focusGame() {
+        if (!this.config.sameOrigin) {
+            this.iframe?.focus();
+            return;
+        }
         try {
             this.iframe?.contentWindow?.focus();
             this.iframe?.contentDocument?.getElementById('canvas')?.focus();

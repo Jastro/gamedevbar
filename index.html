@@ -743,6 +743,41 @@
       pointer-events: none;
     }
 
+    /* Playing a web game (Pokebonk): mouse goes to its iframe, not the 3D world. */
+    .vircon-screen.interactive,
+    .vircon-screen.interactive iframe {
+      pointer-events: auto;
+    }
+
+    body.webgame-playing #webgl-layer {
+      pointer-events: none;
+    }
+
+    #webgame-exit {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 1600;
+      display: flex;
+      gap: 8px;
+    }
+
+    #webgame-exit a,
+    #webgame-exit button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    #webgame-exit button {
+      background: #dc5a0b;
+    }
+
     .vircon-roms {
       display: flex;
       flex-direction: column;

@@ -15,6 +15,7 @@ import { VirconSync } from '../world/VirconSync';
 import { LightsSync } from '../world/LightsSync';
 import { RoomLighting } from '../rendering/RoomLighting';
 import { createLightSwitchInteraction } from '../interactions/lightSwitchInteraction';
+import { createWebGameInteraction } from '../interactions/webGameInteraction';
 import { VirconSpectating } from '../vircon/VirconSpectating';
 import { ServerClock } from '../network/ServerClock';
 import { AudioSettings } from '../audio/AudioSettings';
@@ -94,6 +95,7 @@ export class Game {
         this.interactions.register(createProjectorInteraction(this));
         this.interactions.register(createVirconInteraction(this));
         this.interactions.register(createLightSwitchInteraction(this));
+        this.interactions.register(createWebGameInteraction(this));
 
         this.clock = new THREE.Clock();
 

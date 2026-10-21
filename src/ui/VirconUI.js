@@ -2,12 +2,17 @@ import { FloatingPanel } from './FloatingPanel';
 
 const ROMS_URL = '/vircon32/roms/roms.json';
 const CONTROLS_HINT = 'Esc para salir · Flechas, X Z S A, Q W, Enter = Start · V: hablar · Rueda: mover cámara · R: centrar';
+// A web game from another site keeps its keys: Esc/V/R only work once you
+// click outside it, hence the exit button.
+const WEB_GAME_HINT = 'Ratón y teclado: el juego · ✕ Salir (arriba a la derecha) para volver al bar';
 
 // Vircon32 cabinet UI: the ROM picker (bundled games from roms.json, or your
 // own .v32 file) and the play session. While playing, the camera frames the
 // cabinet screen, the avatar stands in front of it, and the keyboard goes to
 // the emulator iframe. Esc (sent by the iframe, or pressed in the page)
-// leaves and unloads the emulator.
+// leaves and unloads the emulator. Web-game cabinets (Pokebonk) reuse the
+// play session without the picker: the mouse goes to the game and an exit
+// button leaves.
 export class VirconUI {
     constructor(game) {
         this.game = game;
@@ -36,6 +41,7 @@ export class VirconUI {
         help.textContent = `Controles: ${CONTROLS_HINT}. Juegos y créditos: vircon32.com`;
 
         this.panel.body.append(this.status, this.list, upload, help);
+        this.createExitBar();
 
         window.addEventListener('message', (event) => this.handleFrameMessage(event));
         game.audioSettings.on('change', ({ category }) => category === 'arcade' && this.applyVolume());
@@ -48,6 +54,35 @@ export class VirconUI {
             if (!this.session || ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target?.tagName)) return;
             setTimeout(() => this.session?.cabinet.focusGame(), 0);
         });
+    }
+
+    createExitBar() {
+        this.exitBar = document.createElement('div');
+        this.exitBar.id = 'webgame-exit';
+        this.exitBar.className = 'hidden';
+        this.externalLink = document.createElement('a');
+        this.externalLink.target = '_blank';
+        this.externalLink.rel = 'noopener';
+        this.externalLink.textContent = '↗ Abrir en otra pestaña';
+        const exit = document.createElement('button');
+        exit.type = 'button';
+        exit.textContent = '✕ Salir';
+        exit.addEventListener('click', () => this.endPlay());
+        this.exitBar.append(this.externalLink, exit);
+        document.body.appendChild(this.exitBar);
+    }
+
+    // Web-game cabinet: no picker, ask the server for it straight away.
+    playWebGame(cabinet) {
+        const occupant = cabinet.occupant;
+        if (occupant && occupant.playerId !== this.game.players.localPlayer?.id) {
+            this.game.ui.chat?.addMessage({
+                type: 'system',
+                message: `🎮 ${occupant.playerName} está jugando a ${cabinet.config.title}. Espera tu turno.`
+            });
+            return;
+        }
+        this.game.virconSync.request(cabinet.id, { title: cabinet.config.title, external: true });
     }
 
     async loadRoms() {
@@ -110,22 +145,33 @@ export class VirconUI {
         this.play({ title: file.name.replace(/\.v32$/i, ''), url: URL.createObjectURL(file), isBlob: true });
     }
 
-    // Called by VirconSync once the server gives us the cabinet.
+    // Called by VirconSync once the server gives us the cabinet
+    // (roomId: the cabinet id, see VirconCabinet.id).
     beginPlay(roomId, rom) {
-        const cabinet = this.game.environment.rooms.get(roomId)?.vircon;
+        const cabinet = this.game.environment.getCabinet(roomId);
         const player = this.game.players.localPlayer;
         if (!cabinet || !player) return;
         if (this.session) this.endPlay();
 
         this.session = { roomId, cabinet, rom };
-        this.game.playMode = { hint: CONTROLS_HINT };
+        const external = !cabinet.config.sameOrigin;
+        this.game.playMode = { hint: external ? WEB_GAME_HINT : CONTROLS_HINT };
         const { stand, screen } = cabinet.getViewpoints(this.game.camera.getCamera());
         player.position.copy(stand);
         player.rotation = Math.atan2(screen.x - stand.x, screen.z - stand.z);
         player.keysPressed = {};
         player.isMoving = false;
 
-        const iframe = cabinet.startLocal(rom.url);
+        const iframe = cabinet.startLocal(rom);
+        if (external) {
+            cabinet.setInteractive(true);
+            document.body.classList.add('webgame-playing');
+            this.externalLink.href = cabinet.config.url;
+            this.exitBar.classList.remove('hidden');
+            iframe.addEventListener('load', () => cabinet.focusGame());
+            this.update();
+            return;
+        }
         iframe.addEventListener('load', () => {
             cabinet.focusGame();
             // The game has the keyboard; R (camera) and V (push to talk)
@@ -146,6 +192,9 @@ export class VirconUI {
         const session = this.session;
         if (!session) return;
         this.session = null;
+        session.cabinet.setInteractive(false);
+        document.body.classList.remove('webgame-playing');
+        this.exitBar.classList.add('hidden');
         session.cabinet.stopLocal();
         if (session.rom.isBlob) URL.revokeObjectURL(session.rom.url);
         this.game.virconSync.release(session.roomId);
