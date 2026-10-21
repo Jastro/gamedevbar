@@ -52,3 +52,9 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       window, sound, all controls (arrows, X Z S A, Q W, Enter), Esc returns you to the bar. A second
       player gets "ya está jugando"; the cabinet shows "🎮 name · game" to others. Try *Cargar mi .v32*
       with a file of your own. Clicking the chat while playing still lets you type?
+- [ ] **Vircon32 play camera.** Start a game: the cabinet stays visible with its screen at about half
+      the view (not fullscreen), the wheel doesn't zoom (also while scrolling the ROM list), middle-drag
+      pans, R re-centers. Is the framing comfortable to play on desktop and on a narrow window? Tune
+      `PLAY_VIEW_FILL`/`PLAY_VIEW_RISE` in `VirconCabinet.js`.
+- [ ] **Camera pan and reset (whole bar).** Middle-drag (wheel click) shifts the view, R brings back the
+      default zoom, angle (facing the bar) and no pan. R typed in the chat does nothing. Pan speed OK?

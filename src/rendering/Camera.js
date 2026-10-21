@@ -8,6 +8,11 @@ function safeAspect(aspect) {
     return Number.isFinite(aspect) && aspect > 0 ? aspect : 16 / 9;
 }
 
+const DEFAULT_DISTANCE = 5;
+const DEFAULT_VERTICAL = Math.PI / 6;
+const MAX_PAN = 3; // world units the view can be shifted with middle-drag
+const WORLD_UP = new THREE.Vector3(0, 1, 0);
+
 export class Camera {
     constructor(scene) {
         this.scene = scene;
@@ -20,10 +25,15 @@ export class Camera {
         
         this.rotation = {
             horizontal: 0,
-            vertical: Math.PI / 6
+            vertical: DEFAULT_VERTICAL
         };
-        
-        this.distance = 5;
+        // Yaw R resets to (set per room on entry, see Game.start).
+        this.defaultHorizontal = 0;
+        // Middle-drag shift of the view, in camera right/up units.
+        this.pan = new THREE.Vector2();
+        this.isPanning = false;
+
+        this.distance = DEFAULT_DISTANCE;
         this.minDistance = 2;
         this.maxDistance = 8;
         this.isRightMouseDown = false;
@@ -39,10 +49,16 @@ export class Camera {
     }
 
     setupEventListeners() {
-        // Control de la cámara con el botón derecho
+        // Right button rotates, middle button (wheel click) pans.
         window.addEventListener("mousedown", (e) => {
             if (e.button === 2) {
                 this.isRightMouseDown = true;
+                this.previousMouseX = e.clientX;
+                this.previousMouseY = e.clientY;
+            }
+            if (e.button === 1 && this.isOverScene(e)) {
+                e.preventDefault(); // no browser autoscroll
+                this.isPanning = true;
                 this.previousMouseX = e.clientX;
                 this.previousMouseY = e.clientY;
             }
@@ -52,10 +68,23 @@ export class Camera {
             if (e.button === 2) {
                 this.isRightMouseDown = false;
             }
+            if (e.button === 1) {
+                this.isPanning = false;
+            }
         });
 
         window.addEventListener("mousemove", (e) => {
-            if (this.isRightMouseDown) {
+            if (this.isPanning) {
+                // Drag the scene with the cursor; scaled so it feels the same at any zoom.
+                const scale = (this.view ? 1.5 : this.distance) * 0.002;
+                this.pan.x -= (e.clientX - this.previousMouseX) * scale;
+                this.pan.y += (e.clientY - this.previousMouseY) * scale;
+                this.pan.clampLength(0, MAX_PAN);
+                this.previousMouseX = e.clientX;
+                this.previousMouseY = e.clientY;
+                return;
+            }
+            if (this.isRightMouseDown && !this.view) {
                 const deltaX = e.clientX - this.previousMouseX;
                 const deltaY = e.clientY - this.previousMouseY;
 
@@ -70,6 +99,9 @@ export class Camera {
         });
 
         window.addEventListener("wheel", (e) => {
+            // Only over the 3D view (not panels, chat or the ROM list), and
+            // never while the camera is locked on an arcade screen.
+            if (this.view || !this.isOverScene(e)) return;
             const zoomSpeed = 0.001;
             this.distance += e.deltaY * zoomSpeed * this.distance;
             this.distance = Math.max(this.minDistance, Math.min(this.maxDistance, this.distance));
@@ -80,20 +112,52 @@ export class Camera {
         });
     }
 
-    // Fixed view (e.g. framing an arcade screen) that replaces the follow
-    // camera until clearView().
+    // The WebGL canvas is the 3D view; anything else (UI) is not.
+    isOverScene(event) {
+        return event.target?.id === 'webgl-layer';
+    }
+
+    // Locked view (e.g. framing an arcade screen) that replaces the follow
+    // camera until clearView(). Pan still applies; zoom and rotation don't.
     setView(position, lookAt) {
+        const isNew = !this.view;
         this.view = { position: position.clone(), lookAt: lookAt.clone() };
+        if (isNew) this.pan.set(0, 0);
     }
 
     clearView() {
         this.view = null;
+        this.pan.set(0, 0);
+    }
+
+    // R: back to the default framing (and, outside a locked view, default
+    // zoom and angle behind the player).
+    reset() {
+        this.pan.set(0, 0);
+        if (this.view) return;
+        this.distance = DEFAULT_DISTANCE;
+        this.rotation.vertical = DEFAULT_VERTICAL;
+        this.rotation.horizontal = this.defaultHorizontal;
+    }
+
+    // Places the camera at `position` looking at `target`, both shifted by
+    // the pan along the camera's right/up axes.
+    placeCamera(position, target) {
+        if (this.pan.lengthSq() > 0) {
+            const forward = new THREE.Vector3().subVectors(target, position).normalize();
+            const right = new THREE.Vector3().crossVectors(forward, WORLD_UP).normalize();
+            const up = new THREE.Vector3().crossVectors(right, forward);
+            const offset = right.multiplyScalar(this.pan.x).add(up.multiplyScalar(this.pan.y));
+            position = position.clone().add(offset);
+            target = target.clone().add(offset);
+        }
+        this.camera.position.copy(position);
+        this.camera.lookAt(target);
     }
 
     updatePosition(targetPosition) {
         if (this.view) {
-            this.camera.position.copy(this.view.position);
-            this.camera.lookAt(this.view.lookAt);
+            this.placeCamera(this.view.position, this.view.lookAt);
             return;
         }
 
@@ -123,21 +187,18 @@ export class Camera {
 
         const intersects = raycaster.intersectObjects(walls, false);
 
+        let cameraPosition = targetCameraPos;
         if (intersects.length > 0) {
             // Si hay una colisión, colocar la cámara justo antes del punto de colisión
             const collision = intersects[0];
             if (collision.distance < cameraOffset.length()) {
                 const adjustedDistance = collision.distance * 0.9; // 90% de la distancia a la pared
                 const adjustedOffset = cameraOffset.normalize().multiplyScalar(adjustedDistance);
-                this.camera.position.copy(targetPosition).add(adjustedOffset);
-            } else {
-                this.camera.position.copy(targetCameraPos);
+                cameraPosition = new THREE.Vector3().copy(targetPosition).add(adjustedOffset);
             }
-        } else {
-            this.camera.position.copy(targetCameraPos);
         }
 
-        this.camera.lookAt(targetPosition);
+        this.placeCamera(cameraPosition, targetPosition);
     }
 
     setOccluderProvider(getOccluders) {

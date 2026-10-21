@@ -26,7 +26,7 @@ export const ROOMS = [
         tagline: 'La taberna de siempre',
         barSign: 'Gamedev MV',
         paintings: true,
-        radioStation: 'los40-classic', // until someone changes it (src/audio/radioStations.js)
+        radioStation: 'rock-fm', // until someone changes it (src/audio/radioStations.js)
         origin: { x: 0, z: 0 },
         rotationY: 0
     },
@@ -36,7 +36,7 @@ export const ROOMS = [
         tagline: 'Al otro lado de la calle',
         barSign: 'Desarrollo MV',
         paintings: false,
-        radioStation: 'rock-fm',
+        radioStation: 'megastar',
         // Rotated 180 degrees straight across a 14-unit street, so the two
         // front doors face each other: Gamedev door at (0, 10), this one at (0, 24).
         origin: { x: 0, z: 34 },

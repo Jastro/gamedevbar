@@ -12,6 +12,9 @@ const SCREEN_Z = 0.76;
 const ELEMENT_WIDTH = 640;
 const ELEMENT_HEIGHT = 360;
 export const VIRCON_INTERACT_DISTANCE = 3;
+// Play-mode camera: share of the view the screen takes, and height above it.
+const PLAY_VIEW_FILL = 0.5;
+const PLAY_VIEW_RISE = 0.3;
 
 // A Vircon32 arcade cabinet. Idle, its screen shows the logo and who is
 // playing. For the local player, the emulator (public/vircon32/) runs in an
@@ -179,15 +182,17 @@ export class VirconCabinet {
         return this.group.localToWorld(new THREE.Vector3(0, SCREEN_Y, SCREEN_Z));
     }
 
-    // Where the camera sits so the screen fills ~85% of the view (for this
-    // camera's field of view and aspect), and where the player stands.
+    // Where the camera sits while playing: locked, close, a little above the
+    // screen so the cabinet and the avatar's head stay in view (the screen
+    // takes about half the view for this camera's FOV and aspect), and where
+    // the player stands.
     getViewpoints(camera) {
         const halfTan = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
         const fitHeight = (SCREEN_HEIGHT / 2) / halfTan;
         const fitWidth = (SCREEN_WIDTH / 2) / (halfTan * camera.aspect);
-        const distance = Math.max(fitHeight, fitWidth) / 0.85;
+        const distance = Math.max(fitHeight, fitWidth) / PLAY_VIEW_FILL;
         return {
-            camera: this.group.localToWorld(new THREE.Vector3(0, SCREEN_Y, SCREEN_Z + distance)),
+            camera: this.group.localToWorld(new THREE.Vector3(0, SCREEN_Y + PLAY_VIEW_RISE, SCREEN_Z + distance)),
             screen: this.getScreenCenter(),
             stand: this.group.localToWorld(new THREE.Vector3(0, -1, 1.6))
         };

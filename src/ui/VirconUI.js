@@ -1,7 +1,7 @@
 import { FloatingPanel } from './FloatingPanel';
 
 const ROMS_URL = '/vircon32/roms/roms.json';
-const CONTROLS_HINT = 'Esc para salir · Flechas, X Z S A, Q W, Enter = Start';
+const CONTROLS_HINT = 'Esc para salir · Flechas, X Z S A, Q W, Enter = Start · Rueda: mover cámara · R: centrar';
 
 // Vircon32 cabinet UI: the ROM picker (bundled games from roms.json, or your
 // own .v32 file) and the play session. While playing, the camera frames the
@@ -125,7 +125,12 @@ export class VirconUI {
         player.isMoving = false;
 
         const iframe = cabinet.startLocal(rom.url);
-        iframe.addEventListener('load', () => cabinet.focusGame());
+        iframe.addEventListener('load', () => {
+            cabinet.focusGame();
+            iframe.contentWindow?.addEventListener('keydown', (event) => {
+                if (event.key.toLowerCase() === 'r' && !event.repeat) this.game.camera.reset();
+            });
+        });
         this.update();
     }
 
