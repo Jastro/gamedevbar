@@ -58,8 +58,7 @@ export class Player {
 
     async init() {
         if (this.selectedModel) {
-            await this.loadModel();
-            this.setupAnimations();
+            if (await this.loadModel() !== false) this.setupAnimations();
         }
     }
 
@@ -75,42 +74,32 @@ export class Player {
     async loadModel() {
         const loader = new GLTFLoader();
         try {
-            const modelPath = `/assets/models/${this.selectedModel}.glb`;
-            
+            const modelId = this.selectedModel;
+            const modelPath = `/assets/models/${modelId}.glb`;
+
             const gltf = await loader.loadAsync(modelPath);
+            // Another model was picked while this one loaded: the latest wins.
+            if (modelId !== this.selectedModel) return false;
             const model = gltf.scene;
             model.scale.set(0.8, 0.8, 0.8);
             model.position.y = -1.0;
             
-            // Guardar referencias a los sprites antes de limpiar
-            const nameSprite = this.nameSprite;
-            const chatSprite = this.mesh.children.find(child => child.material?.map === this.chatTexture);
-            const emojiSprite = this.mesh.children.find(child => child.material?.map === this.emojiTexture);
-            const talkSprite = this.talkSprite;
-            
-            // Limpiar TODOS los hijos del mesh, incluyendo modelos anteriores
-            while(this.mesh.children.length > 0) {
-                const child = this.mesh.children[0];
-                // Limpiar geometrías y materiales antes de remover
-                if (child.geometry) child.geometry.dispose();
-                if (child.material) {
-                    if (Array.isArray(child.material)) {
-                        child.material.forEach(m => m.dispose());
-                    } else {
-                        child.material.dispose();
-                    }
-                }
-                this.mesh.remove(child);
-            }
-            
-            // Añadir nuevo modelo
-            this.mesh.add(model);
+            // Swap the previous model for the new one. Sprites (name, chat
+            // bubble, emoji, talk indicator) stay. Before 2026-10-21 the old
+            // model was matched as a "chat sprite" and kept, so every change
+            // stacked another model.
+            this.mesh.children
+                .filter(child => !child.isSprite)
+                .forEach(child => {
+                    child.traverse(node => {
+                        node.geometry?.dispose();
+                        const materials = Array.isArray(node.material) ? node.material : [node.material];
+                        materials.forEach(material => material?.dispose());
+                    });
+                    this.mesh.remove(child);
+                });
 
-            // Restaurar los sprites
-            if (nameSprite) this.mesh.add(nameSprite);
-            if (chatSprite) this.mesh.add(chatSprite);
-            if (emojiSprite) this.mesh.add(emojiSprite);
-            if (talkSprite) this.mesh.add(talkSprite);
+            this.mesh.add(model);
 
             // Configurar animaciones
             if (this.animations.mixer) {
@@ -318,8 +307,7 @@ export class Player {
         
         try {
             // Esperar a que termine de cargar el modelo
-            await this.loadModel();
-            this.setupAnimations();
+            if (await this.loadModel() !== false) this.setupAnimations();
         } catch (error) {
             console.error('Error setting model:', error);
         }

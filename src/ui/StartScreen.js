@@ -1,5 +1,7 @@
+import { loadProfile, saveName } from '../core/PlayerProfile';
+
 // Start dialog: name + character (ModelSelector) + bar (RoomSelector).
-// Calls onStart({ username, model, roomId }) once, when "Entrar al Bar" is pressed.
+// Calls onStart({ username, roomId }) once, when "Entrar al Bar" is pressed.
 export class StartScreen {
     constructor({ modelSelector, roomSelector, onStart }) {
         this.modelSelector = modelSelector;
@@ -19,6 +21,7 @@ export class StartScreen {
 
         this.modelSelector.init();
         this.roomSelector.init();
+        this.usernameInput.value = loadProfile().name ?? '';
 
         this.updateStartButton();
         this.usernameInput.addEventListener('input', () => this.updateStartButton());
@@ -39,11 +42,13 @@ export class StartScreen {
         if (!username || this.started) return;
         this.started = true;
 
-        const model = await this.modelSelector.waitForModelSelection();
+        saveName(username);
+        await this.modelSelector.waitForModelSelection();
+        this.modelSelector.setPreviewsActive(false);
         this.dialog.classList.add('hidden');
         document.getElementById('chat-container')?.classList.remove('hidden');
         document.getElementById('chat-box')?.classList.remove('hidden');
 
-        await this.onStart({ username, model, roomId: this.roomSelector.getSelectedRoom() });
+        await this.onStart({ username, roomId: this.roomSelector.getSelectedRoom() });
     }
 }

@@ -19,9 +19,15 @@ export class VirconSync {
 
     bind() {
         const { network } = this.game;
+        // The join snapshot lists only busy cabinets; after a reconnect, the
+        // others must be cleared (they may have been freed meanwhile).
         network.on('virconStates', (data) => {
-            Object.entries(data.cabinets || {}).forEach(([roomId, state]) => this.cabinet(roomId)?.setOccupant(state));
+            const cabinets = data.cabinets || {};
+            this.game.environment.rooms.forEach(({ vircon }, roomId) => vircon.setOccupant(cabinets[roomId] ?? null));
         });
+        // The server frees the cabinet with the lost connection (and a
+        // reconnect respawns the avatar), so the game ends here too.
+        network.on('disconnect', () => this.game.ui.vircon.endPlay());
         network.on('virconState', (data) => {
             const cabinet = this.cabinet(data.roomId);
             if (!cabinet) return;
@@ -49,15 +55,16 @@ export class VirconSync {
         });
     }
 
-    // rom: { title, url }
+    // rom: { title, url, isBlob? }. Uploaded carts (blob URLs) aren't streamed.
     request(roomId, rom) {
+        const watchable = !rom.isBlob;
         if (!this.game.network.isConnected) {
-            this.cabinet(roomId)?.setOccupant({ playerId: this.localId, playerName: this.game.username, romTitle: rom.title });
+            this.cabinet(roomId)?.setOccupant({ playerId: this.localId, playerName: this.game.username, romTitle: rom.title, watchable });
             this.game.ui.vircon.beginPlay(roomId, rom);
             return;
         }
         this.pending = { roomId, rom };
-        this.game.network.send('virconStart', { roomId, romTitle: rom.title });
+        this.game.network.send('virconStart', { roomId, romTitle: rom.title, watchable });
     }
 
     release(roomId) {

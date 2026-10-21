@@ -32,17 +32,20 @@ export class PlayerManager {
         
         // Establecer el modelo
         this.localPlayer.setModel(selectedModel).then(() => {
+            // The 👤 menu may have changed the model while it loaded.
+            const model = this.localPlayer.selectedModel;
             // Enviar información al servidor después de cargar el modelo
             this.game.network.send('setUsername', {
                 username: this.game.username,
-                selectedModel: selectedModel
+                selectedModel: model
             });
 
             // Enviar initCompleted después
             this.game.network.send('initCompleted', {
                 username: this.game.username,
-                selectedModel: selectedModel
+                selectedModel: model
             });
+            this.game.handleLocalPlayerReady();
         }).catch(error => {
             console.error('Error initializing local player model:', error);
         });

@@ -46,6 +46,12 @@ export const ROOMS = [
 
 export const DEFAULT_ROOM_ID = 'gamedev';
 
+// Direct links: `/gamedev`, `/Desarrollo/`... → the room id, or null.
+export function getRoomIdFromPath(pathname) {
+    const name = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+    return ROOMS.some(room => room.id === name) ? name : null;
+}
+
 // Walkable outdoor area between the two facades (world coordinates).
 export const STREET = {
     minX: -25,

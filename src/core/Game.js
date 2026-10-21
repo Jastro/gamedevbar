@@ -12,10 +12,14 @@ import { DoorSync } from '../world/DoorSync';
 import { RadioSync } from '../world/RadioSync';
 import { ProjectorSync } from '../world/ProjectorSync';
 import { VirconSync } from '../world/VirconSync';
+import { VirconSpectating } from '../vircon/VirconSpectating';
 import { ServerClock } from '../network/ServerClock';
 import { AudioSettings } from '../audio/AudioSettings';
 import { SoccerGame } from '../world/SoccerGame';
-import { getRoomDefinition } from '../world/RoomLayout';
+import { getRoomDefinition, getRoomIdFromPath } from '../world/RoomLayout';
+import { loadProfile, saveName, randomModel, placeholderName } from './PlayerProfile';
+import { LoadingScreen } from '../ui/LoadingScreen';
+import { CustomizeUI } from '../ui/CustomizeUI';
 import { VoiceChat } from '../voice/VoiceChat';
 import { ChatUI } from '@/ui/ChatUI';
 import { ModelSelector } from '../ui/ModelSelector';
@@ -66,12 +70,14 @@ export class Game {
         this.radioSync = new RadioSync(this);
         this.projectorSync = new ProjectorSync(this);
         this.virconSync = new VirconSync(this);
+        this.virconSpectating = new VirconSpectating(this);
         // Set while the local player is at an arcade screen ({ hint }): movement
         // and world clicks are off, the camera is fixed.
         this.playMode = null;
         this.ui.radio = new RadioUI(this);
         this.ui.projector = new ProjectorUI(this);
         this.ui.vircon = new VirconUI(this);
+        this.ui.customize = new CustomizeUI(this);
 
         this.interactions = new InteractionSystem(this);
         this.interactions.register(createSeatInteraction(this));
@@ -81,13 +87,47 @@ export class Game {
         this.interactions.register(createProjectorInteraction(this));
         this.interactions.register(createVirconInteraction(this));
 
-        this.startScreen = new StartScreen({
-            modelSelector: this.ui.modelSelector,
-            roomSelector: this.ui.roomSelector,
-            onStart: (choice) => this.start(choice)
-        });
-        this.startScreen.init();
         this.clock = new THREE.Clock();
+
+        // `/gamedev`-style links skip the start dialog (forum embeds);
+        // anything else shows it.
+        const directRoomId = getRoomIdFromPath(window.location.pathname);
+        this.directJoin = Boolean(directRoomId);
+        if (this.directJoin) {
+            this.joinDirectly(directRoomId);
+        } else {
+            this.startScreen = new StartScreen({
+                modelSelector: this.ui.modelSelector,
+                roomSelector: this.ui.roomSelector,
+                onStart: (choice) => this.start(choice)
+            });
+            this.startScreen.init();
+        }
+    }
+
+    // Into the bar with the remembered identity, or a random character and a
+    // placeholder nick on the first visit (both remembered from then on).
+    // When the forum provides the username, it replaces the nick here.
+    joinDirectly(roomId) {
+        document.getElementById('username-dialog')?.classList.add('hidden');
+        this.loadingScreen = new LoadingScreen();
+        this.loadingScreen.show(getRoomDefinition(roomId).name);
+
+        const profile = loadProfile();
+        this.ui.modelSelector.setSelectedModel(profile.model ?? randomModel());
+        const username = profile.name ?? placeholderName();
+        saveName(username);
+
+        document.getElementById('chat-container')?.classList.remove('hidden');
+        document.getElementById('chat-box')?.classList.remove('hidden');
+        this.start({ username, roomId });
+    }
+
+    // The local avatar is loaded and in the scene.
+    handleLocalPlayerReady() {
+        this.loadingScreen?.hide();
+        this.loadingScreen = null;
+        if (this.directJoin) this.ui.customize.maybeAskOnFirstVisit();
     }
 
     // Typing (chat, or any text field/dropdown in a panel) suspends movement
@@ -136,6 +176,7 @@ export class Game {
         this.radioSync.bind();
         this.projectorSync.bind();
         this.virconSync.bind();
+        this.virconSpectating.bind();
         bindArcadeNetwork(this);
 
         this.network.on('userChat', (data) => this.ui.chat.addMessage({
@@ -174,6 +215,24 @@ export class Game {
         document.addEventListener('pointerdown', () => {
             this.environment.rooms.forEach(({ projector }) => projector.kick());
         });
+        // Without the start dialog's click (direct links) the browser keeps
+        // audio off until the first interaction. Not every event counts as
+        // one (a touch pointerdown, Escape), so keep trying until it runs.
+        const unlockEvents = ['pointerdown', 'pointerup', 'click', 'touchend', 'keydown'];
+        const unlockAudio = async () => {
+            const context = this.environment.audioListener?.context;
+            if (!context) return;
+            try {
+                await context.resume();
+            } catch {
+                // Not a qualifying gesture; the next event retries.
+            }
+            this.environment.rooms.forEach(({ radio }) => radio.kick());
+            if (context.state === 'running') {
+                unlockEvents.forEach(type => window.removeEventListener(type, unlockAudio, true));
+            }
+        };
+        unlockEvents.forEach(type => window.addEventListener(type, unlockAudio, true));
         // Releasing the key in another window never reaches us.
         window.addEventListener('blur', () => this.voice.stopTalking());
     }
@@ -199,6 +258,7 @@ export class Game {
         this.environment.update(deltaTime, playerPosition);
         this.voice.update(playerPosition);
         this.ui.vircon.update();
+        this.virconSpectating.update(playerPosition);
         this.interactions.update();
         this.environment.rooms.forEach(({ presenceBoard }) => presenceBoard.update(this));
 

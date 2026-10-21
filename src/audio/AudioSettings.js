@@ -1,14 +1,14 @@
 import { EventEmitter } from '../core/EventEmitter';
 
 const STORAGE_KEY = 'audioVolumes';
-export const VOLUME_CATEGORIES = ['radio', 'video', 'voice'];
+export const VOLUME_CATEGORIES = ['radio', 'video', 'voice', 'arcade'];
 
-// Per-player volume multipliers (0..1) for radio, projector video and other
-// players' voices, remembered in localStorage. Emits 'change' (category, value).
+// Per-player volume multipliers (0..1) for radio, projector video, other
+// players' voices and arcade games (Vircon32, Snake, Pong), remembered in localStorage. Emits 'change' (category, value).
 export class AudioSettings extends EventEmitter {
     constructor() {
         super();
-        this.volumes = { radio: 1, video: 1, voice: 1 };
+        this.volumes = { radio: 1, video: 1, voice: 1, arcade: 1 };
         try {
             const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
             VOLUME_CATEGORIES.forEach(category => {

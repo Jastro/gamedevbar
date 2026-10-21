@@ -75,6 +75,31 @@
         }
       });
 
+      // Audio tap for the bar: SDL2 connects its output to
+      // `audioContext.destination`, so hand it a unity "tap" node instead.
+      // tap -> output (the player's Arcade volume) -> speakers, and
+      // tap -> a MediaStream that the bar streams to people watching.
+      (function () {
+        var NativeContext = window.AudioContext || window.webkitAudioContext;
+        if (!NativeContext) return;
+        function TappedContext(options) {
+          var context = new NativeContext(options);
+          var tap = context.createGain();
+          var output = context.createGain();
+          var capture = context.createMediaStreamDestination();
+          tap.connect(output);
+          output.connect(context.destination);
+          tap.connect(capture);
+          Object.defineProperty(context, 'destination', { value: tap });
+          window.virconAudio = { context: context, tap: tap, output: output, stream: capture.stream };
+          notifyParent('vircon:audio');
+          return context;
+        }
+        TappedContext.prototype = NativeContext.prototype;
+        window.AudioContext = TappedContext;
+        if (window.webkitAudioContext) window.webkitAudioContext = TappedContext;
+      })();
+
       var Module = {
         canvas: canvasElement,
         totalDependencies: 0,

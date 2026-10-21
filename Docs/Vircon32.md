@@ -16,8 +16,15 @@ arcade cabinet that plays the console's games on its 3D screen.
   && ./emsdk activate latest`), then run
   `tools/vircon32/build.sh <path to the emulator clone> <path to emsdk>` from Git Bash. The script uses the
   upstream compile line with our page shell, `tools/vircon32/shell.html`. That shell is only a canvas
-  plus a loading line, with no buttons. It posts `vircon:ready` / `vircon:error` / `vircon:escape` to the
-  parent page.
+  plus a loading line, with no buttons. It posts `vircon:ready` / `vircon:error` / `vircon:escape` /
+  `vircon:audio` to the parent page.
+- **Audio tap** (in the shell): it wraps `AudioContext` so SDL2's output (`audioContext.destination`)
+  goes to a unity `tap` gain:
+  - `tap → output` (the player's 🕹️ Arcade volume) `→` speakers;
+  - `tap →` a `MediaStream` streamed to spectators.
+  - Exposed as `window.virconAudio` inside the iframe.
+  - `public/vircon32/index.html` carries the same script, minified by hand (2026-10-21). A rebuild from
+    the shell reproduces it.
 - ROM: `index.html?rom=<path>`, fetched at load (`preload_cartridge.js` upstream). The path can be
   relative (`roms/Worm.v32`) or a same-origin `blob:` URL (an uploaded file).
 - Controls (fixed): arrows = D-pad, X / Z / S / A = buttons A / B / X / Y, Q / W = L / R, Enter = Start.
@@ -47,8 +54,25 @@ Licensed but not bundled:
 - **Picking a game:** click it or press `E` within 3 units → panel (`src/ui/VirconUI.js`). It lists the
   bundled games (`roms.json`) and a *📂 Cargar mi .v32* button (the file plays only on your client).
 - **One player per cabinet:** `virconStart` → server → `virconState` (or `virconBusy`), handled in
-  `server/features/vircon.js` and `src/world/VirconSync.js`. Freed on Esc or disconnect. Others see the
-  player's name and game title, not the video.
+  `server/features/vircon.js` and `src/world/VirconSync.js`. Freed on Esc or disconnect. People farther
+  away see the player's name and game title.
+- **Spectating** (`src/vircon/`): anyone within 4.5 units of the cabinet (play range + 1.5, same room)
+  sees and hears the live game on the cabinet's screen.
+  - **Watcher:** offers a receive-only WebRTC connection (`virconSignal`, relayed by the server only to or
+    from the cabinet's player).
+  - **Player:** answers with the emulator canvas (`captureStream(30)`, capped at 1 Mbps) and the audio
+    tap.
+  - **On screen:** a `VideoTexture` on the screen mesh, so people in front still cover it. The sound is a
+    `PositionalAudio` at the screen, muffled by walls, on the Arcade slider.
+  - **Limits:** at most 6 watchers, nearest first. A newcomer must be 0.5 nearer to take the farthest
+    watcher's slot. A refused watcher retries after 3 s, doubling up to 30 s; a new game resets that.
+  - **Connection ids:** every signal carries the connection's `peerId`, so late messages from an earlier
+    connection are ignored.
+  - **Lost connection:** the player's game ends. The join snapshot also clears cabinets it doesn't list.
+  - **Ending:** leaving range (+0.3 margin), Esc or a disconnect brings back the idle screen.
+  - **Uploaded carts** are never streamed (`watchable: false`): nobody has checked their licenses.
+  - **Network:** ICE uses the same STUN/TURN as voice, so when no direct path exists the stream goes
+    through coturn. Worst case about 12 Mbps (2 cabinets × 6 watchers × 1 Mbps).
 - **Play mode:** `game.playMode` is set, which turns off movement and world clicks/`E`, and the hint shows
   the controls. The camera is locked in front of the cabinet (`Camera.setView`), 0.3 above the screen and
   close enough that the screen takes about half the view for the camera's FOV and aspect
@@ -59,5 +83,5 @@ Licensed but not bundled:
   is in a text field (chat). Esc, sent by the iframe or pressed in the page, ends the session and unloads
   the emulator.
 - **Rendering:** the emulator iframe sits on the screen through the CSS3D layer, with a transparent "hole"
-  mesh like the projector's, so it's drawn only while you play. Emulator audio isn't positional; only the
-  player hears it.
+  mesh like the projector's, so it's drawn only while you play. The player hears the emulator directly
+  (not positional), at the Arcade volume.

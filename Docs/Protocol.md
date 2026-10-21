@@ -25,8 +25,9 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `radioSet` | `roomId`, `stationId` (or `null` = off) | store, `radioState` to all |
 | `projectorPlay` | `roomId`, `videoId` (11-char YouTube id) | start at server time now, `projectorState` to all |
 | `projectorPause` / `projectorResume` / `projectorStop` | `roomId` | update/clear, `projectorState` to all |
-| `virconStart` | `roomId`, `romTitle` | take the room's cabinet → `virconState` to all, or `virconBusy` to sender |
+| `virconStart` | `roomId`, `romTitle`, `watchable` (bool; false for uploaded carts) | take the room's cabinet → `virconState` to all, or `virconBusy` to sender |
 | `virconStop` | `roomId` | free it (only its player) → `virconState` to all |
+| `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, always with `peerId`; ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player; an offer that can't be relayed gets `{refused, peerId}` back (as if from the target) |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
 | `arcadeState` | `gameState`, `data` | re-broadcast (see known issues: Pong sync broken) |
 | `soccerBallUpdate` | `position`, `velocity` | relayed to others |
@@ -50,7 +51,8 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `projectorState` | `roomId`, `state` (`{ videoId, startedAt, pausedAt }` or `null`), `by`, `serverTime` | apply + 📽️ chat line |
 | `projectorStates` | `screens: { roomId: state }`, `serverTime` | join snapshot |
 | `doorStates` | `doors: { doorId: isOpen }` | apply instantly (join snapshot) |
-| `virconState` | `roomId`, `state` (`{ playerId, playerName, romTitle }` or `null`) | cabinet screen; the asker starts playing |
+| `virconState` | `roomId`, `state` (`{ playerId, playerName, romTitle, watchable }` or `null`) | cabinet screen; the asker starts playing; spectators connect or drop |
+| `virconSignal` | `roomId`, `fromId`, `signal` | `VirconSpectating`: answer (player) or apply (watcher) |
 | `virconStates` | `cabinets: { roomId: state }` | join snapshot |
 | `virconBusy` | `roomId`, `state` | "someone is already playing" chat line |
 | `snakeHighScores` | `scores` | all Snake machines |

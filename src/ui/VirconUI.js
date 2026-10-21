@@ -38,6 +38,7 @@ export class VirconUI {
         this.panel.body.append(this.status, this.list, upload, help);
 
         window.addEventListener('message', (event) => this.handleFrameMessage(event));
+        game.audioSettings.on('change', ({ category }) => category === 'arcade' && this.applyVolume());
         window.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && this.session) this.endPlay();
         });
@@ -152,12 +153,20 @@ export class VirconUI {
         if (event.source !== session.cabinet.iframe?.contentWindow) return;
         const { type, detail } = event.data || {};
         if (type === 'vircon:ready') session.cabinet.focusGame();
+        if (type === 'vircon:audio') this.applyVolume();
         if (type === 'vircon:escape') this.endPlay();
         if (type === 'vircon:error') {
             console.warn('Vircon32:', detail);
             this.game.ui.chat?.addMessage({ type: 'system', message: '🎮 No se ha podido cargar ese juego.' });
             this.endPlay();
         }
+    }
+
+    // The emulator page routes its sound through a gain node (see
+    // tools/vircon32/shell.html); the Arcade slider drives it.
+    applyVolume() {
+        const audio = this.session?.cabinet.getEmulatorAudio();
+        if (audio) audio.output.gain.value = this.game.audioSettings.get('arcade');
     }
 
     // Every frame while playing: keep the camera on the screen (aspect can change).

@@ -15,6 +15,8 @@ export const VIRCON_INTERACT_DISTANCE = 3;
 // Play-mode camera: share of the view the screen takes, and height above it.
 const PLAY_VIEW_FILL = 0.5;
 const PLAY_VIEW_RISE = 0.3;
+// Frame rate of the picture streamed to people watching.
+const CAPTURE_FPS = 30;
 
 // A Vircon32 arcade cabinet. Idle, its screen shows the logo and who is
 // playing. For the local player, the emulator (public/vircon32/) runs in an
@@ -24,8 +26,10 @@ export class VirconCabinet {
     constructor(room, collisionManager) {
         this.room = room;
         this.collisionManager = collisionManager;
-        this.occupant = null; // { playerId, playerName, romTitle } from the server
+        this.occupant = null; // { playerId, playerName, romTitle, watchable } from the server
         this.iframe = null;
+        this.capture = null; // canvas MediaStream while streaming to watchers
+        this.remoteTexture = null; // a watcher's view of someone else's game
     }
 
     create() {
@@ -158,6 +162,8 @@ export class VirconCabinet {
     }
 
     stopLocal() {
+        this.capture?.getTracks().forEach(track => track.stop());
+        this.capture = null;
         if (this.iframe) {
             this.iframe.remove();
             this.iframe = null;
@@ -176,6 +182,58 @@ export class VirconCabinet {
         } catch {
             // Not loaded yet; VirconUI retries on vircon:ready.
         }
+    }
+
+    // The emulator page's audio tap ({ context, tap, output, stream }), once
+    // SDL2 has created its AudioContext (see tools/vircon32/shell.html).
+    getEmulatorAudio() {
+        try {
+            return this.iframe?.contentWindow?.virconAudio ?? null;
+        } catch {
+            return null;
+        }
+    }
+
+    // Player side of spectating: the game's picture and sound as tracks
+    // ({ video, audio }, audio null until the game's AudioContext exists),
+    // or null while the emulator page isn't ready.
+    getCaptureTracks() {
+        let canvas = null;
+        try {
+            canvas = this.iframe?.contentDocument?.getElementById('canvas');
+        } catch {
+            return null;
+        }
+        if (!canvas?.captureStream) return null;
+        if (!this.capture) this.capture = canvas.captureStream(CAPTURE_FPS);
+        return {
+            video: this.capture.getVideoTracks()[0] ?? null,
+            audio: this.getEmulatorAudio()?.stream.getAudioTracks()[0] ?? null
+        };
+    }
+
+    // Watcher side: someone else's live game on this screen, drawn in the
+    // scene (so people in front of the cabinet still cover it).
+    showRemoteVideo(video) {
+        this.hideRemoteVideo();
+        this.remoteTexture = new THREE.VideoTexture(video);
+        this.remoteTexture.colorSpace = THREE.SRGBColorSpace;
+        this.idleScreen.material.map = this.remoteTexture;
+        this.idleScreen.material.needsUpdate = true;
+    }
+
+    hideRemoteVideo() {
+        if (!this.remoteTexture) return;
+        this.idleScreen.material.map = this.idleTexture;
+        this.idleScreen.material.needsUpdate = true;
+        this.remoteTexture.dispose();
+        this.remoteTexture = null;
+    }
+
+    // The streamed game's sound comes from the screen.
+    addScreenSound(sound) {
+        sound.position.set(0, SCREEN_Y, SCREEN_Z);
+        this.group.add(sound);
     }
 
     getScreenCenter() {
