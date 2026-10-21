@@ -60,6 +60,20 @@ export class ModelSelector {
         this.previewsActive = active;
     }
 
+    // The tiles change size when they move from the start dialog to the 👤
+    // menu: match each preview's renderer and camera to its tile again.
+    resizePreviews() {
+        this.modelPreviews.forEach(({ renderer, camera }) => {
+            const container = renderer.domElement.parentElement;
+            const width = container?.clientWidth;
+            const height = container?.clientHeight;
+            if (!width || !height) return;
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        });
+    }
+
     createModelPreview(modelId, container) {
         // Crear escena
         const scene = new THREE.Scene();

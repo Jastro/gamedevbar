@@ -13,7 +13,7 @@ export class Scene {
         
         try {
             const loadedScene = await new Promise((resolve, reject) => {
-                loader.load('level.json', resolve, undefined, reject);
+                loader.load('/level.json', resolve, undefined, reject);
             });
 
             // level.json holds one room ("Taberna") plus the global lights.

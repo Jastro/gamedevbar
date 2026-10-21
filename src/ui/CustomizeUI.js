@@ -62,6 +62,7 @@ export class CustomizeUI {
         // their (now visible) containers.
         setTimeout(() => {
             this.modelSelector.init();
+            this.modelSelector.resizePreviews();
             this.modelSelector.setPreviewsActive(true);
         });
     }
@@ -92,7 +93,9 @@ export class CustomizeUI {
 
     // Direct links only, once per browser: offer the menu after entering.
     maybeAskOnFirstVisit() {
-        if (hasSeenCustomizePrompt()) return;
+        // Called again after every reconnect; one popup is enough.
+        if (this.promptShown || hasSeenCustomizePrompt()) return;
+        this.promptShown = true;
         const prompt = new FloatingPanel('customize-prompt', '👋 ¡Bienvenido!');
         const text = document.createElement('div');
         text.textContent = '¿Quieres personalizar tu personaje?';

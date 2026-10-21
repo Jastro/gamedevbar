@@ -213,15 +213,23 @@ export class Game {
             this.environment.rooms.forEach(({ projector }) => projector.kick());
         });
         // Without the start dialog's click (direct links) the browser keeps
-        // audio off until the first interaction: start it then.
-        const unlockAudio = () => {
-            window.removeEventListener('pointerdown', unlockAudio, true);
-            window.removeEventListener('keydown', unlockAudio, true);
-            this.environment.audioListener?.context.resume();
+        // audio off until the first interaction. Not every event counts as
+        // one (a touch pointerdown, Escape), so keep trying until it runs.
+        const unlockEvents = ['pointerdown', 'pointerup', 'click', 'touchend', 'keydown'];
+        const unlockAudio = async () => {
+            const context = this.environment.audioListener?.context;
+            if (!context) return;
+            try {
+                await context.resume();
+            } catch {
+                // Not a qualifying gesture; the next event retries.
+            }
             this.environment.rooms.forEach(({ radio }) => radio.kick());
+            if (context.state === 'running') {
+                unlockEvents.forEach(type => window.removeEventListener(type, unlockAudio, true));
+            }
         };
-        window.addEventListener('pointerdown', unlockAudio, true);
-        window.addEventListener('keydown', unlockAudio, true);
+        unlockEvents.forEach(type => window.addEventListener(type, unlockAudio, true));
         // Releasing the key in another window never reaches us.
         window.addEventListener('blur', () => this.voice.stopTalking());
     }

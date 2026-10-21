@@ -37,6 +37,15 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     - the buttons are on screen at 375 and 820 px.
   - **Not verified:** the autoplay unlock, because the in-app browser doesn't block autoplay, so the
     suspended → running path was never exercised.
+  - **Fixed after review:**
+    - `/gamedev/` redirects to `/gamedev`, and `level.json` plus the bathroom sounds now load from absolute
+      paths. Before, a trailing slash gave an empty scene.
+    - The audio unlock retries until the context runs.
+    - ⚙️ fits on phones.
+    - A model change mid-load keeps the latest pick, and the menu previews resize.
+    - The popup can't open twice on reconnect.
+  - **Bug fix:** every model change kept the previous model attached to the avatar (`Player.loadModel`
+    matched it as an undefined "chat sprite"). Verified: after three quick changes, one model is left.
 - 2026-10-21 Camera controls: middle-drag pans (clamped to 3 units), R resets zoom/angle/pan (also from
   inside the emulator), the wheel zooms only over the 3D view (no zoom while scrolling panels like the
   ROM list). Vircon32 play mode now plays on the arcade: camera locked, screen at ~50% of the view,

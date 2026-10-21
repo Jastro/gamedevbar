@@ -200,7 +200,7 @@ export class Bathroom {
             sound.setRolloffFactor(2);
             sound.setDistanceModel('exponential');
             
-            audioLoader.load(`assets/sound/cacota${i}.mp3`, (buffer) => {
+            audioLoader.load(`/assets/sound/cacota${i}.mp3`, (buffer) => {
                 sound.setBuffer(buffer);
                 sound.setVolume(0.5);
             });
