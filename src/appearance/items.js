@@ -11,7 +11,10 @@ const materials = new Map();
 function mat(color, options = {}) {
     const key = `${color}:${JSON.stringify(options)}`;
     if (!materials.has(key)) {
-        materials.set(key, new THREE.MeshStandardMaterial({ color, roughness: 0.6, ...options }));
+        const material = new THREE.MeshStandardMaterial({ color, roughness: 0.6, ...options });
+        // Shared by every player wearing it: never disposed (see disposeTree).
+        material.userData.shared = true;
+        materials.set(key, material);
     }
     return materials.get(key);
 }

@@ -66,21 +66,40 @@ export function prepareAnchors(model, avatar, modelId) {
     avatar.updateMatrixWorld(true);
 }
 
-// Replaces the model's accessories and applies tint and size.
+// Frees an object tree's GPU resources: geometries, and materials (with
+// their maps) except the shared item materials. Used for accessories and for
+// whole models (Player.loadModel / cleanup).
+export function disposeTree(root) {
+    root.traverse(node => {
+        node.geometry?.dispose();
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        materials.forEach(material => {
+            if (!material || material.userData.shared) return;
+            material.map?.dispose();
+            material.dispose();
+        });
+    });
+}
+
+// Puts the appearance on the model. Only slots whose item changed are
+// rebuilt (a size or tint change touches no accessory), and removed ones are
+// disposed.
 export function applyAppearance(model, modelId, appearance) {
     if (!model) return;
     const anchors = anchorCache.get(modelId);
-    model.traverse(object => {
-        if (object.userData.isAccessory) object.userData.remove = true;
-    });
-    const stale = [];
-    model.traverse(object => object.userData.remove && stale.push(object));
-    stale.forEach(object => object.removeFromParent());
+    const worn = model.userData.accessories ?? (model.userData.accessories = {});
 
-    if (anchors) {
-        Object.keys(SLOTS).forEach(slot => {
-            const item = getItem(appearance[slot]);
-            if (!item) return;
+    Object.keys(SLOTS).forEach(slot => {
+        const wanted = anchors ? getItem(appearance[slot])?.id ?? null : null;
+        if (worn[slot]?.id === wanted) return;
+        if (worn[slot]) {
+            worn[slot].object.removeFromParent();
+            disposeTree(worn[slot].object);
+            delete worn[slot];
+        }
+        const item = getItem(wanted);
+        if (!item) return;
+        {
             const anchor = anchors[slot];
             const bone = model.getObjectByName(anchor.bone);
             if (!bone) return;
@@ -95,8 +114,9 @@ export function applyAppearance(model, modelId, appearance) {
                 if (child.isMesh) child.raycast = () => {};
             });
             bone.add(accessory);
-        });
-    }
+            worn[slot] = { id: item.id, object: accessory };
+        }
+    });
 
     applyTint(model, appearance.tint);
     model.scale.setScalar(BASE_MODEL_SCALE * (appearance.scale ?? 1));

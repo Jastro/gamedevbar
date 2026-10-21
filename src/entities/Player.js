@@ -3,7 +3,7 @@ import { Group, Vector3, AnimationMixer, CanvasTexture, SpriteMaterial, Sprite }
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as THREE from 'three';
 import { DEFAULT_APPEARANCE, normalizeAppearance } from '../appearance/catalog';
-import { prepareAnchors, applyAppearance } from '../appearance/Accessories';
+import { prepareAnchors, applyAppearance, disposeTree } from '../appearance/Accessories';
 
 // Moves angle `from` toward `to` by fraction t (0..1) the short way round.
 export function lerpAngle(from, to, t) {
@@ -102,16 +102,13 @@ export class Player {
             this.mesh.children
                 .filter(child => !child.isSprite)
                 .forEach(child => {
-                    child.traverse(node => {
-                        node.geometry?.dispose();
-                        const materials = Array.isArray(node.material) ? node.material : [node.material];
-                        materials.forEach(material => material?.dispose());
-                    });
+                    disposeTree(child);
                     this.mesh.remove(child);
                 });
 
             this.mesh.add(model);
             this.model = model;
+            this.modelId = modelId;
             // Rest pose, before the mixer moves anything: measure once.
             prepareAnchors(model, this.mesh, modelId);
             applyAppearance(model, modelId, this.appearance);
@@ -266,7 +263,8 @@ export class Player {
 
     setAppearance(appearance) {
         this.appearance = normalizeAppearance(appearance);
-        applyAppearance(this.model, this.selectedModel, this.appearance);
+        // The model on screen, even while another one loads.
+        applyAppearance(this.model, this.modelId, this.appearance);
         if (this.username) this.setUsername(this.username);
     }
 
@@ -278,17 +276,8 @@ export class Player {
             this.animations.mixer.stopAllAction();
             this.animations.actions.clear();
         }
-        // Limpiar recursos
-        this.mesh.traverse((child) => {
-            if (child.geometry) child.geometry.dispose();
-            if (child.material) {
-                if (Array.isArray(child.material)) {
-                    child.material.forEach(material => material.dispose());
-                } else {
-                    child.material.dispose();
-                }
-            }
-        });
+        // Limpiar recursos (shared accessory materials stay)
+        disposeTree(this.mesh);
         
         // Limpiar recursos del nombre
         if (this.nameSprite) {

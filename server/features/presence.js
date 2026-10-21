@@ -22,7 +22,7 @@ function registerPresence(hub) {
     hub.on('setUsername', ({ user }, data) => {
         user.username = cleanUsername(data.username);
         user.selectedModel = cleanModelId(data.selectedModel);
-        user.appearance = cleanAppearance(data.appearance);
+        if ('appearance' in data) user.appearance = cleanAppearance(data.appearance);
         hub.broadcastAll({
             type: 'userUsername',
             userId: user.id,
@@ -49,7 +49,7 @@ function registerPresence(hub) {
         const { ws, user } = ctx;
         user.username = cleanUsername(data.username);
         user.selectedModel = cleanModelId(data.selectedModel);
-        user.appearance = cleanAppearance(data.appearance);
+        if ('appearance' in data) user.appearance = cleanAppearance(data.appearance);
 
         hub.broadcast({ type: 'userJoined', ...user.toPublic() }, ws);
         hub.users.forEach((existingUser, existingWs) => {
