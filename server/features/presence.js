@@ -5,7 +5,7 @@ const { cleanUsername, cleanModelId } = require('../validation');
 function registerPresence(hub) {
     hub.onConnect(({ ws, user }) => {
         // Enviar ID al nuevo usuario
-        hub.send(ws, { type: 'init', userId: user.id, iceServers: getIceServers(user.id) });
+        hub.send(ws, { type: 'init', userId: user.id, iceServers: getIceServers(user.id), serverTime: Date.now() });
 
         // Early announcement without the model (it isn't chosen yet); the full
         // one follows on initCompleted.

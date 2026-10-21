@@ -74,6 +74,10 @@ logged). Lifecycle hooks: `onConnect`, `onJoin` (after `initCompleted`, in regis
   `hub.send` / `hub.broadcast`. Document it in Protocol.md.
 - **A server feature**: `server/features/<name>.js` exporting `register<Name>(hub)`; call it in
   `server/index.js`. Keep its state inside the module. Use `onJoin` to send newcomers a snapshot.
+- **A radio station**: an entry in `src/audio/radioStations.js`. The stream must send CORS headers
+  (`curl -I -H "Origin: https://example.com" <url>` shows `access-control-allow-origin`).
+- **Shared media in a room** (like the radio/projector): server feature with per-room state + join
+  snapshot, a `*Sync` class in `src/world/` that applies it, and a panel built on `src/ui/FloatingPanel.js`.
 - **A chat command**: `hub.command('/name', (ctx, args) => ...)` in the relevant feature.
 - **Sound that should be muffled by walls**: a `PositionalAudio` with an `OcclusionChain`
   (`sound.setFilters(chain.nodes)`); each frame call

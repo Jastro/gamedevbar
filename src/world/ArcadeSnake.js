@@ -103,11 +103,6 @@ export class ArcadeSnake {
 
         const audioLoader = new THREE.AudioLoader();
 
-        this.sounds.title = new THREE.Audio(listener);
-        audioLoader.load('/assets/sound/arcade/intro.mp3', (buffer) => {
-            this.sounds.title.setBuffer(buffer);
-            this.sounds.title.setVolume(0.5);
-        });
 
         this.sounds.eat = new THREE.Audio(listener);
         audioLoader.load('/assets/sound/arcade/point.wav', (buffer) => {
@@ -141,14 +136,6 @@ export class ArcadeSnake {
                     break;
             }
         });
-    }
-
-    playTitleSound() {
-        if (this.sounds.title && !this.sounds.title.isPlaying && this.gameState === 'title') {
-            this.sounds.title.play();
-            clearTimeout(this.titleSoundTimeout);
-            this.titleSoundTimeout = setTimeout(() => this.playTitleSound(), 45000);
-        }
     }
 
     initGame() {
@@ -214,7 +201,6 @@ export class ArcadeSnake {
             }
         }
         this.updateScreenTexture();
-        this.playTitleSound();
 
         if (!showHighScores && this.gameState === 'title') {  // Añadir verificación de gameState
             this.titleScreenTimeout = setTimeout(() => {       // Guardar referencia al timeout

@@ -11,6 +11,23 @@ Next step: Jastro merges both PRs, adds the `TURN_SECRET` repo secret and opens 
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Sound: per-player volume sliders (radio/projector/voices) in ⚙️, and radios stop
+  downloading when inaudible (estimated gain < -40 dB for 3 s; resume live when audible). Verified
+  in-app: gains logged at 5 spots, other bar's radio never loads from inside a bar, resumes from the
+  street, slider 0 stops the stream, settings persist across reload.
+- 2026-10-21 Bug: arcade intro jingle played on every join (all 4 machines, full volume, plus a 30-45 s
+  repeat). Removed the automatic intro; in-game sounds unchanged. Verified: no arcade sound playing after
+  join, Snake/Pong still start. `public/assets/sound/arcade/intro.mp3` is now unused.
+- 2026-10-21 Removed the El Fary mp3 loop ("Taberna FM"): radios play live stations only; Gamedev
+  defaults to LOS40 Classic.
+- 2026-10-21 Shared radio (13 live Spanish stations + Taberna FM synced to the server clock, per-room
+  station picked by clicking the radio) and a shared YouTube projector on each room's right wall (CSS3D
+  iframe behind a hole in the canvas, server-clock sync, pause/resume/stop, volume by distance/walls).
+  Branch `feature/radio-projector`, stacked on the TURN branches. Verified with two in-app browser clients:
+  live stream samples reach Web Audio (CORS ok), Taberna FM within 40 ms between clients, station change
+  synced + chat line, projector join snapshot / pause / resume / stop synced (clients 0.3-1.4 s apart),
+  iframe aligned to the screen to the pixel, volume 100 → 3 across distance/doors. Not seen with eyes:
+  the screenshot tool can't capture the video itself, and nothing was listened to.
 - 2026-10-20 TURN deploy automation: workflow ships `deploy/` and runs `deploy/remote-deploy.sh`; with
   the `TURN_SECRET` secret it starts coturn (own compose project) and injects TURN env into the app via a
   managed compose override, never editing the server's compose file; any TURN problem aborts before

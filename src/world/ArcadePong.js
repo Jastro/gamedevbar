@@ -97,13 +97,6 @@ export class ArcadePong {
 
         const audioLoader = new THREE.AudioLoader();
 
-        // Sonido de título (no en loop, lo manejaremos manualmente)
-        this.sounds.title = new THREE.Audio(listener);
-        audioLoader.load('/assets/sound/arcade/intro.mp3', (buffer) => {
-            this.sounds.title.setBuffer(buffer);
-            this.sounds.title.setLoop(false);
-            this.sounds.title.setVolume(0.5);
-        });
 
         // Sonido de golpe
         this.sounds.hit = new THREE.Audio(listener);
@@ -132,13 +125,6 @@ export class ArcadePong {
             this.sounds.gameOver.setBuffer(buffer);
             this.sounds.gameOver.setVolume(0.5);
         });
-    }
-
-    playTitleSound() {
-        if (this.sounds.title && !this.sounds.title.isPlaying && this.gameState === 'title') {
-            this.sounds.title.play();
-            this.titleSoundTimeout = setTimeout(() => this.playTitleSound(), 30000);
-        }
     }
 
     isPlayingGame(playerId) {
@@ -255,8 +241,6 @@ export class ArcadePong {
         ctx.fillText('Controles: W/S o ↑/↓', this.canvas.width / 2, 350);
 
         this.updateScreenTexture();
-
-        this.playTitleSound();
     }
 
     updateScreenTexture() {

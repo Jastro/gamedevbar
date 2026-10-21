@@ -37,6 +37,10 @@ export class VoiceChat extends EventEmitter {
         this.pttHeld = false;
         this.isTalking = false;
         this.setupNetworkHandlers();
+        game.audioSettings?.on('change', ({ category, value }) => {
+            if (category !== 'voice') return;
+            this.peers.forEach(entry => entry.sound?.setVolume(value));
+        });
         navigator.mediaDevices?.addEventListener?.('devicechange', () => this.emit('devices'));
     }
 
@@ -180,6 +184,7 @@ export class VoiceChat extends EventEmitter {
         entry.occlusion = new OcclusionChain(listener.context);
         entry.sound = new THREE.PositionalAudio(listener);
         entry.sound.setRefDistance(VOICE_REF_DISTANCE);
+        entry.sound.setVolume(this.game.audioSettings?.get('voice') ?? 1);
         entry.sound.setRolloffFactor(VOICE_ROLLOFF);
         entry.sound.position.y = VOICE_HEIGHT;
         entry.sound.setFilters(entry.occlusion.nodes);

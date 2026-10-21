@@ -22,6 +22,9 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `doorToggle` | `doorId` (`<roomId>:<door>`) | validate id, flip state, `doorState` to all |
 | `voiceSignal` | `targetId`, `signal` (`{description}` or `{candidate}`, ≤ 16 KB) | relayed only to `targetId` as `voiceSignal` with `fromId` |
 | `voiceTalking` | `talking` (bool) | `voiceTalking` to others |
+| `radioSet` | `roomId`, `stationId` (or `null` = off) | store, `radioState` to all |
+| `projectorPlay` | `roomId`, `videoId` (11-char YouTube id) | start at server time now, `projectorState` to all |
+| `projectorPause` / `projectorResume` / `projectorStop` | `roomId` | update/clear, `projectorState` to all |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
 | `arcadeState` | `gameState`, `data` | re-broadcast (see known issues: Pong sync broken) |
 | `soccerBallUpdate` | `position`, `velocity` | relayed to others |
@@ -31,7 +34,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 
 | type | Fields | Client handling |
 |---|---|---|
-| `init` | `userId`, `iceServers` (STUN + per-user TURN credentials when configured) | create `LocalPlayer` at chosen room spawn, send `setUsername` + `initCompleted`; voice keeps id + ICE servers |
+| `init` | `userId`, `iceServers` (STUN + per-user TURN credentials when configured), `serverTime` | create `LocalPlayer` at chosen room spawn, send `setUsername` + `initCompleted`; voice keeps id + ICE servers |
 | `userJoined` | `userId`, `username`, `position`, `rotation`, `selectedModel`, `seatId` | create/update `RemotePlayer` |
 | `userLeft` | `userId` | remove player |
 | `userMoved` | `userId`, `position`, `rotation` | remote player target |
@@ -40,6 +43,10 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `doorState` | `doorId`, `isOpen` | animate door |
 | `voiceSignal` | `fromId`, `signal` | WebRTC offer/answer/ICE candidate for that peer |
 | `voiceTalking` | `userId`, `talking` | 🎙️ sprite on that avatar |
+| `radioState` | `roomId`, `stationId`, `by` | switch that room's radio, 📻 chat line |
+| `radioStates` | `stations: { roomId: stationId }` | join snapshot |
+| `projectorState` | `roomId`, `state` (`{ videoId, startedAt, pausedAt }` or `null`), `by`, `serverTime` | apply + 📽️ chat line |
+| `projectorStates` | `screens: { roomId: state }`, `serverTime` | join snapshot |
 | `doorStates` | `doors: { doorId: isOpen }` | apply instantly (join snapshot) |
 | `snakeHighScores` | `scores` | all Snake machines |
 | `startSoccerGame` | `initiatorId` | start soccer for everyone |

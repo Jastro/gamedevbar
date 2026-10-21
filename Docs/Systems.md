@@ -58,6 +58,50 @@ level `Environment.getOcclusionLevel(sourceRoom, listenerRoom)` picks every fram
 Changes are smoothed with `setTargetAtTime` (0.15 s). Values live in `OCCLUSION_LEVELS` in `Occlusion.js`.
 Arcade sounds are plain `THREE.Audio` (not positional, not occluded).
 
+## Radio (shared stations)
+
+Each room's radio (`src/world/Radio.js`) plays the room's **shared station**: live Spanish internet
+radio only (`src/audio/radioStations.js`), so everyone hears the same broadcast (± the browser's buffer).
+Defaults: Gamedev LOS40 Classic, Desarrollo Rock FM. The old El Fary mp3 loop was removed (2026-10-21). Clicking a radio opens the station picker (`src/ui/RadioUI.js`). A change goes
+`radioSet` → server → `radioState` to everyone, with a 📻 chat line; newcomers get `radioStates`. Rooms
+nobody has changed play their `RoomLayout` `radioStation`. *Silenciar para mí* is local.
+
+Playback: a `<audio crossOrigin="anonymous">` element → `PositionalAudio.setMediaElementSource` → the
+same `OcclusionChain` as before, so distance and wall muffling still work. **Every station URL must send
+CORS headers**, or Web Audio gets silence. The list was checked with curl on 2026-10-20; re-check a station
+that goes quiet. Dropped live streams reconnect after 5 s.
+
+**Inaudible radios stop downloading.** Every 250 ms each radio estimates what this player would hear:
+the panner's inverse distance falloff (from the camera's `AudioListener`) × the wall/door occlusion gain
+× radio volume × the player's radio slider (0 when *Silenciar para mí*). Below 0.01 (-40 dB) for 3 s,
+the stream is unloaded. The first check decides at once, so the other bar's radio never starts if you
+can't hear it. When it's audible again, it reconnects at the live point. Typical values: own bar ~0.05,
+street ~0.011-0.024, the other bar with closed doors ~0.008 (stopped). Each stream is ~128 kbps.
+
+## Volume settings
+
+⚙️ (next to the mic button) also has per-player volume sliders: 📻 radio, 📽️ projector, 🗣️ voices
+(`src/audio/AudioSettings.js`, saved in `localStorage` `audioVolumes`, 0-100 %). Radios multiply their
+`PositionalAudio` volume, projectors their YouTube volume, and voices their `PositionalAudio` gain. A
+slider releases focus when let go, so movement keys work right away.
+
+## Projector (shared YouTube)
+
+A 16:9 screen on each room's right wall (`src/world/Projector.js`), with a projector box hanging in
+front of it. The right-wall paintings moved to the front wall, left of the door. The video is a real
+YouTube iframe (IFrame API, `src/media/youtube.js`) placed in 3D by a `CSS3DRenderer` layer **under** the
+transparent WebGL canvas (`Renderer`). A mesh with `NoBlending` + opacity 0 punches a hole in the canvas
+where the screen is, so walls and players in front still cover it. The iframe gets no pointer events: all
+control goes through the panel (`src/ui/ProjectorUI.js`), opened by clicking the screen. The player can
+paste a YouTube link (watch, youtu.be, shorts, embed, live), pause/resume, or turn it off.
+
+Sync: the server keeps `{ videoId, startedAt, pausedAt }` per room (server clock). Clients estimate the
+server clock (`src/network/ServerClock.js`, from `init` and every projector message), play from
+`now - startedAt`, and re-seek when more than 1.5 s off (checked every 2 s). Pause stores the position;
+resume shifts `startedAt`. YouTube audio can't go through Web Audio, so walls are imitated with volume
+only (`OCCLUSION_VOLUME`: 1 / 0.5 / 0.12) on top of distance. If the browser blocks autoplay with sound,
+the next click anywhere starts it. Non-embeddable/missing videos are reported in chat.
+
 ## Voice chat (push to talk)
 
 `src/voice/VoiceChat.js` + `VoicePeer.js`, UI in `src/ui/VoiceUI.js`. WebRTC full mesh: every pair of
