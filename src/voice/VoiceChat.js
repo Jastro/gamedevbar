@@ -15,12 +15,21 @@ const VOICE_ROLLOFF = 1.2;
 const VOICE_HEIGHT = 0.6; // mouth height relative to the avatar origin
 
 const DEVICE_STORAGE_KEY = 'voiceInputDevice';
+const MODE_STORAGE_KEY = 'voiceMode';
 const MIC_PROCESSING = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
 
-// Push-to-talk proximity voice chat over a WebRTC mesh; the game's WebSocket
-// only relays signaling. Events: 'talking' (bool), 'mic' (bool: mic open or
-// released), 'error' (reason), 'devices' (input device list may have changed),
-// 'peers' (connection status changed), 'peerFailed' (remoteId, first failure only).
+// Open-mic speech detection (drives the 🎙️ indicator, not what is sent):
+// RMS above SPEECH_LEVEL counts as speaking, kept for SPEECH_HOLD after it drops.
+const SPEECH_LEVEL = 0.02;
+const SPEECH_HOLD = 500;      // ms
+const SPEECH_INTERVAL = 100;  // ms between level checks
+
+// Proximity voice chat over a WebRTC mesh; the game's WebSocket only relays
+// signaling. Two modes: 'ptt' (push to talk, default) and 'open' (mic always
+// on, V / 🎙️ toggle mute). Events: 'talking' (bool: indicator), 'mode',
+// 'muted' (bool, open mode), 'mic' (bool: mic open or released), 'error'
+// (reason), 'devices' (input device list may have changed), 'peers'
+// (connection status changed), 'peerFailed' (remoteId, first failure only).
 // Statuses: 'connecting' | 'connected' | 'failed'.
 export class VoiceChat extends EventEmitter {
     constructor(game) {
@@ -35,7 +44,10 @@ export class VoiceChat extends EventEmitter {
         this.micTrack = null;
         this.micRequest = null;
         this.pttHeld = false;
-        this.isTalking = false;
+        this.isTalking = false;     // shown to everyone as 🎙️
+        this.mode = this.loadMode();
+        this.openMuted = false;
+        this.speech = null;         // open-mode level detector
         this.setupNetworkHandlers();
         game.audioSettings?.on('change', ({ category, value }) => {
             if (category !== 'voice') return;
@@ -207,9 +219,32 @@ export class VoiceChat extends EventEmitter {
         });
     }
 
-    // --- Push to talk ------------------------------------------------------
+    // --- Push to talk / open mic --------------------------------------------
 
+    loadMode() {
+        try {
+            return localStorage.getItem(MODE_STORAGE_KEY) === 'open' ? 'open' : 'ptt';
+        } catch {
+            return 'ptt';
+        }
+    }
+
+    // Whether the mic track is sent to peers right now.
+    get transmitting() {
+        if (this.mode === 'open') return !this.openMuted;
+        return this.pttHeld;
+    }
+
+    applyTransmitting() {
+        if (this.micTrack) this.micTrack.enabled = this.transmitting;
+    }
+
+    // Push-to-talk key/button down. In open mode the same controls toggle mute.
     async startTalking() {
+        if (this.mode === 'open') {
+            this.toggleOpenMute();
+            return;
+        }
         if (this.pttHeld) return;
         this.pttHeld = true;
         if (!this.micTrack && !(await this.enableMic())) {
@@ -217,19 +252,91 @@ export class VoiceChat extends EventEmitter {
             return;
         }
         // Released while the permission prompt was open.
-        if (this.pttHeld) this.setTalking(true);
+        if (this.pttHeld) {
+            this.applyTransmitting();
+            this.setTalking(true);
+        }
     }
 
     stopTalking() {
+        if (this.mode === 'open') return;
         this.pttHeld = false;
+        this.applyTransmitting();
         if (this.isTalking) this.setTalking(false);
     }
 
+    // The 🎙️ indicator others see.
     setTalking(isTalking) {
+        if (this.isTalking === isTalking) return;
         this.isTalking = isTalking;
-        if (this.micTrack) this.micTrack.enabled = isTalking;
         this.network.send('voiceTalking', { talking: isTalking });
         this.emit('talking', isTalking);
+    }
+
+    // mode: 'ptt' | 'open'. Called from the settings checkbox (a user gesture,
+    // so the mic can be requested) and on entering with a saved 'open' mode.
+    async setMode(mode) {
+        this.mode = mode === 'open' ? 'open' : 'ptt';
+        try {
+            localStorage.setItem(MODE_STORAGE_KEY, this.mode);
+        } catch {
+            // Not critical: the choice just won't be remembered.
+        }
+        this.pttHeld = false;
+        this.openMuted = false;
+        this.setTalking(false);
+        if (this.mode === 'open' && !(await this.enableMic())) {
+            this.mode = 'ptt';
+        }
+        this.applyTransmitting();
+        this.restartSpeechDetection();
+        this.emit('mode', this.mode);
+        this.emit('muted', this.openMuted);
+    }
+
+    async toggleOpenMute() {
+        if (!this.micTrack) {
+            // Released or lost mic: the toggle brings it back, unmuted.
+            if (!(await this.enableMic())) return;
+            this.openMuted = false;
+        } else {
+            this.openMuted = !this.openMuted;
+        }
+        this.applyTransmitting();
+        if (this.openMuted) this.setTalking(false);
+        this.emit('muted', this.openMuted);
+    }
+
+    // Open mode only: watch a clone of the mic (the clone stays enabled and
+    // is never sent) and raise the 🎙️ indicator while there is speech.
+    restartSpeechDetection() {
+        if (this.speech) {
+            clearInterval(this.speech.timer);
+            this.speech.source.disconnect();
+            this.speech.clone.stop();
+            this.speech = null;
+        }
+        if (this.mode !== 'open' || !this.micTrack) return;
+
+        const context = THREE.AudioContext.getContext();
+        const clone = this.micTrack.clone();
+        clone.enabled = true;
+        const source = context.createMediaStreamSource(new MediaStream([clone]));
+        const analyser = context.createAnalyser();
+        analyser.fftSize = 512;
+        source.connect(analyser);
+        const samples = new Float32Array(analyser.fftSize);
+        let lastSpeech = 0;
+
+        const timer = setInterval(() => {
+            analyser.getFloatTimeDomainData(samples);
+            let sum = 0;
+            for (const value of samples) sum += value * value;
+            const now = performance.now();
+            if (Math.sqrt(sum / samples.length) > SPEECH_LEVEL) lastSpeech = now;
+            this.setTalking(!this.openMuted && now - lastSpeech < SPEECH_HOLD);
+        }, SPEECH_INTERVAL);
+        this.speech = { clone, source, timer };
     }
 
     // --- Microphone -------------------------------------------------------
@@ -306,13 +413,14 @@ export class VoiceChat extends EventEmitter {
 
     useTrack(track) {
         const previous = this.micTrack;
-        track.enabled = this.isTalking;
         track.addEventListener('ended', () => {
             if (this.micTrack === track) this.handleMicLost();
         });
         this.micTrack = track;
+        this.applyTransmitting();
         this.peers.forEach(entry => entry.peer.setLocalTrack(track));
         previous?.stop();
+        this.restartSpeechDetection();
         this.emit('mic', true);
     }
 
@@ -320,18 +428,23 @@ export class VoiceChat extends EventEmitter {
     // push to talk opens it again.
     releaseMic() {
         if (!this.micTrack) return;
-        this.stopTalking();
-        this.micTrack.stop();
-        this.micTrack = null;
-        this.peers.forEach(entry => entry.peer.setLocalTrack(null));
-        this.emit('mic', false);
+        const track = this.micTrack;
+        this.handleMicLost();
+        track.stop();
     }
 
-    // Device unplugged or permission revoked: next press asks again.
+    // Device unplugged or permission revoked (or released): the next press /
+    // mute toggle asks again.
     handleMicLost() {
-        this.stopTalking();
+        this.pttHeld = false;
         this.micTrack = null;
+        this.restartSpeechDetection();
+        this.setTalking(false);
         this.peers.forEach(entry => entry.peer.setLocalTrack(null));
+        if (this.mode === 'open') {
+            this.openMuted = true;
+            this.emit('muted', true);
+        }
         this.emit('mic', false);
     }
 }

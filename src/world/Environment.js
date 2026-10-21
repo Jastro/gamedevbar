@@ -7,6 +7,8 @@ import { ArcadePong } from './ArcadePong';
 import { ArcadeSnake } from './ArcadeSnake';
 import { Door, DOOR_INTERACT_DISTANCE } from './Door';
 import { Projector } from './Projector';
+import { PresenceBoard } from './PresenceBoard';
+import { VirconCabinet } from './VirconCabinet';
 import { DEFAULT_ROOM_ID } from './RoomLayout';
 
 // Props and interactive objects. Every room gets its own full set, built in
@@ -17,7 +19,7 @@ export class Environment {
         this.world = world;
         this.serverClock = serverClock;
         this.audioSettings = audioSettings;
-        this.rooms = new Map();  // roomId -> { room, bar, furniture, radio, paintings, arcadePong, arcadeSnake, door, projector }
+        this.rooms = new Map();  // roomId -> { room, bar, furniture, radio, paintings, arcadePong, arcadeSnake, door, projector, presenceBoard, vircon }
         this.doors = new Map();  // doorId -> Door
     }
 
@@ -33,7 +35,9 @@ export class Environment {
                 arcadePong: new ArcadePong(room),
                 arcadeSnake: new ArcadeSnake(room),
                 door: new Door(room, this.world.collisionManager),
-                projector: new Projector(room, this.serverClock, this.audioSettings)
+                projector: new Projector(room, this.serverClock, this.audioSettings),
+                presenceBoard: new PresenceBoard(room),
+                vircon: new VirconCabinet(room, this.world.collisionManager)
             };
 
             contents.bar.create();
@@ -44,6 +48,8 @@ export class Environment {
             contents.arcadePong.create({ x: -7.5, y: 2, z: -8 });
             contents.door.create();
             contents.projector.create();
+            contents.presenceBoard.create();
+            contents.vircon.create();
             if (contents.paintings) this.loadPaintings(contents.paintings);
 
             this.rooms.set(room.id, contents);

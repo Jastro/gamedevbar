@@ -16,7 +16,9 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Camera near doors/walls outside.** Walk along both facades and through the doorways rotating the
       camera (right mouse). Expected: camera doesn't end up behind a wall or a closed door.
 - [ ] **Room selector.** Layout on desktop and phone width; choice remembered after reload.
-- [ ] **Forum TV position.** It moved beside the door (x = 7 on the front wall). Still easy to read?
+- [ ] **"Who's here" board** (front wall, right of the door). Shows everyone inside that bar, 🎙️ while
+      they talk, and counts for the other bar / street; updates within ~0.5 s as people walk in and out.
+      Readable from the bar?
 - [ ] **Street look.** Exterior is plain (dark ground, fences, neon name signs, no roof). Good enough for now?
 - [ ] **Voice with a real mic.** Two machines (or two browsers with headphones). Hold `V`: first press asks
       for the mic; the other player hears you from your avatar's position and sees 🎙️ over your head.
@@ -42,3 +44,11 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Far radios stop.** From inside one bar with doors closed, the other bar's radio shouldn't be
       audible at all (it isn't even downloaded). Walking out to the street brings it back within ~0.25 s,
       live. Does the cut-off point (-40 dB) feel right, or is it noticeable when it stops/starts?
+- [ ] **Open mic (⚙️ → Micrófono abierto).** Others hear you without holding V; 🎙️ over your head only
+      while you speak (not with background noise). V / 🎙️ mutes (🔇) and unmutes. Kept after reload.
+      Is the speech threshold right for your mic, or does the indicator flicker / miss quiet speech?
+- [ ] **Vircon32 cabinet** (back-right corner of each bar). Walk up, `E` or click → pick a game → the camera
+      frames the cabinet and the game runs on its screen. Check: speed/smoothness in a normal browser
+      window, sound, all controls (arrows, X Z S A, Q W, Enter), Esc returns you to the bar. A second
+      player gets "ya está jugando"; the cabinet shows "🎮 name · game" to others. Try *Cargar mi .v32*
+      with a file of your own. Clicking the chat while playing still lets you type?

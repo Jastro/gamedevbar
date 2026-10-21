@@ -11,6 +11,7 @@ import { Environment } from '../world/Environment';
 import { DoorSync } from '../world/DoorSync';
 import { RadioSync } from '../world/RadioSync';
 import { ProjectorSync } from '../world/ProjectorSync';
+import { VirconSync } from '../world/VirconSync';
 import { ServerClock } from '../network/ServerClock';
 import { AudioSettings } from '../audio/AudioSettings';
 import { SoccerGame } from '../world/SoccerGame';
@@ -24,11 +25,13 @@ import { VoiceUI } from '../ui/VoiceUI';
 import { VoiceSettingsUI } from '../ui/VoiceSettingsUI';
 import { RadioUI } from '../ui/RadioUI';
 import { ProjectorUI } from '../ui/ProjectorUI';
+import { VirconUI } from '../ui/VirconUI';
 import { createDoorInteraction } from '../interactions/doorInteraction';
 import { createSeatInteraction } from '../interactions/seatInteraction';
 import { createRadioInteraction } from '../interactions/radioInteraction';
 import { createArcadeInteraction, bindArcadeNetwork } from '../interactions/arcadeInteraction';
 import { createProjectorInteraction } from '../interactions/projectorInteraction';
+import { createVirconInteraction } from '../interactions/virconInteraction';
 
 // Composition root: builds every system, wires them together and runs the
 // main loop. Systems reach each other through this object (also window.game).
@@ -62,8 +65,13 @@ export class Game {
         this.doorSync = new DoorSync(this);
         this.radioSync = new RadioSync(this);
         this.projectorSync = new ProjectorSync(this);
+        this.virconSync = new VirconSync(this);
+        // Set while the local player is at an arcade screen ({ hint }): movement
+        // and world clicks are off, the camera is fixed.
+        this.playMode = null;
         this.ui.radio = new RadioUI(this);
         this.ui.projector = new ProjectorUI(this);
+        this.ui.vircon = new VirconUI(this);
 
         this.interactions = new InteractionSystem(this);
         this.interactions.register(createSeatInteraction(this));
@@ -71,6 +79,7 @@ export class Game {
         this.interactions.register(createArcadeInteraction(this));
         this.interactions.register(createDoorInteraction(this));
         this.interactions.register(createProjectorInteraction(this));
+        this.interactions.register(createVirconInteraction(this));
 
         this.startScreen = new StartScreen({
             modelSelector: this.ui.modelSelector,
@@ -95,10 +104,15 @@ export class Game {
         this.camera.rotation.horizontal = getRoomDefinition(roomId).rotationY;
 
         await this.init();
+        // The window may have been resized (or been 0x0) since the page loaded.
+        this.handleResize();
         this.setupInput();
         this.animate();
 
         this.environment.initializeAudio(this.camera.getCamera());
+        // A saved open-mic choice reopens the mic on entry.
+        if (this.voice.mode === 'open') await this.voice.setMode('open');
+        this.ui.voice.updateButton();
         this.ui.voice.showIntro();
     }
 
@@ -120,6 +134,7 @@ export class Game {
         this.doorSync.bind();
         this.radioSync.bind();
         this.projectorSync.bind();
+        this.virconSync.bind();
         bindArcadeNetwork(this);
 
         this.network.on('userChat', (data) => this.ui.chat.addMessage({
@@ -177,7 +192,9 @@ export class Game {
         this.soccerGame.update(deltaTime);
         this.environment.update(deltaTime, playerPosition);
         this.voice.update(playerPosition);
+        this.ui.vircon.update();
         this.interactions.update();
+        this.environment.rooms.forEach(({ presenceBoard }) => presenceBoard.update(this));
 
         // Actualizar posición de la cámara para seguir al jugador local
         if (this.players.localPlayer) {

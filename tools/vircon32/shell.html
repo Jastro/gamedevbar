@@ -1,0 +1,102 @@
+<!doctype html>
+<!-- Minimal page shell for the Vircon32 web emulator inside the bar's arcade
+     cabinet (see Docs/Vircon32.md). Only the 640x360 canvas, no buttons or
+     overlays. Talks to the parent page (same origin) with postMessage:
+     vircon:ready, vircon:error, vircon:escape. -->
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Vircon32</title>
+    <style>
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+      }
+      /* !important: Emscripten's SDL sets an inline pixel size on the canvas. */
+      #canvas {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain;
+        image-rendering: pixelated;
+        outline: none;
+      }
+      #status {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #8be9fd;
+        font: bold 28px monospace;
+        pointer-events: none;
+      }
+      #status.hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="640" height="360" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+    <div id="status">Cargando…</div>
+    <script type="text/javascript">
+      var canvasElement = document.getElementById('canvas');
+      var statusElement = document.getElementById('status');
+
+      function notifyParent(type, detail) {
+        if (window.parent !== window) {
+          window.parent.postMessage({ type: type, detail: detail }, window.location.origin);
+        }
+      }
+
+      // From the upstream shell: Safari loses arrow keys on their way from the
+      // canvas to window, where Emscripten's SDL2 listens; re-dispatch them.
+      ['keydown', 'keyup'].forEach(function (type) {
+        canvasElement.addEventListener(type, function (e) {
+          if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            window.dispatchEvent(new KeyboardEvent(type, {
+              key: e.key, code: e.code, keyCode: e.keyCode, which: e.which,
+              bubbles: true, cancelable: true
+            }));
+          }
+        });
+      });
+
+      // Esc leaves the cabinet (handled by the bar, which unloads this page).
+      window.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          notifyParent('vircon:escape');
+        }
+      });
+
+      var Module = {
+        canvas: canvasElement,
+        totalDependencies: 0,
+        setStatus: function () {},
+        monitorRunDependencies: function (left) {
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          if (!left) {
+            statusElement.classList.add('hidden');
+            canvasElement.focus();
+            notifyParent('vircon:ready');
+          }
+        },
+        // Called by MainWeb.cpp every frame; the upstream shell graphs it.
+        onPerfUpdate: function () {}
+      };
+
+      window.onerror = window.onunhandledrejection = function (event) {
+        statusElement.textContent = 'Error al cargar el juego';
+        statusElement.classList.remove('hidden');
+        notifyParent('vircon:error', String(event && (event.message || event.reason) || event));
+      };
+    </script>
+    {{{ SCRIPT }}}
+  </body>
+</html>

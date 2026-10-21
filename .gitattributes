@@ -1,0 +1,4 @@
+# Binary assets: never let line-ending conversion touch them.
+*.v32 binary
+*.wasm binary
+*.data binary

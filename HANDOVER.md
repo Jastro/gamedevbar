@@ -12,6 +12,24 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Vircon32: 17 more games, for 21 bundled (~480 MB): Ocean Storm (Jastro's permission), all
+  of joyrider3774's licensed games under 100 MB, and six community games. Picker shows each game's size.
+  `public/vircon32/roms/LICENSES.md` lists license and source per game.
+- 2026-10-21 Vircon32 cabinet in every room (plan `Docs/Plans done/2026-10-21-openmic-board-vircon32.md`):
+  web emulator built with emsdk into `public/vircon32/` (`tools/vircon32/build.sh`, own shell), four MIT
+  games + upload of your own `.v32`, one player per cabinet (server), game on the cabinet's 3D screen with
+  the camera framing it and keyboard in the emulator iframe; Esc leaves. Verified with two in-app clients:
+  E/hint/panel, Worm boots on the cabinet screen (BIOS logo seen), real key presses reach the game while
+  the avatar stays put, busy refusal, Esc frees, disconnect frees, upload loads the exact file. The pane
+  ran at 1.5 fps (throttled), so speed wasn't judged.
+- 2026-10-21 The forum TV in each room is now a "who's here" board (players inside that room, 🎙️ when
+  talking, counts for the other room/street), computed client-side. Removed the Mediavida scraper:
+  `server/forumProxy.js`, `/mv-proxy` + `/proxy-image`, `puppeteer` and `node-fetch`, Chromium in the
+  Docker image, Vite proxies. Verified: build, server syntax; in-app (see slice commit).
+- 2026-10-21 Open-mic mode for voice (⚙️ checkbox, saved): mic always sent, V/🎙️ toggle mute, 🎙️
+  indicator driven by speech detection. Verified with two in-app clients and a gated fake mic: heard with
+  no key held, indicator on with speech / off 0.5 s after, mute → silence, back to PTT → silence, saved
+  mode reopens the mic on entry. Not tried with a real mic.
 - 2026-10-21 Deploy through GHCR + Portainer webhook instead of scp/ssh; app and coturn run as git-ops
   stacks. Removed `deploy/` (remote-deploy.sh, coturn files): the repo no longer needs an SSH key to the
   server, only `PORTAINER_WEBHOOK_URL`. Not run yet against the real server.
@@ -72,17 +90,21 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   snapshot, stool facing in the rotated room, occlusion levels per position. Audio not listened to.
 
 ## Decisions to review
-- Doors centered on the front wall, rooms straight across the street (per Borja, 2026-10-20). The forum TV
+- Vircon32 cabinet at room-local (11, 2, -8), back-right corner. Emulator audio is not positional.
+- Every licensed game under 100 MB is bundled in git (~480 MB in history and in the Docker image), per
+  Borja's "no LFS" rule. If the image size hurts deploys, move the ROMs to a server volume or CDN.
+- Doors centered on the front wall, rooms straight across the street (per Borja, 2026-10-20). The board
   moved from x = 1.09 to x = 7 on the same wall to make room for the door.
-- Desarrollo is a copy without the paintings: own forum TV (same thread), own radio (same song), own local
+- Desarrollo is a copy without the paintings: own board, own radio, own local
   arcades.
 - Chat, `/furbo` and Snake high scores stay global across rooms.
 - No roofs (camera would clip on them); exterior is minimal.
 - Git: per the request, work went to a branch + PR instead of straight to `main`.
 
 ## Open questions
+- Carra's own Vircon32 games (BSD-3) are only on itch.io as zips: download them by hand to add them?
 - Should chat become per-room (or show which bar someone is in)?
-- Desarrollo's identity: different decoration, music, TV feed (another subforum thread)?
+- Desarrollo's identity: different decoration, default music?
 
 ## Next
 - Pong sync (message `type` overwritten in `WebSocketManager.send`).

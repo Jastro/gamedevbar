@@ -7,7 +7,7 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
 
 All room content is authored in one **room-local frame** (the original bar): x ∈ [-15, 15], z ∈ [-10, 10],
 walls 8 high, bar counter at z = -3, back bar at z = -7, front wall at z = +10 with the entrance centered
-(x = 0) and the forum TV beside it (x = 7).
+(x = 0) and the "who's here" board beside it (x = 7).
 `src/world/RoomLayout.js` is the single source of truth for placing rooms:
 
 | Room | Origin (x, z) | Rotation Y | Front door (world) |
@@ -24,7 +24,7 @@ How a room is built (`World.create` → `Environment.create`):
    added (colliders are `Box3.setFromObject` of world-space geometry).
 2. A clone of `level.json`'s "Taberna" group (lights and `FrontWall` stripped by `Scene`; lights are global).
 3. `World`: floor, walls (front wall split around the door), bar counter colliders.
-4. `Environment`: Bar (sign text per room, forum TV), Furniture, Radio, Paintings (only if the room's
+4. `Environment`: Bar (sign text per room), PresenceBoard, Furniture, Radio, Paintings (only if the room's
    `paintings` flag isn't `false`; Desarrollo has bare walls), Snake + Pong arcades, Door.
    Builders receive the `Room` as their "scene", so they keep their original local coordinates.
 
@@ -78,6 +78,20 @@ the stream is unloaded. The first check decides at once, so the other bar's radi
 can't hear it. When it's audible again, it reconnects at the live point. Typical values: own bar ~0.05,
 street ~0.011-0.024, the other bar with closed doors ~0.008 (stopped). Each stream is ~128 kbps.
 
+## "Who's here" board
+
+Each room's front wall (where the Mediavida forum TV used to be) has a board (`src/world/PresenceBoard.js`).
+It lists the players currently inside that room (🎙️ while they talk, *(tú)* for yourself), with a footer
+counting people in the other rooms and on the street. It's computed on each client from the player
+positions it already knows (`World.getRoomAt`), checked every 500 ms, and redrawn only when something
+changes. No server state. The forum scraper behind the old TV (Puppeteer + headless Chromium,
+`/mv-proxy`) was removed on 2026-10-21; it's in git history if a forum feed is wanted again.
+
+## Vircon32 cabinet
+
+A Vircon32 fantasy-console cabinet in every room (back-right corner), playing on its own 3D screen with a
+ROM picker. Details: [Vircon32.md](Vircon32.md).
+
 ## Volume settings
 
 ⚙️ (next to the mic button) also has per-player volume sliders: 📻 radio, 📽️ projector, 🗣️ voices
@@ -113,6 +127,11 @@ only), later presses just toggle `track.enabled`. Remote voices play as `THREE.P
 speaker's avatar through the same `OcclusionChain` as the radios
 (`Environment.getOcclusionLevel(speakerRoom, listenerRoom)`). Avatars show a 🎙️ sprite while talking.
 
+**Open mic** (⚙️ → *Micrófono abierto*, saved in `localStorage` `voiceMode`): the mic track stays enabled
+and `V` / 🎙️ toggle mute (🔇) instead of push-to-talk. The 🎙️ indicator others see follows actual speech:
+a level detector on a clone of the mic track (RMS > 0.02, 500 ms hold). A saved open mode reopens the mic
+on entry. Releasing or losing the mic in open mode leaves it muted; the next `V` reopens it.
+
 Mic settings (⚙️ next to the mic button, `src/ui/VoiceSettingsUI.js`): input device dropdown (names appear
 once mic permission is granted; choice saved in `localStorage` `voiceInputDevice` and requested as `ideal`,
 so a missing device falls back to the default), a live level meter (fed from a clone of the mic track,
@@ -135,8 +154,8 @@ shows each player as conectando / conectado / sin conexión. Embedding in a foru
 
 All in memory, lost on restart, each owned by its feature module in `server/features/`: users (Hub: id,
 name, model, position; seat and duel fields added by those features), seats, chat history (last 50), Snake
-high scores (top 10), doors (doorId → open). Forum posts cached 30 s, proxied images 5 min
-(`server/forumProxy.js`). Message list: see [Protocol.md](Protocol.md).
+high scores (top 10), doors (doorId → open), radio stations and projector state per room. Message list:
+see [Protocol.md](Protocol.md).
 
 ## Known issues and quirks (found 2026-10-20, not fixed unless noted)
 
@@ -150,16 +169,15 @@ high scores (top 10), doors (doorId → open). Forum posts cached 30 s, proxied 
 - Seat ids are Three.js object ids (client-local), so server seat occupancy is meaningless across clients, and
   no client handles `userSat`/`userStood` (others don't see you sit).
 - Duel messages (`duelRequest`...) exist on the server but there is no client UI for them.
-- `node-fetch` is a devDependency but `server/forumProxy.js` imports it at request time; the Docker
-  image installs production deps only, so image proxying likely fails there (forum text still works).
-  Fix: move it to `dependencies` or use Node's built-in `fetch`.
+- Fixed 2026-10-21: a page loaded hidden or zero-sized (background tab, hidden pane, collapsed iframe)
+  left the camera aspect at 0/0 = NaN until the next resize. The scene rendered black, and anything
+  using the aspect (the Vircon32 camera framing) got NaN positions. Camera now clamps the aspect and
+  `Game.start` re-syncs the size.
 - `window.game` is still used as a global by older modules (Bar, arcades, SoccerGame, ChatUI); new code
   gets `game` passed in.
 - Geometry is duplicated: `level.json`, `World` and `Bar` all create floor/walls/bar counter (z-fighting).
-- `Bathroom.js` and `Lighting.js` are never used (level.json has an empty Bathroom group). `/proxy-image`
-  is unused by the client (avatars go through `/mv-proxy?imageUrl=`).
+- `Bathroom.js` and `Lighting.js` are never used (level.json has an empty Bathroom group).
 - The 6 character previews keep their own WebGL contexts and render loops after the game starts.
   (Fixed 2026-10-20: `ModelSelector.init()` ran twice, creating 12.)
-- Each room's forum TV polls `/mv-proxy` every 5 s (2 rooms → 2 requests per client per 5 s; server caches).
 - Fixed 2026-10-20: server sent the initial position as `{x,y,z}` while clients expect `[x, y, z]`;
   local `system` chat messages rendered as "undefined ...".
