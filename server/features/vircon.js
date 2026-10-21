@@ -1,14 +1,17 @@
+const { LIMITS } = require('../config');
 const { cleanString } = require('../validation');
 
 // Who is playing each room's Vircon32 cabinet (one player at a time). The
-// game itself runs only on that player's client; others just see the name
-// and title on the cabinet. Freed on stop or disconnect.
+// game itself runs only on that player's client; people standing next to it
+// get a WebRTC stream from that client (signaling relayed here, bundled
+// games only); everyone else sees the name and title. Freed on stop or
+// disconnect.
 const ROOM_ID_PATTERN = /^[a-z0-9_-]{1,32}$/;
 const MAX_ROOMS = 32;
 const MAX_TITLE_LENGTH = 60;
 
 function registerVircon(hub) {
-    const cabinets = new Map(); // roomId -> { playerId, playerName, romTitle }
+    const cabinets = new Map(); // roomId -> { playerId, playerName, romTitle, watchable }
 
     const publish = (roomId) => {
         hub.broadcastAll({ type: 'virconState', roomId, state: cabinets.get(roomId) ?? null });
@@ -26,9 +29,26 @@ function registerVircon(hub) {
         cabinets.set(roomId, {
             playerId: user.id,
             playerName: user.username,
-            romTitle: cleanString(data.romTitle, MAX_TITLE_LENGTH) || 'Vircon32'
+            romTitle: cleanString(data.romTitle, MAX_TITLE_LENGTH) || 'Vircon32',
+            // Only bundled games may be streamed (uploads aren't license-checked).
+            watchable: data.watchable === true
         });
         publish(roomId);
+    });
+
+    // Spectating signaling: only between a watchable cabinet's player and
+    // someone else. Media goes peer to peer (or through TURN).
+    hub.on('virconSignal', ({ user }, data) => {
+        const { roomId, targetId, signal } = data;
+        if (typeof roomId !== 'string' || typeof targetId !== 'string') return;
+        if (!signal || typeof signal !== 'object') return;
+        if (JSON.stringify(signal).length > LIMITS.voiceSignalBytes) return;
+        const cabinet = cabinets.get(roomId);
+        if (!cabinet?.watchable || targetId === user.id) return;
+        if (cabinet.playerId !== user.id && cabinet.playerId !== targetId) return;
+        const target = hub.findUser(targetId);
+        if (!target) return;
+        hub.send(target.ws, { type: 'virconSignal', roomId, fromId: user.id, signal });
     });
 
     hub.on('virconStop', ({ user }, data) => {

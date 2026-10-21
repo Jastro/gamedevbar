@@ -49,15 +49,16 @@ export class VirconSync {
         });
     }
 
-    // rom: { title, url }
+    // rom: { title, url, isBlob? }. Uploaded carts (blob URLs) aren't streamed.
     request(roomId, rom) {
+        const watchable = !rom.isBlob;
         if (!this.game.network.isConnected) {
-            this.cabinet(roomId)?.setOccupant({ playerId: this.localId, playerName: this.game.username, romTitle: rom.title });
+            this.cabinet(roomId)?.setOccupant({ playerId: this.localId, playerName: this.game.username, romTitle: rom.title, watchable });
             this.game.ui.vircon.beginPlay(roomId, rom);
             return;
         }
         this.pending = { roomId, rom };
-        this.game.network.send('virconStart', { roomId, romTitle: rom.title });
+        this.game.network.send('virconStart', { roomId, romTitle: rom.title, watchable });
     }
 
     release(roomId) {
