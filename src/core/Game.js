@@ -12,6 +12,7 @@ import { DoorSync } from '../world/DoorSync';
 import { RadioSync } from '../world/RadioSync';
 import { ProjectorSync } from '../world/ProjectorSync';
 import { VirconSync } from '../world/VirconSync';
+import { VirconSpectating } from '../vircon/VirconSpectating';
 import { ServerClock } from '../network/ServerClock';
 import { AudioSettings } from '../audio/AudioSettings';
 import { SoccerGame } from '../world/SoccerGame';
@@ -69,6 +70,7 @@ export class Game {
         this.radioSync = new RadioSync(this);
         this.projectorSync = new ProjectorSync(this);
         this.virconSync = new VirconSync(this);
+        this.virconSpectating = new VirconSpectating(this);
         // Set while the local player is at an arcade screen ({ hint }): movement
         // and world clicks are off, the camera is fixed.
         this.playMode = null;
@@ -174,6 +176,7 @@ export class Game {
         this.radioSync.bind();
         this.projectorSync.bind();
         this.virconSync.bind();
+        this.virconSpectating.bind();
         bindArcadeNetwork(this);
 
         this.network.on('userChat', (data) => this.ui.chat.addMessage({
@@ -255,6 +258,7 @@ export class Game {
         this.environment.update(deltaTime, playerPosition);
         this.voice.update(playerPosition);
         this.ui.vircon.update();
+        this.virconSpectating.update(playerPosition);
         this.interactions.update();
         this.environment.rooms.forEach(({ presenceBoard }) => presenceBoard.update(this));
 
