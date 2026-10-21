@@ -20,6 +20,7 @@ import { getRoomDefinition, getRoomIdFromPath } from '../world/RoomLayout';
 import { loadProfile, saveName, randomModel, placeholderName } from './PlayerProfile';
 import { LoadingScreen } from '../ui/LoadingScreen';
 import { CustomizeUI } from '../ui/CustomizeUI';
+import { ControlsHelpUI } from '../ui/ControlsHelpUI';
 import { VoiceChat } from '../voice/VoiceChat';
 import { ChatUI } from '@/ui/ChatUI';
 import { ModelSelector } from '../ui/ModelSelector';
@@ -78,6 +79,7 @@ export class Game {
         this.ui.projector = new ProjectorUI(this);
         this.ui.vircon = new VirconUI(this);
         this.ui.customize = new CustomizeUI(this);
+        this.ui.controlsHelp = new ControlsHelpUI();
 
         this.interactions = new InteractionSystem(this);
         this.interactions.register(createSeatInteraction(this));
@@ -206,6 +208,11 @@ export class Game {
 
         window.addEventListener('keydown', (e) => this.ui.voice.handleKey(e, true, this.chatActive));
         window.addEventListener('keyup', (e) => this.ui.voice.handleKey(e, false, this.chatActive));
+        // A right click on the 3D view (a drag still rotates): emoji menu.
+        this.camera.onRightClick = (e) => {
+            if (this.playMode || this.chatActive) return;
+            this.ui.chat.emotesUI?.openAt(e.clientX, e.clientY);
+        };
         // R: reset the camera (zoom, angle, pan).
         window.addEventListener('keydown', (e) => {
             if (this.chatActive || e.repeat || e.key.toLowerCase() !== 'r') return;
@@ -262,6 +269,7 @@ export class Game {
         this.interactions.update();
         this.environment.rooms.forEach(({ presenceBoard }) => presenceBoard.update(this));
 
+        this.camera.update(deltaTime, this.chatActive);
         // Actualizar posición de la cámara para seguir al jugador local
         if (this.players.localPlayer) {
             this.camera.updatePosition(this.players.localPlayer.mesh.position);

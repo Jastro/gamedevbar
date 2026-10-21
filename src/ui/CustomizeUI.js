@@ -67,9 +67,12 @@ export class CustomizeUI {
         });
     }
 
+    // Guardar / Enter: apply the nick (if it changed) and close the menu.
     saveName() {
         const name = this.nameInput.value.trim();
-        if (!name || name === this.game.username) return;
+        if (!name) return;
+        this.panel.close();
+        if (name === this.game.username) return;
         this.game.username = name;
         saveName(name);
         this.sendIdentity();

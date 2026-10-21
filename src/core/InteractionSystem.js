@@ -1,13 +1,16 @@
 import * as THREE from 'three';
 
+// Q and E rotate the camera, so interacting is F.
+export const INTERACT_KEY = 'f';
+
 // UI that sits over the canvas: clicks there must not reach the 3D world.
 const UI_ELEMENT_IDS = ['chat-box', 'chat-container', 'emotes-panel'];
 
-// Mouse hover/click and the E key for everything clickable in the world.
+// Mouse hover/click and the F key for everything clickable in the world.
 // An object is interactable when an ancestor has `userData.type` matching a
 // registered interaction (see src/interactions/). Each interaction is
 //   { type, use(object), findNearby?(position) -> object, hint?(object) -> text }
-// findNearby/hint opt the type into "press E near it" plus the on-screen hint.
+// findNearby/hint opt the type into "press F near it" plus the on-screen hint.
 export class InteractionSystem {
     constructor(game) {
         this.game = game;
@@ -30,7 +33,7 @@ export class InteractionSystem {
         });
         window.addEventListener('click', (e) => this.handleClick(e));
         window.addEventListener('keydown', (e) => {
-            if (this.game.chatActive || this.game.playMode || e.repeat || e.key.toLowerCase() !== 'e') return;
+            if (this.game.chatActive || this.game.playMode || e.repeat || e.key.toLowerCase() !== INTERACT_KEY) return;
             const nearby = this.findNearby();
             if (nearby) nearby.interaction.use(nearby.object);
         });
@@ -76,7 +79,7 @@ export class InteractionSystem {
         this.interactions.get(this.highlightedObject.userData.type).use(this.highlightedObject);
     }
 
-    // --- Proximity (E key + hint) ---------------------------------------------
+    // --- Proximity (F key + hint) ---------------------------------------------
 
     findNearby() {
         const player = this.game.players.localPlayer;
@@ -94,7 +97,7 @@ export class InteractionSystem {
             text = this.game.playMode.hint;
         } else {
             const nearby = this.game.chatActive ? null : this.findNearby();
-            text = nearby?.interaction.hint ? `E · ${nearby.interaction.hint(nearby.object)}` : '';
+            text = nearby?.interaction.hint ? `${INTERACT_KEY.toUpperCase()} · ${nearby.interaction.hint(nearby.object)}` : '';
         }
         if (text === this.hintText || !this.hintElement) return;
         this.hintText = text;

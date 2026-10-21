@@ -13,6 +13,11 @@ const INAUDIBLE_DELAY = 3000; // ms
 const AUDIBILITY_INTERVAL = 250; // ms between checks
 const INDICATOR_ON = 0x32CD32;
 const INDICATOR_OFF = 0x696969;
+// Station name floating above the radio, always facing the camera.
+const LABEL_WIDTH = 512;
+const LABEL_HEIGHT = 96;
+const LABEL_HEIGHT_ABOVE = 0.85;
+const LABEL_SCALE = 3; // world units wide, readable from across the bar
 
 // A room's radio: a positional speaker on the bar that plays the room's
 // shared station (set through RadioSync). Live streams play through a media
@@ -97,6 +102,8 @@ export class Radio {
 
         // Posicionar la radio
         radioGroup.position.set(-5, 1.5, -3);
+
+        this.createLabel(radioGroup);
 
         // Añadir propiedades para interactividad
         this.indicator = indicator;
@@ -239,7 +246,40 @@ export class Radio {
         return distanceGain * (OCCLUSION_LEVELS[occlusionLevel]?.gain ?? 1) * this.volume;
     }
 
+    createLabel(radioGroup) {
+        this.labelCanvas = document.createElement('canvas');
+        this.labelCanvas.width = LABEL_WIDTH;
+        this.labelCanvas.height = LABEL_HEIGHT;
+        this.labelTexture = new THREE.CanvasTexture(this.labelCanvas);
+        this.labelTexture.colorSpace = THREE.SRGBColorSpace;
+        const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.labelTexture, transparent: true }));
+        label.position.set(0, LABEL_HEIGHT_ABOVE, 0);
+        label.scale.set(LABEL_SCALE, LABEL_SCALE * LABEL_HEIGHT / LABEL_WIDTH, 1);
+        radioGroup.add(label);
+        this.drawLabel();
+    }
+
+    // "📻 Rock FM" (or "Radio apagada"), so everyone knows what's on.
+    drawLabel() {
+        const ctx = this.labelCanvas?.getContext('2d');
+        if (!ctx) return;
+        const text = this.station ? `📻 ${this.station.name}` : '📻 Radio apagada';
+        ctx.clearRect(0, 0, LABEL_WIDTH, LABEL_HEIGHT);
+        ctx.font = 'bold 44px "Segoe UI", sans-serif';
+        const width = Math.min(LABEL_WIDTH - 8, ctx.measureText(text).width + 48);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+        ctx.beginPath();
+        ctx.roundRect((LABEL_WIDTH - width) / 2, 8, width, LABEL_HEIGHT - 16, 24);
+        ctx.fill();
+        ctx.fillStyle = this.station ? '#ffd27f' : '#aaaaaa';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, LABEL_WIDTH / 2, LABEL_HEIGHT / 2, LABEL_WIDTH - 40);
+        this.labelTexture.needsUpdate = true;
+    }
+
     updateIndicator() {
+        this.drawLabel();
         const color = this.stationId ? INDICATOR_ON : INDICATOR_OFF;
         this.indicator.material.color.setHex(color);
         this.indicator.material.emissive.setHex(color);
