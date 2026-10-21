@@ -1,0 +1,38 @@
+[
+  {
+    "id": "crisp-game-lib",
+    "title": "crisp-game-lib (266 minijuegos)",
+    "file": "crisp-game-lib.v32",
+    "author": "ABA Games, port de joyrider3774",
+    "description": "Cientos de minijuegos arcade de un botón.",
+    "license": "MIT",
+    "source": "https://github.com/joyrider3774/crisp-game-lib-portable_vircon32/releases/tag/v4.0"
+  },
+  {
+    "id": "formula1",
+    "title": "Formula 1",
+    "file": "Formula1.v32",
+    "author": "joyrider3774 (Willems Davy)",
+    "description": "Esquiva el tráfico en una maquinita estilo Game & Watch.",
+    "license": "MIT (código); gráficos con crédito al autor; sonidos con licencias abiertas",
+    "source": "https://github.com/joyrider3774/formula1_vircon32/releases/tag/v1.1"
+  },
+  {
+    "id": "worm",
+    "title": "Worm",
+    "file": "Worm.v32",
+    "author": "joyrider3774 (Willems Davy)",
+    "description": "El clásico del helicóptero/gusano por la cueva.",
+    "license": "MIT (código); fuente de Vircon32 CC BY 4.0",
+    "source": "https://github.com/joyrider3774/worm_vircon32/releases/tag/v1.2"
+  },
+  {
+    "id": "mazethingie",
+    "title": "Mazethingie",
+    "file": "Mazethingie.v32",
+    "author": "joyrider3774 (Willems Davy)",
+    "description": "Laberintos generados al momento.",
+    "license": "MIT (código); fuente de Vircon32 CC BY 4.0",
+    "source": "https://github.com/joyrider3774/mazethingie_vircon32/releases/tag/v1.2"
+  }
+]
