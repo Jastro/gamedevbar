@@ -5,10 +5,18 @@
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
 In production, voice failed between different networks: there was no TURN relay. `fix/voice-turn` adds
 per-user TURN credentials + connection status/errors, and the coturn setup guide in [Docs/TURN.md](Docs/TURN.md).
-Next step: merge that PR, then Borja deploys coturn on the server (TURN.md steps 1-5) and retests with a friend.
+`feature/turn-deploy` (stacked on it) makes the deploy workflow run coturn automatically.
+Next step: Jastro merges both PRs, adds the `TURN_SECRET` repo secret and opens the firewall ports
+(checklist in Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-20 TURN deploy automation: workflow ships `deploy/` and runs `deploy/remote-deploy.sh`; with
+  the `TURN_SECRET` secret it starts coturn (own compose project) and injects TURN env into the app via a
+  managed compose override, never editing the server's compose file; any TURN problem aborts before
+  `compose down`. Verified: workflow YAML parses; script run against a fake `docker` in 9 scenarios (no
+  secret / one service / two services ± variable / foreign override / bad secret / compose.yaml / re-run /
+  empty host var). Not run on the real server.
 - 2026-10-20 Bug (production): voice silent between players on different networks; two tabs on one PC
   worked. Root cause: STUN-only ICE can't cross carrier-grade/strict NATs, so no TURN relay = no path. Fix:
   server issues coturn `use-auth-secret` credentials per user (`TURN_URLS`/`TURN_SECRET`); client gives up
