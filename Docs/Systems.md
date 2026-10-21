@@ -32,6 +32,20 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
 - **Colliders** are static and measured once (`CollisionManager`). Before, every collider's box was
   recomputed on every check and every frame.
 
+## Street car
+
+A black car parked on the street (`src/world/Car.js`, world coordinates x -10, z 17, collider on the
+body).
+- **Getting in:** click it or press F next to it to take the first free of its 5 seats. The server
+  (`server/features/car.js`) owns who sits where, and `CarSync` sits you down once `carState` lists you.
+  WASD gets you out (`carLeave`).
+- **The ride:** with 2+ inside, a 5 s countdown starts, shown to the passengers as "🚗💨 N". It's
+  cancelled if they drop below 2. Then `carSmoke`:
+  - everyone sees smoke particles fill the cabin and spill out, and hears a synthesized positional hiss;
+  - passengers fade to black after 3 s, each lands at a random free spot (either bar in front of the
+    counter, or the street away from the car), and fades back in;
+  - the server clears the seats when the smoke starts and keeps the car closed (`riding`) for 6 s.
+
 ## Light switches
 
 - **Switches:** three switches on the inside of each bar's front wall (`LightSwitches.js`): 💡 normal

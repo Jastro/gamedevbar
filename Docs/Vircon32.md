@@ -49,7 +49,13 @@ Licensed but not bundled:
 - **No license stated:** four community games.
 
 ## In the bar
-- **Cabinet:** one per room at room-local (11, 2, -8), the back-right corner (`src/world/VirconCabinet.js`).
+- **Cabinet:** one per room at room-local (12.5, 2, -8), the back-right corner (`src/world/VirconCabinet.js`,
+  `CABINETS.vircon`). Next to it, at x 8.8, a **Pokebonk** cabinet (`CABINETS.pokebonk`) reuses the same
+  class, server occupancy (id `<room>-pokebonk`) and play session (VirconUI):
+  - it plays https://pokebonk.com/ in a cross-origin iframe at 1280×720;
+  - while playing, the 3D canvas lets clicks through to the game, and an exit bar shows *✕ Salir* and
+    *↗ Abrir en otra pestaña* (the game's own keys, Esc included, never reach us);
+  - it can't be watched.
   The idle screen shows the logo, or "🎮 name · game" while someone plays.
 - **Picking a game:** click it or press `F` within 3 units → panel (`src/ui/VirconUI.js`). It lists the
   bundled games (`roms.json`) and a *📂 Cargar mi .v32* button (the file plays only on your client).
