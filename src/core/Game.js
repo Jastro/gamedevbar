@@ -15,7 +15,9 @@ import { VirconSync } from '../world/VirconSync';
 import { ServerClock } from '../network/ServerClock';
 import { AudioSettings } from '../audio/AudioSettings';
 import { SoccerGame } from '../world/SoccerGame';
-import { getRoomDefinition } from '../world/RoomLayout';
+import { getRoomDefinition, getRoomIdFromPath } from '../world/RoomLayout';
+import { loadProfile, saveName, randomModel, placeholderName } from './PlayerProfile';
+import { LoadingScreen } from '../ui/LoadingScreen';
 import { VoiceChat } from '../voice/VoiceChat';
 import { ChatUI } from '@/ui/ChatUI';
 import { ModelSelector } from '../ui/ModelSelector';
@@ -81,13 +83,47 @@ export class Game {
         this.interactions.register(createProjectorInteraction(this));
         this.interactions.register(createVirconInteraction(this));
 
-        this.startScreen = new StartScreen({
-            modelSelector: this.ui.modelSelector,
-            roomSelector: this.ui.roomSelector,
-            onStart: (choice) => this.start(choice)
-        });
-        this.startScreen.init();
         this.clock = new THREE.Clock();
+
+        // `/gamedev`-style links skip the start dialog (forum embeds);
+        // anything else shows it.
+        const directRoomId = getRoomIdFromPath(window.location.pathname);
+        this.directJoin = Boolean(directRoomId);
+        if (this.directJoin) {
+            this.joinDirectly(directRoomId);
+        } else {
+            this.startScreen = new StartScreen({
+                modelSelector: this.ui.modelSelector,
+                roomSelector: this.ui.roomSelector,
+                onStart: (choice) => this.start(choice)
+            });
+            this.startScreen.init();
+        }
+    }
+
+    // Into the bar with the remembered identity, or a random character and a
+    // placeholder nick on the first visit (both remembered from then on).
+    // When the forum provides the username, it replaces the nick here.
+    joinDirectly(roomId) {
+        document.getElementById('username-dialog')?.classList.add('hidden');
+        this.loadingScreen = new LoadingScreen();
+        this.loadingScreen.show(getRoomDefinition(roomId).name);
+
+        const profile = loadProfile();
+        this.ui.modelSelector.setSelectedModel(profile.model ?? randomModel());
+        const username = profile.name ?? placeholderName();
+        saveName(username);
+
+        document.getElementById('chat-container')?.classList.remove('hidden');
+        document.getElementById('chat-box')?.classList.remove('hidden');
+        this.start({ username, roomId });
+    }
+
+    // The local avatar is loaded and in the scene.
+    handleLocalPlayerReady() {
+        this.loadingScreen?.hide();
+        this.loadingScreen = null;
+        if (this.directJoin) this.ui.customize?.maybeAskOnFirstVisit();
     }
 
     // Typing (chat, or any text field/dropdown in a panel) suspends movement
@@ -174,6 +210,16 @@ export class Game {
         document.addEventListener('pointerdown', () => {
             this.environment.rooms.forEach(({ projector }) => projector.kick());
         });
+        // Without the start dialog's click (direct links) the browser keeps
+        // audio off until the first interaction: start it then.
+        const unlockAudio = () => {
+            window.removeEventListener('pointerdown', unlockAudio, true);
+            window.removeEventListener('keydown', unlockAudio, true);
+            this.environment.audioListener?.context.resume();
+            this.environment.rooms.forEach(({ radio }) => radio.kick());
+        };
+        window.addEventListener('pointerdown', unlockAudio, true);
+        window.addEventListener('keydown', unlockAudio, true);
         // Releasing the key in another window never reaches us.
         window.addEventListener('blur', () => this.voice.stopTalking());
     }

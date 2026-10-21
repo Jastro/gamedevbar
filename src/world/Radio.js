@@ -171,6 +171,12 @@ export class Radio {
         this.element.play().catch(error => console.warn(`Radio: can't play ${station.id}`, error));
     }
 
+    // Before any click or key press the browser refuses to play (autoplay
+    // policy); called on the first interaction to start it then.
+    kick() {
+        if (this.element?.paused && this.station && !this.suspended) this.playCurrent();
+    }
+
     // Live streams drop now and then; reconnect to the same station.
     scheduleRetry() {
         if (!this.station || this.suspended) return;

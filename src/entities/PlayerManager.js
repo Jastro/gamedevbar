@@ -43,6 +43,7 @@ export class PlayerManager {
                 username: this.game.username,
                 selectedModel: selectedModel
             });
+            this.game.handleLocalPlayerReady();
         }).catch(error => {
             console.error('Error initializing local player model:', error);
         });

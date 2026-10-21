@@ -22,7 +22,10 @@ const DIST_DIR = path.join(__dirname, '..', 'dist');
 const app = express();
 app.use(cors());
 app.use(express.static(DIST_DIR));
-app.get('/', (req, res) => res.sendFile(path.join(DIST_DIR, 'index.html')));
+// `/` and the direct links to a bar (`/gamedev`, `/desarrollo`...) are the
+// same page; the client reads the room from the path and falls back to the
+// start dialog for names it doesn't know.
+app.get(/^\/([a-z0-9_-]{1,32}\/?)?$/i, (req, res) => res.sendFile(path.join(DIST_DIR, 'index.html')));
 
 const server = http.createServer(app);
 const hub = new Hub(server);
