@@ -1,9 +1,9 @@
 # Handover
 
 ## Start here
-2026-10-21. Working toward forum embeds. Two open PRs, stacked: `feature/direct-join` (Jastro/gamedevbar#18)
-and `feature/vircon-spectating` (on top of it; merge #18 first). Next: Borja's checks in
-`Docs/PendingUserChecks.md` (direct links on a phone, watching the arcade between two homes).
+2026-10-21. Working toward forum embeds. Direct links, 👤 menu and arcade spectating are merged
+(#18, #19). `feature/controls-and-movement` (PR open) adds the controls change and the movement rework.
+Next: Borja's checks in `Docs/PendingUserChecks.md`, on the server.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
@@ -16,6 +16,33 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Controls and movement (`feature/controls-and-movement`):
+  - **Controls:** Q/E rotate the camera, F interacts (E did before), a right click opens the emojis at the
+    cursor (a right drag still rotates), and a ❔ button lists every control. *Guardar* closes the 👤 menu,
+    and V talks while playing the Vircon32. Each radio shows "📻 station" above it.
+  - **Movement:**
+    - per second instead of per frame, so the speed was frame-rate dependent before;
+    - acceleration and deceleration, smooth turning;
+    - sliding along walls, plus a door-frame assist;
+    - a collision box of 0.8 instead of 1.0;
+    - position sent at most 20/s instead of every frame;
+    - other players smoothed per second, with smooth turning.
+  - **Bug fix:** every collider's box was recomputed on every collision check and every frame. Now
+    1000 checks take 0.8 ms.
+  - **Bug fix:** Space typed in the chat made you jump.
+  - **Verified in-app:**
+    - 1 s of walking = 2.98 / 2.96 / 2.94 units at 30 / 60 / 144 fps;
+    - a diagonal into a wall slides; straight into the door frame 0.2 off-center eases through; head-on
+      into a wall stops;
+    - Q/E rotate and are ignored while typing in the chat;
+    - a right click opens the emojis at the cursor, and a right drag rotates without opening them;
+    - E no longer interacts and F does (hint "F · Cerrar puerta");
+    - the ❔ panel opens and fits at 375 px;
+    - *Guardar* closes the menu;
+    - V inside the emulator starts and stops talking;
+    - the radio label is readable;
+    - a second client sees the moved player converge, rotation included.
+  - **Not judged:** the feel. That's for Borja.
 - 2026-10-21 Vircon32 spectating + 🕹️ Arcade slider (plan `Docs/Plans done/2026-10-21-vircon-spectating-plan.md`):
   - **Who watches:** people within 4.5 of a cabinet see and hear the player's game on its screen (WebRTC
     from the player: canvas at 30 fps capped at 1 Mbps, plus the emulator's audio tap). At most 6
@@ -63,52 +90,17 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     - The popup can't open twice on reconnect.
   - **Bug fix:** every model change kept the previous model attached to the avatar (`Player.loadModel`
     matched it as an undefined "chat sprite"). Verified: after three quick changes, one model is left.
-- 2026-10-21 Camera controls: middle-drag pans (clamped to 3 units), R resets zoom/angle/pan (also from
-  inside the emulator), the wheel zooms only over the 3D view (no zoom while scrolling panels like the
-  ROM list). Vircon32 play mode now plays on the arcade: camera locked, screen at ~50% of the view,
-  no zoom/rotation. Default radios: Gamedev Rock FM, Desarrollo MegaStar FM. Kiss FM and Hit FM removed
-  (their CDN's redirect has no CORS header → silence; the other 11 load with CORS). Verified in-app: wheel over
-  the canvas zooms and over the ROM list doesn't, no zoom in play mode, middle-drag pans in and out of
-  play mode, R (page and emulator iframe) resets, screenshot shows the cabinet with the screen at about
-  half the view, defaults from the server. Feel not judged.
-- 2026-10-21 Vircon32: 17 more games, for 21 bundled (~480 MB): Ocean Storm (Jastro's permission), all
-  of joyrider3774's licensed games under 100 MB, and six community games. Picker shows each game's size.
-  `public/vircon32/roms/LICENSES.md` lists license and source per game.
-- 2026-10-21 Vircon32 cabinet in every room (plan `Docs/Plans done/2026-10-21-openmic-board-vircon32.md`):
-  web emulator built with emsdk into `public/vircon32/` (`tools/vircon32/build.sh`, own shell), four MIT
-  games + upload of your own `.v32`, one player per cabinet (server), game on the cabinet's 3D screen with
-  the camera framing it and keyboard in the emulator iframe; Esc leaves. Verified with two in-app clients:
-  E/hint/panel, Worm boots on the cabinet screen (BIOS logo seen), real key presses reach the game while
-  the avatar stays put, busy refusal, Esc frees, disconnect frees, upload loads the exact file. The pane
-  ran at 1.5 fps (throttled), so speed wasn't judged.
-- 2026-10-21 The forum TV in each room is now a "who's here" board (players inside that room, 🎙️ when
-  talking, counts for the other room/street), computed client-side. Removed the Mediavida scraper:
-  `server/forumProxy.js`, `/mv-proxy` + `/proxy-image`, `puppeteer` and `node-fetch`, Chromium in the
-  Docker image, Vite proxies. Verified: build, server syntax; in-app (see slice commit).
-- 2026-10-21 Open-mic mode for voice (⚙️ checkbox, saved): mic always sent, V/🎙️ toggle mute, 🎙️
-  indicator driven by speech detection. Verified with two in-app clients and a gated fake mic: heard with
-  no key held, indicator on with speech / off 0.5 s after, mute → silence, back to PTT → silence, saved
-  mode reopens the mic on entry. Not tried with a real mic.
-- 2026-10-21 Deploy through GHCR + Portainer webhook instead of scp/ssh; app and coturn run as git-ops
-  stacks. Removed `deploy/` (remote-deploy.sh, coturn files): the repo no longer needs an SSH key to the
-  server, only `PORTAINER_WEBHOOK_URL`. Not run yet against the real server.
-- 2026-10-21 Sound: per-player volume sliders (radio/projector/voices) in ⚙️, and radios stop
-  downloading when inaudible (estimated gain < -40 dB for 3 s; resume live when audible). Verified
-  in-app: gains logged at 5 spots, other bar's radio never loads from inside a bar, resumes from the
-  street, slider 0 stops the stream, settings persist across reload.
-- 2026-10-21 Bug: arcade intro jingle played on every join (all 4 machines, full volume, plus a 30-45 s
-  repeat). Removed the automatic intro; in-game sounds unchanged. Verified: no arcade sound playing after
-  join, Snake/Pong still start. `public/assets/sound/arcade/intro.mp3` is now unused.
-- 2026-10-21 Removed the El Fary mp3 loop ("Taberna FM"): radios play live stations only; Gamedev
-  defaults to LOS40 Classic.
-- 2026-10-21 Shared radio (13 live Spanish stations + Taberna FM synced to the server clock, per-room
-  station picked by clicking the radio) and a shared YouTube projector on each room's right wall (CSS3D
-  iframe behind a hole in the canvas, server-clock sync, pause/resume/stop, volume by distance/walls).
-  Branch `feature/radio-projector`, stacked on the TURN branches. Verified with two in-app browser clients:
-  live stream samples reach Web Audio (CORS ok), Taberna FM within 40 ms between clients, station change
-  synced + chat line, projector join snapshot / pause / resume / stop synced (clients 0.3-1.4 s apart),
-  iframe aligned to the screen to the pixel, volume 100 → 3 across distance/doors. Not seen with eyes:
-  the screenshot tool can't capture the video itself, and nothing was listened to.
+- Earlier 2026-10-21 (details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md)):
+  - camera pan/reset, with Vircon32 played on the arcade screen;
+  - 21 bundled Vircon32 games;
+  - the Vircon32 cabinet;
+  - the "who's here" board;
+  - open mic;
+  - GHCR + Portainer deploy;
+  - volume sliders and far radios stopping;
+  - the arcade jingle fix;
+  - El Fary removed;
+  - shared radio and projector.
 - 2026-10-20 (details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md)):
   - TURN deploy automation;
   - voice-over-TURN fix (per-user coturn credentials);

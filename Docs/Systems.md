@@ -3,6 +3,25 @@
 Detail notes per system. Last updated 2026-10-20. Structure and extension points:
 [Architecture.md](Architecture.md). Messages: [Protocol.md](Protocol.md).
 
+## Controls and movement
+
+- **Keys** (the full list is in the ❔ panel, `src/ui/ControlsHelpUI.js`; keep it in sync):
+  - WASD walk, Space jump, F interact (`INTERACT_KEY` in `InteractionSystem.js`);
+  - Q/E rotate the camera, right-drag rotates, a right click (moving under 5 px) opens the emojis at the
+    cursor;
+  - wheel zoom, middle-drag pan, R re-center;
+  - V push to talk, also passed on from the Vircon32 iframe together with R.
+- **Movement** (`LocalPlayer`): speeds are per second, so it no longer depends on the frame rate.
+  - The velocity eases toward the input (`ACCELERATION`/`DECELERATION`) and the avatar turns smoothly
+    (`TURN_RATE`).
+  - Steps are collision-checked in pieces of at most 0.15. A blocked step slides along the free axis; when
+    fully blocked, a sideways nudge of up to 0.45 eases you round door frames.
+  - The player's collision box is 0.8 wide (it was 1.0).
+- **Network smoothing.** The position goes out at most 20 times a second. Other players ease toward the
+  latest position and rotation (`RemotePlayer`, frame-rate independent) and snap after a teleport (> 5).
+- **Colliders** are static and measured once (`CollisionManager`). Before, every collider's box was
+  recomputed on every check and every frame.
+
 ## Entry: direct links and customization
 
 - **Two ways in.** `/` shows the start dialog: nick, character, bar. `/<roomId>` (`/gamedev`, `/desarrollo`,
@@ -16,7 +35,8 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
   keys `playerName`, `selectedModel`, `customizePromptSeen`). In a cross-site iframe that storage is
   partitioned. That's acceptable until the forum provides identity.
 - **👤 menu** (`CustomizeUI`, next to ⚙️):
-  - a nick field (*Guardar*/Enter) and the start dialog's character tiles, moved into the panel;
+  - a nick field (*Guardar*/Enter save it and close the menu) and the start dialog's character tiles,
+    moved into the panel;
   - previews are created on first open and paused while it's closed;
   - changes go out as `setUsername` → `userUsername` to everyone.
   - The nick field goes away when forum usernames arrive.
@@ -82,6 +102,7 @@ Arcade sounds are plain `THREE.Audio` (not positional, not occluded).
 
 Each room's radio (`src/world/Radio.js`) plays the room's **shared station**: live Spanish internet
 radio only (`src/audio/radioStations.js`), so everyone hears the same broadcast (± the browser's buffer).
+A sprite above each radio shows "📻 station" (or *Radio apagada*), redrawn on every change.
 Defaults: Gamedev Rock FM, Desarrollo MegaStar FM. Kiss FM and Hit FM were dropped (2026-10-21): their
 CDN redirects through a hop without CORS headers, so they played silence. The old El Fary mp3 loop was removed (2026-10-21). Clicking a radio opens the station picker (`src/ui/RadioUI.js`). A change goes
 `radioSet` → server → `radioState` to everyone, with a 📻 chat line; newcomers get `radioStates`. Rooms

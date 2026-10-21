@@ -1,4 +1,4 @@
-// Doors: click or press E nearby to open/close (state lives on the server, see DoorSync).
+// Doors: click or press F nearby to open/close (state lives on the server, see DoorSync).
 export function createDoorInteraction(game) {
     return {
         type: 'door',

@@ -4,13 +4,13 @@ Things only a human can judge. Run `npm run dev`, open http://localhost:5148 (tw
 multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOVER.md.
 
 - [ ] **Muffled music from outside.** Enter Gamedev, wait for El Fary, walk out (door open) into the street,
-      then close the door (`E`) and walk across to Desarrollo's door. Expected: clear inside; slightly dull
+      then close the door (`F`) and walk across to Desarrollo's door. Expected: clear inside; slightly dull
       with the door open; clearly muffled (bassy, quieter) with it closed; smooth transitions, no clicks.
       Tune `OCCLUSION_LEVELS` in `src/world/Radio.js` if it feels off.
 - [ ] **Two radios.** Both bars play the same song, unsynced. Inside one bar, is the other one audible
       enough to be annoying? (If yes: lower the `closed` gain or give Desarrollo its own track.)
 - [ ] **Door feel.** Swing speed (`SWING_SPEED` in `Door.js`), interaction range 3, hint text position.
-      Click the door and press `E`; both should work, far clicks say "¡Acércate más a la puerta!".
+      Click the door and press `F`; both should work, far clicks say "¡Acércate más a la puerta!".
 - [ ] **Door sync.** Window A opens a door, window B sees it swing. Join a third window late: doors that
       are open appear open.
 - [ ] **Camera near doors/walls outside.** Walk along both facades and through the doorways rotating the
@@ -47,7 +47,7 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Open mic (⚙️ → Micrófono abierto).** Others hear you without holding V; 🎙️ over your head only
       while you speak (not with background noise). V / 🎙️ mutes (🔇) and unmutes. Kept after reload.
       Is the speech threshold right for your mic, or does the indicator flicker / miss quiet speech?
-- [ ] **Vircon32 cabinet** (back-right corner of each bar). Walk up, `E` or click → pick a game → the camera
+- [ ] **Vircon32 cabinet** (back-right corner of each bar). Walk up, `F` or click → pick a game → the camera
       frames the cabinet and the game runs on its screen. Check: speed/smoothness in a normal browser
       window, sound, all controls (arrows, X Z S A, Q W, Enter), Esc returns you to the bar. A second
       player gets "ya está jugando"; the cabinet shows "🎮 name · game" to others. Try *Cargar mi .v32*
@@ -66,6 +66,16 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       `src/vircon/VirconSpectating.js`).
 - [ ] **🕹️ Arcade slider (⚙️).** Changes the Vircon32 sound while you play, a watched game's sound, and
       Snake/Pong sounds; kept after reload.
+- [ ] **Movement feel** (reworked 2026-10-21). Walk around both bars, through the doors and along the
+      walls. Expected: the same speed whatever the frame rate, a short ramp up and down instead of an
+      instant start/stop, smooth turning, sliding along walls, and getting eased through a door when
+      slightly off-center. Tune at the top of `src/entities/LocalPlayer.js` (`WALK_SPEED`, `ACCELERATION`,
+      `DECELERATION`, `TURN_RATE`, `CORNER_PROBES`). Other players should look smooth too.
+- [ ] **New controls.** Q/E rotate the camera (speed OK?), F interacts, a right click opens the emojis at
+      the cursor (a right drag still rotates), ❔ lists the controls, *Guardar* closes 👤, and V talks while
+      playing the Vircon32.
+- [ ] **Radio label.** "📻 station" above each radio is readable from across the bar, and changes when
+      someone switches station.
 - [ ] **Vircon32 play camera.** Start a game: the cabinet stays visible with its screen at about half
       the view (not fullscreen), the wheel doesn't zoom (also while scrolling the ROM list), middle-drag
       pans, R re-centers. Is the framing comfortable to play on desktop and on a narrow window? Tune

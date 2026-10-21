@@ -11,6 +11,10 @@ function safeAspect(aspect) {
 const DEFAULT_DISTANCE = 5;
 const DEFAULT_VERTICAL = Math.PI / 6;
 const MAX_PAN = 3; // world units the view can be shifted with middle-drag
+const KEY_ROTATE_SPEED = 2.2; // rad/s while Q or E is held
+// A right press that moves less than this (px) is a click (emoji menu), not
+// a rotation drag.
+const RIGHT_CLICK_TOLERANCE = 5;
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 
 export class Camera {
@@ -39,6 +43,10 @@ export class Camera {
         this.isRightMouseDown = false;
         this.previousMouseX = 0;
         this.previousMouseY = 0;
+        // Q / E held (rotate the view left / right).
+        this.rotateKeys = { q: false, e: false };
+        // Set by Game: right click (no drag) on the 3D view.
+        this.onRightClick = null;
 
         this.init();
         this.setupEventListeners();
@@ -55,6 +63,7 @@ export class Camera {
                 this.isRightMouseDown = true;
                 this.previousMouseX = e.clientX;
                 this.previousMouseY = e.clientY;
+                this.rightPress = { x: e.clientX, y: e.clientY, onScene: this.isOverScene(e), dragged: false };
             }
             if (e.button === 1 && this.isOverScene(e)) {
                 e.preventDefault(); // no browser autoscroll
@@ -67,6 +76,9 @@ export class Camera {
         window.addEventListener("mouseup", (e) => {
             if (e.button === 2) {
                 this.isRightMouseDown = false;
+                const press = this.rightPress;
+                this.rightPress = null;
+                if (press?.onScene && !press.dragged) this.onRightClick?.(e);
             }
             if (e.button === 1) {
                 this.isPanning = false;
@@ -83,6 +95,11 @@ export class Camera {
                 this.previousMouseX = e.clientX;
                 this.previousMouseY = e.clientY;
                 return;
+            }
+            if (this.rightPress && !this.rightPress.dragged) {
+                const moved = Math.hypot(e.clientX - this.rightPress.x, e.clientY - this.rightPress.y);
+                if (moved < RIGHT_CLICK_TOLERANCE) return;
+                this.rightPress.dragged = true;
             }
             if (this.isRightMouseDown && !this.view) {
                 const deltaX = e.clientX - this.previousMouseX;
@@ -110,6 +127,29 @@ export class Camera {
         window.addEventListener("contextmenu", (e) => {
             e.preventDefault();
         });
+
+        window.addEventListener('keydown', (e) => this.setRotateKey(e, true));
+        window.addEventListener('keyup', (e) => this.setRotateKey(e, false));
+        // A key released in another window never reaches us.
+        window.addEventListener('blur', () => {
+            this.rotateKeys.q = false;
+            this.rotateKeys.e = false;
+        });
+    }
+
+    setRotateKey(event, isDown) {
+        const key = event.key.toLowerCase();
+        if (key !== 'q' && key !== 'e') return;
+        // Typing in the chat or a panel field isn't camera control.
+        if (isDown && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target?.tagName)) return;
+        this.rotateKeys[key] = isDown;
+    }
+
+    // Q/E rotation, per second. Off while typing or locked on a screen.
+    update(deltaTime, inputBlocked) {
+        if (this.view || inputBlocked) return;
+        const direction = (this.rotateKeys.q ? 1 : 0) - (this.rotateKeys.e ? 1 : 0);
+        this.rotation.horizontal += direction * KEY_ROTATE_SPEED * Math.min(deltaTime, 0.1);
     }
 
     // The WebGL canvas is the 3D view; anything else (UI) is not.

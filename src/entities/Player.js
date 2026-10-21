@@ -3,6 +3,12 @@ import { Group, Vector3, AnimationMixer, CanvasTexture, SpriteMaterial, Sprite }
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as THREE from 'three';
 
+// Moves angle `from` toward `to` by fraction t (0..1) the short way round.
+export function lerpAngle(from, to, t) {
+    const delta = Math.atan2(Math.sin(to - from), Math.cos(to - from));
+    return from + delta * t;
+}
+
 export class Player {
     constructor(id, initialPosition, game) {
         this.id = id;

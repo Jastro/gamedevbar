@@ -1,7 +1,7 @@
 import { FloatingPanel } from './FloatingPanel';
 
 const ROMS_URL = '/vircon32/roms/roms.json';
-const CONTROLS_HINT = 'Esc para salir · Flechas, X Z S A, Q W, Enter = Start · Rueda: mover cámara · R: centrar';
+const CONTROLS_HINT = 'Esc para salir · Flechas, X Z S A, Q W, Enter = Start · V: hablar · Rueda: mover cámara · R: centrar';
 
 // Vircon32 cabinet UI: the ROM picker (bundled games from roms.json, or your
 // own .v32 file) and the play session. While playing, the camera frames the
@@ -128,9 +128,16 @@ export class VirconUI {
         const iframe = cabinet.startLocal(rom.url);
         iframe.addEventListener('load', () => {
             cabinet.focusGame();
-            iframe.contentWindow?.addEventListener('keydown', (event) => {
+            // The game has the keyboard; R (camera) and V (push to talk)
+            // aren't Vircon32 controls, so pass them to the bar.
+            const frameWindow = iframe.contentWindow;
+            frameWindow?.addEventListener('keydown', (event) => {
                 if (event.key.toLowerCase() === 'r' && !event.repeat) this.game.camera.reset();
+                this.game.ui.voice.handleKey(event, true, false);
             });
+            frameWindow?.addEventListener('keyup', (event) => this.game.ui.voice.handleKey(event, false, false));
+            // Holding V while the game has focus and then leaving it.
+            frameWindow?.addEventListener('blur', () => this.game.voice.stopTalking());
         });
         this.update();
     }

@@ -364,6 +364,23 @@
       transition: all 0.15s ease;
     }
 
+    #help-button {
+      position: absolute;
+      right: -248px;
+      bottom: 4px;
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(40, 40, 40, 0.9);
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      z-index: 1002;
+      transition: all 0.15s ease;
+    }
+
+    #help-button:hover,
     #customize-button:hover,
     #voice-settings-button:hover,
     #voice-settings-button.active {
@@ -643,6 +660,33 @@
       font-size: 14px;
     }
 
+    #controls-panel {
+      width: min(440px, calc(100% - 32px));
+    }
+
+    .controls-section {
+      color: #dc5a0b;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .controls-list {
+      display: grid;
+      grid-template-columns: minmax(90px, 38%) 1fr;
+      gap: 4px 12px;
+      margin: 0;
+    }
+
+    .controls-list dt {
+      font-family: monospace;
+      color: #ffd27f;
+    }
+
+    .controls-list dd {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
     .floating-panel-note {
       color: rgba(255, 255, 255, 0.6);
       font-size: 12px;
@@ -764,9 +808,7 @@
     }
 
     #emotes-panel {
-      position: absolute;
-      bottom: 60px;
-      right: -60px;
+      position: fixed;
       width: 280px;
       background: rgba(0, 0, 0, 0.95);
       border-radius: 16px;
@@ -1028,7 +1070,7 @@
       #voice-button { right: 52px; bottom: 55px; }
       #voice-settings-button { right: 104px; bottom: 59px; }
       #customize-button { right: 149px; bottom: 59px; }
-      #emotes-panel { right: 0; bottom: 110px; }
+      #help-button { right: 194px; bottom: 59px; }
       #voice-settings {
         right: 0;
         bottom: 110px;

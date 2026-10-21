@@ -51,7 +51,7 @@ Licensed but not bundled:
 ## In the bar
 - **Cabinet:** one per room at room-local (11, 2, -8), the back-right corner (`src/world/VirconCabinet.js`).
   The idle screen shows the logo, or "🎮 name · game" while someone plays.
-- **Picking a game:** click it or press `E` within 3 units → panel (`src/ui/VirconUI.js`). It lists the
+- **Picking a game:** click it or press `F` within 3 units → panel (`src/ui/VirconUI.js`). It lists the
   bundled games (`roms.json`) and a *📂 Cargar mi .v32* button (the file plays only on your client).
 - **One player per cabinet:** `virconStart` → server → `virconState` (or `virconBusy`), handled in
   `server/features/vircon.js` and `src/world/VirconSync.js`. Freed on Esc or disconnect. People farther
@@ -73,12 +73,12 @@ Licensed but not bundled:
   - **Uploaded carts** are never streamed (`watchable: false`): nobody has checked their licenses.
   - **Network:** ICE uses the same STUN/TURN as voice, so when no direct path exists the stream goes
     through coturn. Worst case about 12 Mbps (2 cabinets × 6 watchers × 1 Mbps).
-- **Play mode:** `game.playMode` is set, which turns off movement and world clicks/`E`, and the hint shows
+- **Play mode:** `game.playMode` is set, which turns off movement and world clicks/`F`, and the hint shows
   the controls. The camera is locked in front of the cabinet (`Camera.setView`), 0.3 above the screen and
   close enough that the screen takes about half the view for the camera's FOV and aspect
   (`PLAY_VIEW_FILL`/`PLAY_VIEW_RISE` in `VirconCabinet.js`): the game runs on the arcade, not fullscreen.
-  Wheel zoom and right-drag rotation are off; middle-drag still pans and R (even from inside the
-  emulator) re-centers. The avatar stands in front. Keyboard focus is moved into the iframe (same origin), so the game
+  Wheel zoom and right-drag rotation are off; middle-drag still pans, and R and V (push to talk) work even from inside
+  the emulator. The avatar stands in front. Keyboard focus is moved into the iframe (same origin), so the game
   gets the keys and the bar doesn't. Clicking the page gives focus back to the game, except when the click
   is in a text field (chat). Esc, sent by the iframe or pressed in the page, ends the session and unloads
   the emulator.

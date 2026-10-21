@@ -1,10 +1,16 @@
-import { Player } from './Player';
-import { Vector3 } from 'three';
+import { Player, lerpAngle } from './Player';
+
+// Others' positions arrive ~20 times a second; ease toward the latest one
+// (frame-rate independent), and jump straight there after a teleport.
+const FOLLOW_RATE = 12;      // 1/s
+const TELEPORT_DISTANCE = 5; // units
+const MOVING_DISTANCE = 0.05;
 
 export class RemotePlayer extends Player {
     constructor(id, initialPosition, game) {
         super(id, initialPosition, game);
         this.targetPosition = initialPosition.clone();
+        this.targetRotation = 0;
         this.lastUpdateTime = Date.now();
     }
 
@@ -13,14 +19,10 @@ export class RemotePlayer extends Player {
         this.targetPosition.set(position[0], position[1], position[2]);
         this.lastUpdateTime = Date.now();
         
-        // Calcular si está en movimiento basado en la distancia
-        const distance = this.position.distanceTo(this.targetPosition);
-        this.isMoving = distance > 0.01;
     }
 
     updateRotation(rotation) {
-        this.rotation = rotation;
-        this.mesh.rotation.y = rotation;
+        if (typeof rotation === 'number') this.targetRotation = rotation;
     }
 
     update(deltaTime) {
@@ -28,14 +30,15 @@ export class RemotePlayer extends Player {
             this.animations.mixer.update(deltaTime);
         }
 
-        // Interpolación suave
-        const lerpFactor = 0.1;
-        if (this.position.distanceTo(this.targetPosition) > 0.01) {
-            this.position.lerp(this.targetPosition, lerpFactor);
-            this.isMoving = true;
+        const distance = this.position.distanceTo(this.targetPosition);
+        const t = 1 - Math.exp(-FOLLOW_RATE * Math.min(deltaTime, 0.1));
+        if (distance > TELEPORT_DISTANCE) {
+            this.position.copy(this.targetPosition);
         } else {
-            this.isMoving = false;
+            this.position.lerp(this.targetPosition, t);
         }
+        this.rotation = lerpAngle(this.rotation, this.targetRotation, t);
+        this.isMoving = distance > MOVING_DISTANCE;
 
         // Actualizar mesh y animaciones
         this.mesh.position.copy(this.position);
