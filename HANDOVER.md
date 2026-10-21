@@ -12,6 +12,10 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-21 Open-mic mode for voice (⚙️ checkbox, saved): mic always sent, V/🎙️ toggle mute, 🎙️
+  indicator driven by speech detection. Verified with two in-app clients and a gated fake mic: heard with
+  no key held, indicator on with speech / off 0.5 s after, mute → silence, back to PTT → silence, saved
+  mode reopens the mic on entry. Not tried with a real mic.
 - 2026-10-21 Deploy through GHCR + Portainer webhook instead of scp/ssh; app and coturn run as git-ops
   stacks. Removed `deploy/` (remote-deploy.sh, coturn files): the repo no longer needs an SSH key to the
   server, only `PORTAINER_WEBHOOK_URL`. Not run yet against the real server.

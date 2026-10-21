@@ -42,3 +42,6 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Far radios stop.** From inside one bar with doors closed, the other bar's radio shouldn't be
       audible at all (it isn't even downloaded). Walking out to the street brings it back within ~0.25 s,
       live. Does the cut-off point (-40 dB) feel right, or is it noticeable when it stops/starts?
+- [ ] **Open mic (⚙️ → Micrófono abierto).** Others hear you without holding V; 🎙️ over your head only
+      while you speak (not with background noise). V / 🎙️ mutes (🔇) and unmutes. Kept after reload.
+      Is the speech threshold right for your mic, or does the indicator flicker / miss quiet speech?

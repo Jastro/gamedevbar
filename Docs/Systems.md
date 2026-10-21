@@ -113,6 +113,11 @@ only), later presses just toggle `track.enabled`. Remote voices play as `THREE.P
 speaker's avatar through the same `OcclusionChain` as the radios
 (`Environment.getOcclusionLevel(speakerRoom, listenerRoom)`). Avatars show a 🎙️ sprite while talking.
 
+**Open mic** (⚙️ → *Micrófono abierto*, saved in `localStorage` `voiceMode`): the mic track stays enabled
+and `V` / 🎙️ toggle mute (🔇) instead of push-to-talk. The 🎙️ indicator others see follows actual speech:
+a level detector on a clone of the mic track (RMS > 0.02, 500 ms hold). A saved open mode reopens the mic
+on entry. Releasing or losing the mic in open mode leaves it muted; the next `V` reopens it.
+
 Mic settings (⚙️ next to the mic button, `src/ui/VoiceSettingsUI.js`): input device dropdown (names appear
 once mic permission is granted; choice saved in `localStorage` `voiceInputDevice` and requested as `ideal`,
 so a missing device falls back to the default), a live level meter (fed from a clone of the mic track,

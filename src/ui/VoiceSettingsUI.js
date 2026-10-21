@@ -21,6 +21,7 @@ export class VoiceSettingsUI {
             this.startMeter();
         });
         this.voice.on('devices', () => this.isOpen && this.refresh());
+        this.voice.on('muted', () => this.isOpen && this.refresh());
         this.voice.on('peers', () => this.isOpen && this.renderPeers());
     }
 
@@ -50,6 +51,7 @@ export class VoiceSettingsUI {
             <select id="voice-device-select"></select>
             <button type="button" class="voice-settings-action" data-action="allow">Permitir micrófono</button>
             <div class="voice-meter" aria-label="Nivel de entrada"><div class="voice-meter-fill"></div></div>
+            <label class="voice-open-mic"><input type="checkbox" data-action="open-mic"> Micrófono abierto (sin pulsar ${PTT_KEY.toUpperCase()})</label>
             <div class="voice-settings-hint"></div>
             <button type="button" class="voice-settings-action secondary" data-action="release">Desactivar micrófono</button>
             <div class="voice-settings-label">Conexiones de voz</div>
@@ -62,6 +64,12 @@ export class VoiceSettingsUI {
         this.releaseButton = this.panel.querySelector('[data-action="release"]');
         this.meterFill = this.panel.querySelector('.voice-meter-fill');
         this.hint = this.panel.querySelector('.voice-settings-hint');
+        this.openMicCheckbox = this.panel.querySelector('[data-action="open-mic"]');
+        this.openMicCheckbox.addEventListener('change', async () => {
+            this.openMicCheckbox.blur();
+            await this.voice.setMode(this.openMicCheckbox.checked ? 'open' : 'ptt');
+            this.refresh();
+        });
         this.peerList = this.panel.querySelector('.voice-peers');
         this.createVolumeSliders(this.panel.querySelector('.volume-sliders'));
 
@@ -145,9 +153,20 @@ export class VoiceSettingsUI {
         this.allowButton.classList.toggle('hidden', hasLabels && hasMic);
         this.allowButton.textContent = hasLabels ? 'Activar micrófono' : 'Permitir micrófono';
         this.releaseButton.classList.toggle('hidden', !hasMic);
-        this.hint.textContent = hasMic
-            ? `Habla para probar. Mantén ${PTT_KEY.toUpperCase()} para que te oigan.`
-            : 'El micrófono está apagado; se activa al pulsar para hablar.';
+        const open = this.voice.mode === 'open';
+        this.openMicCheckbox.checked = open;
+        const key = PTT_KEY.toUpperCase();
+        if (!hasMic) {
+            this.hint.textContent = open
+                ? `El micrófono está apagado; ${key} o 🎙️ lo vuelven a abrir.`
+                : 'El micrófono está apagado; se activa al pulsar para hablar.';
+        } else if (open) {
+            this.hint.textContent = this.voice.openMuted
+                ? `Silenciado. ${key} o 🎙️ para que te vuelvan a oír.`
+                : `Te oyen siempre que hablas. ${key} o 🎙️ para silenciarte.`;
+        } else {
+            this.hint.textContent = `Habla para probar. Mantén ${key} para que te oigan.`;
+        }
     }
 
     // Who we can hear / be heard by. A failure usually means a network that

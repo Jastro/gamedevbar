@@ -99,6 +99,9 @@ export class Game {
         this.animate();
 
         this.environment.initializeAudio(this.camera.getCamera());
+        // A saved open-mic choice reopens the mic on entry.
+        if (this.voice.mode === 'open') await this.voice.setMode('open');
+        this.ui.voice.updateButton();
         this.ui.voice.showIntro();
     }
 
