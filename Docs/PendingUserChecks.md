@@ -97,6 +97,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       flight? Is it too easy or too hard (`SWAY`, `DRUNK_SWAY`, `RELEASE_JITTER` in
       `src/bar/DartsSync.js`)? The thunk and whoosh sounds. A friend can't take the board while you throw,
       sees your darts fly and land, and the chalkboard shows both of your turns.
+- [ ] **Bathroom graffiti.** Inside the cubicle, F facing the wall on the bar side → the drawing panel.
+      Draw with the mouse (and on a phone with a finger): smooth lines, colors, sizes, the 🧽 eraser. A
+      friend sees it on the wall as you draw, and after reloading. Is the wall big enough, is the panel
+      comfortable, and do you want a "clear the wall" button (and who could use it)?
 - [ ] **Bar counter and sign.** Jump onto the counter and walk along it. Is the "Gamedev MV" sign on the
       back wall (above the paintings) readable from the entrance?
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a

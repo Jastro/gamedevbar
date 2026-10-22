@@ -20,6 +20,7 @@ const { registerLights } = require('./features/lights');
 const { registerBathroom } = require('./features/bathroom');
 const { registerDrinks } = require('./features/drinks');
 const { registerDarts } = require('./features/darts');
+const { registerGraffiti } = require('./features/graffiti');
 const { registerCar } = require('./features/car');
 
 const DIST_DIR = path.join(__dirname, '..', 'dist');
@@ -54,6 +55,7 @@ registerLights(hub);
 registerBathroom(hub);
 registerDrinks(hub);
 registerDarts(hub);
+registerGraffiti(hub);
 registerCar(hub);
 registerSeats(hub);
 registerChat(hub);

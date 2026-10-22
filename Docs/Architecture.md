@@ -29,7 +29,8 @@ network/       WebSocketManager: transport only (JSON in → emit(type), send(ty
 entities/      Player, LocalPlayer (input + collisions), RemotePlayer, PlayerManager
 world/         RoomLayout (where rooms are), Room, World (shells, colliders, street), Environment (props per room),
                Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, VirconCabinet +
-               Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), Car + CarSync,
+               Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), GraffitiWall +
+               GraffitiSync (the drawable bathroom wall), Car + CarSync,
                VirconSync, SoccerGame, CollisionManager, BarTap, Dartboard
 bar/           drinks (menu, alcohol, decay math shared with the server), DrinkSync (order panel, B to sip,
                held drink, drunk tag and effects), DartsSync (taking the board, aiming, throwing)

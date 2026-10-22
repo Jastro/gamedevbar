@@ -91,6 +91,11 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Dirty hands:** using the toilet dirties them. Outside any bathroom, a dirty-handed player gets rising
   green smell lines at the hands and a "🤢 No se ha lavado las manos" tag (`src/entities/Shame.js`), until
   they wash or 10 min pass.
+- **Graffiti:** the inside of the partition facing the bar (room-local x -10, z 5.4..9.5, y 0.9..2.9) is
+  a drawable wall (`GraffitiWall.js`). F → a panel with the wall's own canvas (it's also the texture): 6
+  colors, a 🧽 eraser (wall white), 3 sizes, mouse/pen/touch. Segments are drawn locally at once and sent
+  in batches (`GraffitiSync`, one message per 100 ms, ≤ 60 segments); the server keeps the last 3000 per
+  wall in memory (a restart wipes it) and late joiners get them all. Walking out closes the panel.
 - **Reaching things:** fixtures only respond from inside the cubicle (the interaction's `canReach`); the
   door works from both sides.
 - **State:** server-side in `server/features/bathroom.js` (see Protocol.md). Disconnecting frees the latch

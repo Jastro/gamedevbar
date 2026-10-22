@@ -621,6 +621,56 @@
       width: min(560px, calc(100% - 32px));
     }
 
+    #graffiti-panel {
+      width: min(680px, calc(100% - 32px));
+    }
+
+    .graffiti-tools {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .graffiti-color,
+    .graffiti-size {
+      width: 30px;
+      height: 30px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 50%;
+      padding: 0;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .graffiti-size {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .graffiti-size span {
+      display: block;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .graffiti-color.selected,
+    .graffiti-size.selected {
+      border-color: #dc5a0b;
+      box-shadow: 0 0 0 2px #dc5a0b;
+    }
+
+    .graffiti-canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
     /* Wide screens: keep the panel at the side so your avatar stays in view
        while you dress it. */
     @media (min-width: 1100px) {

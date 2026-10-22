@@ -10,7 +10,7 @@ const SECTIONS = [
             ['W A S D', 'Andar (Mayús: correr)'],
             ['Espacio', 'Saltar (también a las mesas)'],
             ['F o clic', 'Puertas, sillas, radio, proyector, máquinas e interruptores de luz'],
-            ['Baño (F o clic)', 'Puerta y pestillo, váter, cadena, lavabo, ambientador y luz'],
+            ['Baño (F o clic)', 'Puerta y pestillo, váter, cadena, lavabo, ambientador, luz y pintar en la pared'],
             ['Barra (F o clic en el grifo)', 'Pedir una bebida'],
             ['B', 'Beber'],
             ['Dardos (F en la línea amarilla)', 'Ratón: apuntar · Clic o Espacio: lanzar · Esc: salir'],

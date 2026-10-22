@@ -23,6 +23,7 @@ import { createBathroomInteractions } from '../interactions/bathroomInteraction'
 import { DrinkSync } from '../bar/DrinkSync';
 import { createBarTapInteraction } from '../interactions/barTapInteraction';
 import { DartsSync } from '../bar/DartsSync';
+import { GraffitiSync } from '../world/GraffitiSync';
 import { createDartsInteraction } from '../interactions/dartsInteraction';
 import { VirconSpectating } from '../vircon/VirconSpectating';
 import { ServerClock } from '../network/ServerClock';
@@ -88,6 +89,7 @@ export class Game {
         this.bathroomSync = new BathroomSync(this);
         this.drinkSync = new DrinkSync(this);
         this.dartsSync = new DartsSync(this);
+        this.graffitiSync = new GraffitiSync(this);
         this.lighting = new RoomLighting(this);
         this.virconSpectating = new VirconSpectating(this);
         // Set while the local player is at an arcade screen ({ hint }): movement
@@ -208,6 +210,7 @@ export class Game {
         this.bathroomSync.bind();
         this.drinkSync.bind();
         this.dartsSync.bind();
+        this.graffitiSync.bind();
         this.virconSpectating.bind();
         bindArcadeNetwork(this);
 
@@ -298,6 +301,7 @@ export class Game {
         this.bathroomSync.update(deltaTime);
         this.drinkSync.update();
         this.dartsSync.update(deltaTime);
+        this.graffitiSync.update();
         this.voice.update(playerPosition);
         this.ui.vircon.update();
         this.virconSpectating.update(playerPosition);

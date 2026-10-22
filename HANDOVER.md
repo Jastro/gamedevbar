@@ -2,7 +2,7 @@
 
 ## Start here
 2026-10-22. Away-mode batch from `Docs/Plans to be done/2026-10-22-bar-games-plan.md`: bar service and
-drunkenness and darts (done, pushed), then bathroom graffiti, karaoke stage and two-player Pong sync, each
+drunkenness, darts and bathroom graffiti (done, pushed), then karaoke stage and two-player Pong sync, each
 pushed to `main` on its own. Next: the next unchecked task in that plan; Borja's checks in
 `Docs/PendingUserChecks.md`.
 
@@ -17,6 +17,16 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Bathroom graffiti:
+  - **Wall:** the inside of the cubicle's partition facing the bar is drawable. F → a panel showing the
+    wall's own canvas (6 colors, 🧽 eraser, 3 sizes, mouse/pen/touch). Shared live, last 3000 segments per
+    wall kept in server memory and sent to late joiners.
+  - **Verified in-app with two clients:** F inside facing the wall shows "Pintar en la pared" and opens
+    the panel; a drawn face + letter (57 segments) shows in the panel and on the wall (screenshot), the
+    second client gets all 57, and again after a reload; malformed batches (out-of-range coordinates,
+    bad color, non-array, bad room id, a bad segment mixed with a good one) only let the good segment
+    through; walking out closes the panel; no errors.
+  - **Not judged:** drawing feel, touch on a phone.
 - 2026-10-22 Darts:
   - **Board** on each bar's right wall past the projector, a yellow throw line and a chalkboard (thrower's
     darts, last 6 turns, day's best). F at the line takes the board; a close aiming view, the mouse aims
@@ -111,6 +121,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     If wrong: tune `EFFECT_START` in `src/bar/DrinkSync.js`.
   - **Darts board at y 2.1 and 1.3× real size** (plan said y 1.75): avatars are 2.15 tall. The aiming
     view is a close camera 2.4 from the board, not over the shoulder: from the line the board was a dot.
+  - **Graffiti has no "clear wall" button**, and the eraser is open to everyone. Memory only (a deploy
+    wipes it). If wrong: add a clear (who may use it is Borja's call) or persist to disk.
   - **A turn ends by itself** after 3 darts (no "play again" button: F again). If wrong: add a rematch key.
   - **The tap is at x 5**, not the counter's middle, so F in front of it doesn't pick a stool.
 - Spectating (away mode, 2026-10-21):

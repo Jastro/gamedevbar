@@ -57,6 +57,8 @@ export function createBathroomInteractions(game) {
         fixture(game, 'toiletFlush', 1.6, () => 'Tirar de la cadena', (bathroom) => sync().flush(bathroom)),
         fixture(game, 'sink', 1.6, () => 'Lavarse las manos', (bathroom) => sync().washHands(bathroom)),
         fixture(game, 'airFreshener', 1.6, () => 'Usar el ambientador', (bathroom) => sync().spray(bathroom)),
+        // The wall's center is ~2.4 from the middle of the cubicle.
+        fixture(game, 'graffitiWall', 2.6, () => 'Pintar en la pared', (bathroom) => game.graffitiSync.open(bathroom)),
         fixture(game, 'bathroomLight', 1.6,
             (object) => `${object.userData.bathroom.state.lightOn ? 'Apagar' : 'Encender'} la luz del baño`,
             (bathroom) => sync().toggleLight(bathroom))

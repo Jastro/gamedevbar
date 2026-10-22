@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { LightSwitches, DEFAULT_LIGHTS } from './LightSwitches';
 import { Car } from './Car';
 import { Bathroom } from './Bathroom';
+import { GraffitiWall } from './GraffitiWall';
 import { Bar } from './Bar';
 import { BarTap } from './BarTap';
 import { Dartboard } from './Dartboard';
@@ -69,6 +70,8 @@ export class Environment {
             contents.pokebonk.create();
             contents.lightSwitches.create();
             contents.bathroom.create();
+            contents.graffiti = new GraffitiWall(contents.bathroom);
+            contents.graffiti.create();
             if (contents.paintings) this.loadPaintings(contents.paintings);
 
             this.rooms.set(room.id, contents);

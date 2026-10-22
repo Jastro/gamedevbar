@@ -37,6 +37,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `dartsStart` | `roomId` | take that room's board (ends your turn at any other board) → `dartsState` to all; taken by someone connected → `dartsBusy` to sender |
 | `dartsThrow` | `roomId`, `x`, `y` (board units, clamped to ±2) | thrower only, 3 per turn, 0.6 s cooldown; scored on the server → `dartsThrow` to all; after the 3rd: history + day's best, `dartsState`, and 2.5 s later the turn ends (`dartsState` with no thrower). 30 s idle also ends it |
 | `dartsLeave` | `roomId` | the thrower gives up the board → `dartsState` |
+| `graffitiDraw` | `roomId`, `segments` (1-60 × `[x0, y0, x1, y1, color 0-6, size 0-2]`, coordinates 0..1) | 40 ms per-user rate limit; bad segments dropped, coordinates rounded to 0.001; kept (last 3000 per wall) → `graffitiDraw` to others |
 | `lightsToggle` | `roomId`, `light` (`normal` \| `low` \| `disco`) | flip it for that room → `lightsState` to all |
 | `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, always with `peerId`; ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player; an offer that can't be relayed gets `{refused, peerId}` back (as if from the target) |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
@@ -78,6 +79,8 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `dartsStates` | `rooms: { roomId: state }` | join snapshot |
 | `dartsThrow` | `roomId`, `userId`, `index` (0-2), `x`, `y`, `score`, `label` (`20`, `T20`, `D20`, `25`, `Diana`, `Fuera`) | the dart flies from that player's hand and sticks; the thrower gets a chat line |
 | `dartsBusy` | `roomId`, `thrower` | chat line |
+| `graffitiDraw` | `roomId`, `segments` | draw them on that bathroom's wall |
+| `graffitiStates` | `rooms: { roomId: segments }` | join snapshot |
 | `lightsState` | `roomId`, `state` (`{ normal, low, disco }`) | `LightsSync` → switches + `RoomLighting` |
 | `lightsStates` | `rooms: { roomId: state }` (only rooms someone touched) | join snapshot; unlisted rooms → default (normal on) |
 | `virconSignal` | `roomId`, `fromId`, `signal` | `VirconSpectating`: answer (player) or apply (watcher) |
