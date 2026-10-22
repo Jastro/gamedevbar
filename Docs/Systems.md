@@ -179,6 +179,19 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Clock:** above the door inside each bar (`WallClock.js`): "21:43 · 🌧️ 14°C · Madrid".
 - Inside the bars nothing changes: their lights follow their switches.
 
+## Slot machine (meme slots)
+
+- **Where:** against each bar's left wall (`src/world/SlotMachine.js`, room-local (-14.35, 0, 2.6)). F or
+  click pulls the lever; one spin at a time per machine (2.6 s), and everyone sees the same spin: the
+  reels stop one by one on the server's result.
+- **Symbols** are drawn in code (emoji + caption, no images): 🗿 MOAI, 🤡 PAYASO, 💀 RIP, 🐕 MUCH WOW,
+  🍄 1UP, 🎂 IS A LIE, a keyboard "F" (PRESS F) and 📈 STONKS.
+- **Pays** (`server/features/slots.js`, bet 10): any pair 18; three of a kind 60 / 80 / -20 (💀 takes
+  more) / 120 / 160 / 0 (🎂 the cake is a lie) / 200 / 1000 (📈 jackpot, announced to the whole bar).
+  Returns ~88% of what's bet.
+- **Coins** live on the connection (a reload starts again at 100). Broke → the owner lends you 50, once a
+  minute. Win jingles and a "wah wah" are square-wave tunes (`playTones` in `src/audio/synth.js`).
+
 ## Light switches
 
 - **Switches:** three switches on the inside of each bar's front wall (`LightSwitches.js`): 💡 normal

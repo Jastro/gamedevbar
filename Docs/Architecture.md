@@ -32,9 +32,10 @@ world/         RoomLayout (where rooms are), Room, World (shells, colliders, str
                Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), GraffitiWall +
                GraffitiSync (the drawable bathroom wall), Car + CarSync,
                VirconSync, SoccerGame, CollisionManager, BarTap, Dartboard, KaraokeStage, Weather (Madrid sky,
-               street light, rain/snow/fog/storms), WallClock
+               street light, rain/snow/fog/storms), WallClock, SlotMachine
 bar/           drinks (menu, alcohol, decay math shared with the server), DrinkSync (order panel, B to sip,
-               held drink, drunk tag and effects), DartsSync (taking the board, aiming, throwing)
+               held drink, drunk tag and effects), DartsSync (taking the board, aiming, throwing),
+               SlotSync (lever, shared spins, coins)
 interactions/  one file per clickable type: seat, radio, arcade, door, barTap, bathroom fixtures…
 audio/         OcclusionChain (wall/door muffling shared by radios and voices)
 voice/         VoiceChat (mesh, PTT, positional voices), VoicePeer (one RTCPeerConnection)

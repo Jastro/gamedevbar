@@ -25,6 +25,8 @@ import { createBarTapInteraction } from '../interactions/barTapInteraction';
 import { DartsSync } from '../bar/DartsSync';
 import { GraffitiSync } from '../world/GraffitiSync';
 import { Weather } from '../world/Weather';
+import { SlotSync } from '../bar/SlotSync';
+import { createSlotInteraction } from '../interactions/slotInteraction';
 import { createDartsInteraction } from '../interactions/dartsInteraction';
 import { createKaraokeInteraction } from '../interactions/karaokeInteraction';
 import { VirconSpectating } from '../vircon/VirconSpectating';
@@ -93,6 +95,7 @@ export class Game {
         this.dartsSync = new DartsSync(this);
         this.graffitiSync = new GraffitiSync(this);
         this.weather = new Weather(this);
+        this.slotSync = new SlotSync(this);
         this.lighting = new RoomLighting(this);
         this.virconSpectating = new VirconSpectating(this);
         // Set while the local player is at an arcade screen ({ hint }): movement
@@ -117,6 +120,7 @@ export class Game {
         this.interactions.register(createBarTapInteraction(this));
         this.interactions.register(createDartsInteraction(this));
         this.interactions.register(createKaraokeInteraction(this));
+        this.interactions.register(createSlotInteraction(this));
         createBathroomInteractions(this).forEach(interaction => this.interactions.register(interaction));
 
         this.clock = new THREE.Clock();
@@ -217,6 +221,7 @@ export class Game {
         this.dartsSync.bind();
         this.graffitiSync.bind();
         this.weather.bind();
+        this.slotSync.bind();
         this.virconSpectating.bind();
         bindArcadeNetwork(this);
 
@@ -310,6 +315,7 @@ export class Game {
         this.dartsSync.update(deltaTime);
         this.graffitiSync.update();
         this.weather.update(deltaTime);
+        this.slotSync.update(deltaTime);
         const clockLabel = this.weather.label();
         this.environment.rooms.forEach(({ clock }) => clock.update(clockLabel));
         this.voice.update(playerPosition);

@@ -114,6 +114,9 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       night and whether the lamp posts help, the clock above the door. To see weather without waiting
       for it, in the browser console: `Object.assign(game.weather.state, { code: 95 })` (storm; 61 rain,
       73 snow, 45 fog, 0 clear). Rain sound volume outside/inside, thunder volume, snow look.
+- [ ] **Meme slots** (left wall). F pulls the lever: do the reels, sounds and jingles feel like a
+      tragaperras? Are the symbols readable and funny enough (or want other memes)? Too stingy or too
+      generous (~88%)? A friend nearby sees the same spin.
 - [ ] **Bar counter and sign.** Jump onto the counter and walk along it. Is the "Gamedev MV" sign on the
       back wall (above the paintings) readable from the entrance?
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a

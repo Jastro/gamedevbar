@@ -2,7 +2,7 @@
 
 ## Start here
 2026-10-22 (later). Plan `Docs/Plans to be done/2026-10-22-futbolin-slots-weather-plan.md`: real time and
-weather (done, pushed), then the slot machine and the futbolín. The bar games batch before it is done
+weather and the slot machine (done, pushed), then the futbolín. The bar games batch before it is done
 (plan in `Docs/Plans done/`). Borja's checks are in `Docs/PendingUserChecks.md`.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
@@ -16,6 +16,15 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Meme slot machine:
+  - **Machine** against each bar's left wall; F pulls the lever, the server rolls, everyone watches the
+    same spin. Symbols drawn in code (🗿, 🤡, 💀, 🐕 much wow, 🍄 1UP, 🎂 cake is a lie, F, 📈 stonks).
+  - **Coins** per connection: 100 to start, bet 10, pair 18, triples up to 1000; broke → 50 once a minute.
+  - **Verified:** payout asserts (+ a wrong one that fails) and the expected return (8.79 per 10); a mock
+    hub: bailout once, then "broke" for 60 s, unjoined players and bad rooms ignored; in-app with two
+    clients: hint with coins, spins sync (same reels on both), only the spinner's coins change, a second
+    pull while spinning gets "Espera…"; screenshot of the screen.
+  - **Not judged:** the look, jingles, how generous it feels.
 - 2026-10-22 Real time and weather (Madrid):
   - **Server** asks Open-Meteo every 10 min (code, temperature, clouds, wind, sunrise/sunset).
   - **Client:** the sky follows the real sun and clouds; outside, the street light follows the sky and two
@@ -128,6 +137,9 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 - Futbolín / slots / weather (2026-10-22):
   - **Weather is Madrid's** (one city for everyone). If wrong: change the coordinates in
     `server/features/weather.js`.
+  - **Meme symbols are emoji + captions** drawn in code, not downloaded meme images (copyright, and
+    downloading needs your OK each time). Easy to swap for real images if you provide them.
+  - **Slot coins aren't saved** (a reload gives you 100 again) and can't buy anything.
   - **Weather only falls over the street**, not inside the roofless bars; fog only while you're outside.
 - Bar games batch (away mode, 2026-10-22):
   - **Drunk state is per connection**, not saved: a reload sobers you up. If wrong: people reload to

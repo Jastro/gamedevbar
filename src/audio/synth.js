@@ -111,6 +111,34 @@ export function playSynth(listener, parent, position, name, refDistance = 3) {
     }, recipe.duration * 1000 + 300);
 }
 
+// A little tune of square-wave notes at `position` (slot machine wins):
+// notes = [[frequency Hz, start s, length s], ...].
+export function playTones(listener, parent, position, notes, volume = 0.25, refDistance = 3) {
+    if (!listener || notes.length === 0) return;
+    const context = listener.context;
+    const sound = new THREE.PositionalAudio(listener);
+    sound.setRefDistance(refDistance);
+    sound.position.copy(position);
+    parent.add(sound);
+    const output = sound.getOutput();
+    const start = context.currentTime + 0.02;
+    let end = 0;
+    notes.forEach(([frequency, at, length]) => {
+        const oscillator = context.createOscillator();
+        oscillator.type = 'square';
+        oscillator.frequency.value = frequency;
+        const gain = context.createGain();
+        gain.gain.setValueAtTime(0, start + at);
+        gain.gain.linearRampToValueAtTime(volume, start + at + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + at + length);
+        oscillator.connect(gain).connect(output);
+        oscillator.start(start + at);
+        oscillator.stop(start + at + length + 0.05);
+        end = Math.max(end, at + length);
+    });
+    setTimeout(() => release(sound), (end + 0.4) * 1000);
+}
+
 // Stops a one-shot and unhooks every node it created.
 function release(sound) {
     if (sound.isPlaying) sound.stop();
