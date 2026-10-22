@@ -46,6 +46,9 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `playerGesture` | `gesture` (`dance`, `pushups`, `jerk`, `kiss`, `spit`, `cheer`, `toast`, `snort`) | joined players, ≥ 400 ms apart → `playerGesture {userId, gesture}` to others |
 | `playerGestureStop` | – | → `playerGestureStop {userId}` to others |
 | `powderSnort` | `roomId` | 3 s cooldown; line gone → `bathroomRefused {reason: 'empty'}`; else empty it for 45 s → `bathroomEvent snort` + `bathroomState` |
+| `driveStart` | `carId` (`car1`-`car4`), `x`, `z`, `yaw` (its parking spot, used if nobody moved it yet) | joined players, one car each; taken → `driveBusy {name}`; else → `driveState` to all |
+| `driveUpdate` | `carId`, `x`, `z`, `yaw`, `speed`, `steer` | the driver only, ≥ 30 ms apart, clamped → relayed to others |
+| `driveStop` | – | your car is free (stays where it is) → `driveState` |
 | `lightsToggle` | `roomId`, `light` (`normal` \| `low` \| `disco`) | flip it for that room → `lightsState` to all |
 | `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, always with `peerId`; ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player; an offer that can't be relayed gets `{refused, peerId}` back (as if from the target) |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
@@ -101,6 +104,9 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `foosballState` | `roomId`, `ball` [x, z, vx, vz], `rods` (8 offsets), `kicks` (8 × 0/1), `score`, `phase`, `timer`, `winner`, `events` (`kick`/`hit`/`goal`/`win`) | 20/s while active: draw the table |
 | `foosballFull` | `roomId`, `team` | chat line |
 | `playerGesture` / `playerGestureStop` | `userId` (+ `gesture`) | play / end that player's gesture |
+| `driveState` | `carId`, `driver` (or null), `name`, `x`, `z`, `yaw`, `speed`, `steer` | who drives it; the local player gets in or out |
+| `driveStates` | `cars` (array of `driveState` bodies, only cars that were driven) | join snapshot |
+| `driveUpdate` | as sent | ease that car to the pose |
 | `lightsState` | `roomId`, `state` (`{ normal, low, disco }`) | `LightsSync` → switches + `RoomLighting` |
 | `lightsStates` | `rooms: { roomId: state }` (only rooms someone touched) | join snapshot; unlisted rooms → default (normal on) |
 | `virconSignal` | `roomId`, `fromId`, `signal` | `VirconSpectating`: answer (player) or apply (watcher) |

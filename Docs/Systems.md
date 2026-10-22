@@ -57,6 +57,23 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
 - **Colliders** are static and measured once (`CollisionManager`). Before, every collider's box was
   recomputed on every check and every frame.
 
+## Drivable cars
+
+- **Four open-top cars** (`src/world/DrivableCar.js`: red, blue, yellow, green) parked along the ring
+  road, just past roads 0, 2, 3 and 5. F next to one to drive: W/S speed up and brake (then reverse,
+  max 14 forward / 5 back), A/D steer, F or Esc to get out (on the driver's side, else the other side
+  or behind, wherever is free). A low engine hum (an oscillator through a low-pass, pitch with speed)
+  while someone drives it, a thunk on a crash.
+- **The driver's client runs the car** (`DrivingSync`): a bicycle model (wheelbase 2.5), stepped in
+  0.25 pieces; three points along its length are checked against the colliders (walls, lamp posts,
+  the fountain, the edge wall) and against the bars' footprints, so it never gets into a bar. A crash
+  bounces it back at a quarter speed. Cars don't collide with people (they drive through them) or
+  with each other.
+- **Sync** (`server/features/driving.js`): one driver per car; the pose goes out 20 times a second,
+  the server keeps the last one (a car stays where it was left, also for late joiners) and relays it;
+  other clients carry it along its heading and ease to it. Everyone puts the driver's avatar in the
+  seat with the seated pose; the camera swings in behind a moving car.
+
 ## Plaza car
 
 A black car parked on the plaza by the road between Gamedev and Desarrollo (`src/world/Car.js`,
@@ -327,7 +344,9 @@ of slots to a ring road (`RING_ROAD_WIDTH` 8, dashed middle line), and a low wal
 | Desarrollo | 1 | (-35.7, 20.6) | 60° | (-27.0, 25.6) |
 
 `Outdoors` (`src/world/Outdoors.js`) builds the grass, the paved plaza (curb and a ring in the middle), the
-roads and the edge wall; `getLampSpots()` puts a lamp beside each road. The soccer stadium lives at
+roads, the edge wall and the fountain in the middle (basin radius 2.4, a column with two bowls up to
+~4.4, water falling from each bowl, a soft positional water loop; the basin is a round platform you
+can hop onto, the column blocks); `getLampSpots()` puts a lamp beside each road. The soccer stadium lives at
 (0, 0, -50) behind Gamedev and is only shown during `/furbo`.
 
 How a room is built (`World.create` → `Environment.create`):

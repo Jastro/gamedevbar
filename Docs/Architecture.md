@@ -29,7 +29,7 @@ network/       WebSocketManager: transport only (JSON in → emit(type), send(ty
 entities/      Player, LocalPlayer (input + collisions), RemotePlayer, PlayerManager, Gestures (procedural
                right-click animations on the bones) + GestureSync
 world/         RoomLayout (the hub: plaza, slots, roads), Room, World (shells, colliders), Outdoors (plaza, roads,
-               edge wall), Environment (props per room),
+               edge wall, fountain), DrivableCar + DrivingSync, Environment (props per room),
                Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, VirconCabinet +
                Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), GraffitiWall +
                GraffitiSync (the drawable bathroom wall), Car + CarSync,

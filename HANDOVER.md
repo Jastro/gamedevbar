@@ -18,6 +18,15 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 Drivable cars and the fountain: four open-top cars on the ring road (F to drive, W/S/A/D,
+  F or Esc to get out), a quiet engine hum, crashes against walls/lamps/fountain/edge, never into a
+  bar, no collision with people; the driver's client runs it, the server keeps where it was left.
+  A tall, slim fountain in the plaza center with falling water and a water loop. **Verified with two
+  clients:** F next to the red car → driving (seated, hint, engine on), 23 units in under 3 s; the other
+  client sees the car and the driver seated at the same spot; driving at Desarrollo's open door stops
+  at the doorway line (never inside); stops against the fountain (4.4 from its center); drives
+  through the other player; F gets out 2 away on a free spot, engine off, pose cleared on both; a
+  late joiner sees the car where it was left; screenshots of the fountain and of driving.
 - 2026-10-23 The hub: the street is replaced by a round plaza with 6 bar slots around it, a small road
   between each pair out to a ring road, grass and a wall at the map's edge, all computed from the room
   size (plaza radius 31.2 today, ~40 when rooms grow a third). Gamedev keeps slot 0 at the origin,
@@ -148,13 +157,13 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   branches or PRs. Every push deploys, so only finished, built, checked slices get pushed.
 
 ## Open questions
-- More characters: the six models share one rig (CORE/Body/Head + floating hands/feet; materials CryptoBro,
-  ChickenGuy, Officer, HalloweenBits, GenericFemale, SantaClaus; clips Grounded/Idle/Jump/Sprint/Walk) but
-  their source pack isn't recorded anywhere. Which pack (and license) are they from?
 - Carra's own Vircon32 games (BSD-3) are only on itch.io as zips: download them by hand to add them?
 - Should chat become per-room (or show which bar someone is in)?
 - Desarrollo's identity: different decoration, default music?
 
 ## Next
+- More characters: the six models are by an artist who collaborates with the project; new ones (or
+  variations) wait for them. They must keep the rig (CORE/Body/Head + floating hands/feet with finger
+  bones, clips Grounded/Idle/Jump/Sprint/Walk) for accessories, the seated pose and the gestures.
 - Bathroom and lights still accept any room id up to 32 (like darts did): switch them to `isRoomId`.
 - Remove the remaining duplicated geometry (level.json vs World: floor and walls).

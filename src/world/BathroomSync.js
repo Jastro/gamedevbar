@@ -199,7 +199,7 @@ export class BathroomSync {
         });
         players.players.forEach((player, id) => {
             const seated = player === local
-                ? player.isSitting && player.seat?.userData.pose !== 'stand'
+                ? (player.isSitting && player.seat?.userData.pose !== 'stand') || player.driving
                 : pooping.has(id) || player.seatPose === 'sit';
             player.setPose(seated ? 'sit' : null);
         });

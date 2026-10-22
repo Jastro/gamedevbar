@@ -19,6 +19,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **"Who's here" board** (front wall, right of the door). Shows everyone inside that bar, 🎙️ while
       they talk, and counts for the other bar / street; updates within ~0.5 s as people walk in and out.
       Readable from the bar?
+- [ ] **Driving** (four cars on the ring road). F to get in: is it fun to drive (speed, acceleration,
+      steering: top of `src/world/DrivingSync.js`)? The engine hum: too quiet / annoying? Crash into a wall,
+      a lamp, the fountain; try to drive into a bar (you can't). A friend sees you drive, sitting in it.
+- [ ] **Fountain** (plaza center): looks right? Water sound volume (`WATER_VOLUME` in `Outdoors.js`)?
 - [ ] **The plaza** (2026-10-23). Walk around: the plaza, the six small roads, the ring road, the wall at
       the edge, the lamps. Desarrollo is now Gamedev's neighbor (slot 1). Is the plaza too big for two bars
       for now? Walls and furniture in Desarrollo (turned 60°) should block exactly like in Gamedev.

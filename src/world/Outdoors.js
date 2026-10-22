@@ -6,10 +6,16 @@ import {
 
 // Everything outside the bars (world coordinates, see RoomLayout's hub): the
 // round paved plaza in the middle, a small road between each pair of bar
-// slots out to the ring road, grass in between, and a low wall around the
-// map. Nothing here blocks except that wall (CollisionManager.setBoundary).
+// slot out to the ring road, grass in between, a fountain in the middle and
+// a low wall around the map. Only the fountain and that wall block
+// (CollisionManager.setBoundary).
 const WALL_HEIGHT = 1.2;
 const DASH = { length: 2, width: 0.2, gap: 2 };
+// Tall and slim: a basin, a column with two bowls, water falling from each.
+const FOUNTAIN = { basinRadius: 2.4, basinHeight: 0.7, waterY: 0.55, columnTop: 3.6 };
+const BOWLS = [{ y: 1.9, radius: 1.3 }, { y: 3.0, radius: 0.75 }]; // rim height, rim radius
+const DROPS = 360;
+const WATER_VOLUME = 0.22;
 
 // Where the small roads leave the plaza: between slot k and slot k + 1.
 export function roadAngle(index) {
@@ -41,10 +47,15 @@ export class Outdoors {
         this.createPlaza();
         this.createRoads();
         this.createWall();
+        this.createFountain();
         this.scene.add(this.group);
         this.group.updateMatrixWorld(true);
         // Inside the wall's thickness, so nobody pokes through it.
         this.collisionManager.setBoundary(PLAZA_CENTER.x, PLAZA_CENTER.z, WORLD_RADIUS - 0.6);
+        // The basin is a round platform (you can hop onto its rim); the column
+        // is one too tall to get onto.
+        this.collisionManager.addPlatform(this.basinBlocker, FOUNTAIN.basinRadius);
+        this.collisionManager.addPlatform(this.columnBlocker, 0.5);
     }
 
     // A flat disc or ring on the ground, just above the grass.
@@ -113,6 +124,120 @@ export class Outdoors {
         this.group.add(wall);
         // A flat cap on top.
         this.flat(new THREE.RingGeometry(WORLD_RADIUS - 0.3, WORLD_RADIUS + 0.3, 160), 0x6f665b, WALL_HEIGHT);
+    }
+
+    createFountain() {
+        const stone = new THREE.MeshStandardMaterial({ color: 0xb8b0a2, roughness: 0.8 });
+        const water = new THREE.MeshStandardMaterial({ color: 0x4fa3d1, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.8 });
+        const fountain = new THREE.Group();
+        fountain.position.set(PLAZA_CENTER.x, 0, PLAZA_CENTER.z);
+        const add = (mesh, y) => {
+            mesh.position.y = y;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            fountain.add(mesh);
+            return mesh;
+        };
+        const { basinRadius, basinHeight } = FOUNTAIN;
+        // Basin: an open stone ring with a floor, and its water.
+        const stoneBothSides = new THREE.MeshStandardMaterial({ color: 0xb8b0a2, roughness: 0.8, side: THREE.DoubleSide });
+        add(new THREE.Mesh(new THREE.CylinderGeometry(basinRadius, basinRadius + 0.1, basinHeight, 48, 1, true), stoneBothSides), basinHeight / 2);
+        add(new THREE.Mesh(new THREE.TorusGeometry(basinRadius - 0.06, 0.13, 8, 48).rotateX(Math.PI / 2), stone), basinHeight);
+        add(new THREE.Mesh(new THREE.CircleGeometry(basinRadius, 48).rotateX(-Math.PI / 2), stone), 0.05);
+        this.waterMeshes = [add(new THREE.Mesh(new THREE.CircleGeometry(basinRadius - 0.1, 48).rotateX(-Math.PI / 2), water), FOUNTAIN.waterY)];
+        // Column with two bowls (each with water in it) and a top.
+        add(new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.42, FOUNTAIN.columnTop, 16), stone), FOUNTAIN.columnTop / 2);
+        BOWLS.forEach(({ y, radius }) => {
+            add(new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 0.35, 0.35, 32), stone), y - 0.17);
+            this.waterMeshes.push(add(new THREE.Mesh(new THREE.CircleGeometry(radius - 0.08, 32).rotateX(-Math.PI / 2), water), y + 0.005));
+        });
+        add(new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), stone), FOUNTAIN.columnTop + 0.15);
+        add(new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.35, 12), stone), FOUNTAIN.columnTop + 0.45);
+        fountain.traverse(child => { child.raycast = () => {}; });
+        this.group.add(fountain);
+        this.fountain = fountain;
+
+        // Falling water: drops leave each bowl's rim and fall into the one below.
+        const positions = new Float32Array(DROPS * 3);
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        this.drops = Array.from({ length: DROPS }, (_, i) => this.newDrop(i % BOWLS.length, Math.random()));
+        this.dropPoints = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0xbfe6ff, size: 0.07, transparent: true, opacity: 0.85 }));
+        this.dropPoints.frustumCulled = false;
+        this.dropPoints.raycast = () => {};
+        fountain.add(this.dropPoints);
+
+        // Invisible blockers for the collision manager.
+        const invisible = new THREE.MeshBasicMaterial({ visible: false });
+        this.basinBlocker = new THREE.Mesh(new THREE.CylinderGeometry(basinRadius + 0.1, basinRadius + 0.1, basinHeight + 0.1, 16), invisible);
+        this.basinBlocker.position.set(PLAZA_CENTER.x, (basinHeight + 0.1) / 2, PLAZA_CENTER.z);
+        this.columnBlocker = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, FOUNTAIN.columnTop + 0.8, 8), invisible);
+        this.columnBlocker.position.set(PLAZA_CENTER.x, (FOUNTAIN.columnTop + 0.8) / 2, PLAZA_CENTER.z);
+        [this.basinBlocker, this.columnBlocker].forEach(blocker => {
+            blocker.raycast = () => {};
+            this.group.add(blocker);
+        });
+    }
+
+    // A drop leaving bowl `level`'s rim (fountain space), `progress` 0..1 of its fall.
+    newDrop(level, progress = 0) {
+        const bowl = BOWLS[level];
+        const below = level > 0 ? BOWLS[level - 1].y : FOUNTAIN.waterY;
+        const angle = Math.random() * Math.PI * 2;
+        return { level, angle, outward: 0.25 + Math.random() * 0.2, time: progress * Math.sqrt((2 * (bowl.y - below)) / 9.8) };
+    }
+
+    // Per frame (World.update): the water falls and ripples, and you hear it near.
+    update(deltaTime) {
+        if (!this.drops) return;
+        const dt = Math.min(deltaTime, 0.1);
+        const positions = this.dropPoints.geometry.attributes.position.array;
+        this.drops.forEach((drop, i) => {
+            drop.time += dt;
+            const bowl = BOWLS[drop.level];
+            const below = drop.level > 0 ? BOWLS[drop.level - 1].y : FOUNTAIN.waterY;
+            const y = bowl.y - 4.9 * drop.time * drop.time;
+            if (y <= below) {
+                this.drops[i] = this.newDrop(drop.level);
+                return;
+            }
+            const radius = bowl.radius + drop.outward * drop.time;
+            positions[i * 3] = Math.sin(drop.angle) * radius;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = Math.cos(drop.angle) * radius;
+        });
+        this.dropPoints.geometry.attributes.position.needsUpdate = true;
+        const time = performance.now() / 1000;
+        this.waterMeshes.forEach((mesh, i) => { mesh.position.y += Math.sin(time * 3 + i) * 0.0006; });
+        this.updateWaterSound();
+    }
+
+    // A soft loop of running water, from the fountain (once audio exists).
+    updateWaterSound() {
+        const listener = window.game?.environment.audioListener;
+        if (this.waterSound || !listener) return;
+        const context = listener.context;
+        const length = context.sampleRate * 2;
+        const buffer = context.createBuffer(1, length, context.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (0.75 + 0.25 * Math.sin(i / 900));
+        this.waterSound = new THREE.PositionalAudio(listener);
+        this.waterSound.setBuffer(buffer);
+        this.waterSound.setLoop(true);
+        this.waterSound.setRefDistance(3);
+        this.waterSound.setRolloffFactor(1.6);
+        this.waterSound.setVolume(WATER_VOLUME);
+        const filter = context.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1300;
+        filter.Q.value = 0.6;
+        this.waterSound.setFilter(filter);
+        this.waterSound.position.y = 1.5;
+        this.fountain.add(this.waterSound);
+        if (context.state === 'running') this.waterSound.play();
+        else context.addEventListener('statechange', () => {
+            if (context.state === 'running' && !this.waterSound.isPlaying) this.waterSound.play();
+        });
     }
 
     // Lamp posts: one beside each small road, a bit out from the plaza.

@@ -29,6 +29,8 @@ import { LocalWeather } from '../world/LocalWeather';
 import { GestureSync } from '../entities/GestureSync';
 import { GESTURES, GESTURE_IDS, updateGestureEffects } from '../entities/Gestures';
 import { RadialMenu } from '../ui/RadialMenu';
+import { DrivingSync } from '../world/DrivingSync';
+import { createDriveInteraction } from '../interactions/driveInteraction';
 import { SlotSync } from '../bar/SlotSync';
 import { createSlotInteraction } from '../interactions/slotInteraction';
 import { FoosballSync } from '../world/FoosballSync';
@@ -103,6 +105,7 @@ export class Game {
         this.weather = new Weather(this);
         this.localWeather = new LocalWeather();
         this.gestureSync = new GestureSync(this);
+        this.drivingSync = new DrivingSync(this);
         this.ui.radial = new RadialMenu();
         this.slotSync = new SlotSync(this);
         this.foosballSync = new FoosballSync(this);
@@ -132,6 +135,7 @@ export class Game {
         this.interactions.register(createKaraokeInteraction(this));
         this.interactions.register(createSlotInteraction(this));
         this.interactions.register(createFoosballInteraction(this));
+        this.interactions.register(createDriveInteraction(this));
         createBathroomInteractions(this).forEach(interaction => this.interactions.register(interaction));
 
         this.clock = new THREE.Clock();
@@ -213,6 +217,7 @@ export class Game {
         this.world.create();
         this.environment.create();
         this.weather.create();
+        this.drivingSync.create();
         this.lighting.init();
         this.radioSync.applyDefaults();
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
@@ -235,6 +240,7 @@ export class Game {
         this.graffitiSync.bind();
         this.weather.bind();
         this.gestureSync.bind();
+        this.drivingSync.bind();
         this.slotSync.bind();
         this.foosballSync.bind();
         this.virconSpectating.bind();
@@ -348,6 +354,7 @@ export class Game {
         this.slotSync.update(deltaTime);
         this.foosballSync.update(deltaTime);
         updateGestureEffects(deltaTime);
+        this.drivingSync.update(deltaTime);
         const clockLabel = this.localWeather.label(this.weather);
         this.environment.rooms.forEach(({ clock }) => clock.update(clockLabel));
         this.voice.update(playerPosition);

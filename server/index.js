@@ -26,6 +26,7 @@ const { registerWeather } = require('./features/weather');
 const { registerSlots } = require('./features/slots');
 const { registerFoosball } = require('./features/foosball');
 const { registerGestures } = require('./features/gestures');
+const { registerDriving } = require('./features/driving');
 const { registerCar } = require('./features/car');
 
 const DIST_DIR = path.join(__dirname, '..', 'dist');
@@ -70,6 +71,7 @@ registerPong(hub);
 registerSlots(hub);
 registerFoosball(hub);
 registerGestures(hub);
+registerDriving(hub);
 registerDuel(hub);
 registerSoccer(hub);
 registerVoice(hub);

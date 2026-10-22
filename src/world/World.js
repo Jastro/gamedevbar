@@ -190,7 +190,9 @@ export class World {
 
     // Colliders are static and measured once (CollisionManager), so there's
     // nothing to refresh per frame.
-    update() {}
+    update(deltaTime) {
+        this.outdoors?.update(deltaTime);
+    }
 
     checkCollision(position, radius) {
         return this.collisionManager.checkCollision(position, radius);
