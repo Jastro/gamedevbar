@@ -79,6 +79,13 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       own headgear)? Too big or too small? Hand items while walking? Does the tint look good, and is the
       size slider range OK? A friend should see everything live. Tune per character in
       `src/appearance/Accessories.js` (`HEADS`) and per item in `items.js`.
+- [ ] **Bathroom** (front-left corner of each bar). With a friend:
+      - Open the door, go in, latch it: your friend can't open it, and the sign says Ocupado.
+      - Pee (stand) and poo (sit): sounds, bowl visuals, the stink haze and flies.
+      - Flush, the air freshener, the light switch (dark inside when off), the mirror.
+      - Leave without washing: green lines at your hands and the shame tag. Washing clears it.
+      - Judge: sound volumes (pee/flush/fart), haze density, room size for 3 people, how the cubicle looks
+        from the bar.
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a
       friend: both of you see the same thing. Does low look cosy, all off dark enough, disco fun
       (`RoomLighting.js`: `LEVELS`, `DISCO_*`)? Frame rate with disco on?

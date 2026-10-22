@@ -29,6 +29,7 @@ network/       WebSocketManager: transport only (JSON in → emit(type), send(ty
 entities/      Player, LocalPlayer (input + collisions), RemotePlayer, PlayerManager
 world/         RoomLayout (where rooms are), Room, World (shells, colliders, street), Environment (props per room),
                Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, VirconCabinet +
+               Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), Car + CarSync,
                VirconSync, SoccerGame, CollisionManager
 interactions/  one file per clickable type: seat, radio, arcade, door
 audio/         OcclusionChain (wall/door muffling shared by radios and voices)

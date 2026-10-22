@@ -17,6 +17,18 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Bathroom in each bar (plan `Docs/Plans done/2026-10-22-bathroom-plan.md`):
+  - **Features:** door with latch and Libre/Ocupado sign, toilet (pee/poo with sounds and bowl visuals),
+    flush, sink, mirror, air freshener, its own light and switch, the 10-min stink, and dirty-hands shame
+    (lines + tag) until washing.
+  - **Bug fix:** an invisible toilet seat from an old `level.json` group was sitting next to the Vircon32.
+  - **Verified in-app with two clients:**
+    - door and latch sync, and a latched door is refused to the other player;
+    - pee stands you at the bowl with yellow water, poo sits you with a 💩 swirl, haze and flies;
+    - flush empties the bowl; the freshener ends the stink and shows the spray;
+    - shame appears outside and not inside, and washing clears it;
+    - the light syncs and darkens the inside; the mirror reflects, only for whoever is inside.
+  - **Not judged:** sound levels and the look at play distance.
 - 2026-10-21 Car, Pokebonk, small fixes (plan `Docs/Plans done/2026-10-21-car-pokebonk-plan.md`):
   - **Chairs:** they faced sideways and now face their table (verified for all 24).
   - **Jump:** 1.43 high and 0.6 s in the air.
