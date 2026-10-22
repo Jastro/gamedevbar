@@ -52,6 +52,13 @@ const RECIPES = {
         filter: { type: 'highpass', from: 3000, to: 2500, q: 1.5 },
         volume: 0.7
     },
+    // Distant thunder: a long low rumble.
+    thunder: {
+        duration: 3,
+        envelope: (t, d) => fade(t, d, 0.08, 2.2) * (0.6 + 0.4 * Math.sin(t * 9) * Math.sin(t * 2.3)),
+        filter: { type: 'lowpass', from: 420, to: 70, q: 0.7 },
+        volume: 1
+    },
     // A dart hitting the board: a dull thunk.
     dart: {
         duration: 0.15,

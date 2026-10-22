@@ -31,7 +31,8 @@ world/         RoomLayout (where rooms are), Room, World (shells, colliders, str
                Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, VirconCabinet +
                Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), GraffitiWall +
                GraffitiSync (the drawable bathroom wall), Car + CarSync,
-               VirconSync, SoccerGame, CollisionManager, BarTap, Dartboard, KaraokeStage
+               VirconSync, SoccerGame, CollisionManager, BarTap, Dartboard, KaraokeStage, Weather (Madrid sky,
+               street light, rain/snow/fog/storms), WallClock
 bar/           drinks (menu, alcohol, decay math shared with the server), DrinkSync (order panel, B to sip,
                held drink, drunk tag and effects), DartsSync (taking the board, aiming, throwing)
 interactions/  one file per clickable type: seat, radio, arcade, door, barTap, bathroom fixtures…

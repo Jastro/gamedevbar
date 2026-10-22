@@ -68,11 +68,20 @@ export class RoomLighting {
             ? { normal: bathroom.state.lightOn, low: false, disco: false }
             : room ? environment.getLights(room.id) : DEFAULT_LIGHTS;
 
-        const levelName = state.normal ? 'normal' : state.low ? 'low' : 'off';
-        const level = LEVELS[levelName];
-        const t = 1 - Math.exp(-FADE_RATE * dt);
+        let levelName = state.normal ? 'normal' : state.low ? 'low' : 'off';
+        let level = LEVELS[levelName];
+        let outdoorColor = null;
+        // On the street the sky lights you (night, clouds, lightning).
+        const outdoor = !room && !bathroom ? this.game.weather?.outdoorLight() : null;
+        if (outdoor) {
+            levelName = 'outdoor';
+            level = { ambient: outdoor.ambient, directional: outdoor.directional };
+            outdoorColor = outdoor.color;
+        }
+        // Lightning is instant; everything else fades.
+        const t = outdoor && this.game.weather.flash > 0 ? 1 : 1 - Math.exp(-FADE_RATE * dt);
         if (this.ambient) {
-            const targetColor = levelName === 'normal' ? this.base.ambientColor : LEVEL_COLORS[levelName];
+            const targetColor = outdoorColor ?? (levelName === 'normal' ? this.base.ambientColor : LEVEL_COLORS[levelName]);
             this.ambient.color.lerp(targetColor, t);
             this.ambient.intensity += (this.base.ambient * level.ambient - this.ambient.intensity) * t;
         }

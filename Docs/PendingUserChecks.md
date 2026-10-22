@@ -110,6 +110,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       to challenge: the match restarts 1 vs 1 after 3 s. Is it smooth for both, including player 2 on a
       slower connection? Speed, bounce angles and the CPU's level OK (top of `src/world/ArcadePong.js`)? A
       third player only watches; Esc leaves; the end screen frees the machine after 4 s.
+- [ ] **Time and weather.** Visit by day and by night (Madrid time): the sky, how dark the street is at
+      night and whether the lamp posts help, the clock above the door. To see weather without waiting
+      for it, in the browser console: `Object.assign(game.weather.state, { code: 95 })` (storm; 61 rain,
+      73 snow, 45 fog, 0 clear). Rain sound volume outside/inside, thunder volume, snow look.
 - [ ] **Bar counter and sign.** Jump onto the counter and walk along it. Is the "Gamedev MV" sign on the
       back wall (above the paintings) readable from the entrance?
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a

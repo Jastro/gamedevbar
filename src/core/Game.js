@@ -24,6 +24,7 @@ import { DrinkSync } from '../bar/DrinkSync';
 import { createBarTapInteraction } from '../interactions/barTapInteraction';
 import { DartsSync } from '../bar/DartsSync';
 import { GraffitiSync } from '../world/GraffitiSync';
+import { Weather } from '../world/Weather';
 import { createDartsInteraction } from '../interactions/dartsInteraction';
 import { createKaraokeInteraction } from '../interactions/karaokeInteraction';
 import { VirconSpectating } from '../vircon/VirconSpectating';
@@ -91,6 +92,7 @@ export class Game {
         this.drinkSync = new DrinkSync(this);
         this.dartsSync = new DartsSync(this);
         this.graffitiSync = new GraffitiSync(this);
+        this.weather = new Weather(this);
         this.lighting = new RoomLighting(this);
         this.virconSpectating = new VirconSpectating(this);
         // Set while the local player is at an arcade screen ({ hint }): movement
@@ -193,6 +195,7 @@ export class Game {
         this.network.connect();
         this.world.create();
         this.environment.create();
+        this.weather.create();
         this.lighting.init();
         this.radioSync.applyDefaults();
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
@@ -213,6 +216,7 @@ export class Game {
         this.drinkSync.bind();
         this.dartsSync.bind();
         this.graffitiSync.bind();
+        this.weather.bind();
         this.virconSpectating.bind();
         bindArcadeNetwork(this);
 
@@ -305,6 +309,9 @@ export class Game {
         this.drinkSync.update();
         this.dartsSync.update(deltaTime);
         this.graffitiSync.update();
+        this.weather.update(deltaTime);
+        const clockLabel = this.weather.label();
+        this.environment.rooms.forEach(({ clock }) => clock.update(clockLabel));
         this.voice.update(playerPosition);
         this.ui.vircon.update();
         this.virconSpectating.update(playerPosition);

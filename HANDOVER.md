@@ -1,9 +1,9 @@
 # Handover
 
 ## Start here
-2026-10-22. Away-mode batch done and pushed (plan `Docs/Plans done/2026-10-22-bar-games-plan.md`): bar
-service and drunkenness, darts, bathroom graffiti, the karaoke stage and two-player Pong. Next: Borja's
-checks in `Docs/PendingUserChecks.md` (new ones for each of these) and the *Decisions to review* below.
+2026-10-22 (later). Plan `Docs/Plans to be done/2026-10-22-futbolin-slots-weather-plan.md`: real time and
+weather (done, pushed), then the slot machine and the futbolín. The bar games batch before it is done
+(plan in `Docs/Plans done/`). Borja's checks are in `Docs/PendingUserChecks.md`.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
@@ -16,6 +16,18 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Real time and weather (Madrid):
+  - **Server** asks Open-Meteo every 10 min (code, temperature, clouds, wind, sunrise/sunset).
+  - **Client:** the sky follows the real sun and clouds; outside, the street light follows the sky and two
+    lamp posts come on at night; rain, drizzle, snow, fog and storms (lightning + thunder) over the
+    street only; a clock above each bar's door ("23:18 · 🌧️ 14°C · Madrid").
+  - **Verified:** a real fetch (13.9 °C, sunrise 08:33, sunset 19:24); in-app at 23:17 Madrid: night sky,
+    street ambient 0.22, lamps on (screenshot); forced storm: rain streaks and a lightning flash
+    (screenshot); forced snow by day: round flakes (screenshot, after fixing square flakes); inside the
+    bar the lights stay on their switch, no fog, rain quieter; the clock (screenshot).
+  - **Not judged:** the look by day, sound levels.
+- 2026-10-22 Small fixes (`8c2017e`): the karaoke mic faces the singer, no mic prompt while on stage,
+  bar stools face the counter straight on (they faced its middle).
 - 2026-10-22 Review fixes for the batch (independent review of `6026818..3f689ad`):
   - **Bug fixes:**
     - a client that never joined could take the darts board and leave a nameless turn that broke every
@@ -113,6 +125,10 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   - rooms, street, doors and audio occlusion.
 
 ## Decisions to review
+- Futbolín / slots / weather (2026-10-22):
+  - **Weather is Madrid's** (one city for everyone). If wrong: change the coordinates in
+    `server/features/weather.js`.
+  - **Weather only falls over the street**, not inside the roofless bars; fog only while you're outside.
 - Bar games batch (away mode, 2026-10-22):
   - **Drunk state is per connection**, not saved: a reload sobers you up. If wrong: people reload to
     escape the effects (harmless).

@@ -85,6 +85,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `dartsBusy` | `roomId`, `thrower` | chat line |
 | `graffitiDraw` | `roomId`, `segments` | draw them on that bathroom's wall |
 | `graffitiStates` | `rooms: { roomId: segments }` | join snapshot |
+| `weatherState` | `code` (WMO), `temperature` (°C or null), `cloudCover` (%), `wind` (km/h), `sunrise`/`sunset` (Madrid minutes after midnight), `updatedAt` | `Weather`: sky, street light, precipitation, clocks. Also sent on join |
 | `lightsState` | `roomId`, `state` (`{ normal, low, disco }`) | `LightsSync` → switches + `RoomLighting` |
 | `lightsStates` | `rooms: { roomId: state }` (only rooms someone touched) | join snapshot; unlisted rooms → default (normal on) |
 | `virconSignal` | `roomId`, `fromId`, `signal` | `VirconSpectating`: answer (player) or apply (watcher) |
