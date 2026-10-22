@@ -126,6 +126,8 @@ export class LocalPlayer extends Player {
         }
 
         const input = this.getInputDirection();
+        // Walking off cuts a gesture short (for everyone).
+        if (input && this.gesture) this.game.gestureSync?.stop();
         if (this.isSitting) {
             if (input) this.standUp();
             return;

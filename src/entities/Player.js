@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as THREE from 'three';
 import { DEFAULT_APPEARANCE, normalizeAppearance } from '../appearance/catalog';
 import { prepareAnchors, applyAppearance, disposeTree } from '../appearance/Accessories';
+import { GESTURES, applyGesture } from './Gestures';
 
 // Moves angle `from` toward `to` by fraction t (0..1) the short way round.
 // Seated pose: feet forward and up (legs sticking out from the seat), soles
@@ -36,6 +37,11 @@ export class Player {
         // Accessories, tint, size, name color (src/appearance/catalog.js).
         this.appearance = { ...DEFAULT_APPEARANCE };
         this.model = null;
+        this.baseModelScale = 0.8; // loadModel's scale before the size slider
+        // Right-click gesture being played ({ name, time, ... }, see Gestures.js),
+        // and the item it puts in the hand (a beer to toast with).
+        this.gesture = null;
+        this.gestureItem = null;
         
         this.animations = {
             mixer: null,
@@ -181,6 +187,37 @@ export class Player {
 
         this.mesh.position.copy(this.position);
         this.mesh.rotation.y = this.rotation;
+        this.updateGesture(deltaTime);
+    }
+
+    // After the animation and the mesh's transform (RemotePlayer too).
+    updateGesture(deltaTime) {
+        if (this.gesture && !applyGesture(this, deltaTime)) {
+            this.gesture = null;
+            this.setGestureItem(null);
+        }
+    }
+
+    playGesture(name) {
+        const def = GESTURES[name];
+        if (!def || !this.model) return;
+        // Restart cleanly: put the model back before the new one takes over.
+        if (this.gesture?.rest) {
+            this.model.position.copy(this.gesture.rest.position);
+            this.model.rotation.copy(this.gesture.rest.rotation);
+        }
+        this.gesture = { name, time: 0, model: this.model };
+        this.setGestureItem(def.item && !this.heldItem ? def.item : null);
+    }
+
+    stopGesture() {
+        if (this.gesture) this.gesture.stopping = true;
+    }
+
+    setGestureItem(itemId) {
+        if ((itemId ?? null) === this.gestureItem) return;
+        this.gestureItem = itemId ?? null;
+        if (this.model) applyAppearance(this.model, this.modelId, this.wornAppearance());
     }
 
 
@@ -281,7 +318,8 @@ export class Player {
     }
 
     wornAppearance() {
-        return this.heldItem ? { ...this.appearance, hand: this.heldItem } : this.appearance;
+        const hand = this.gestureItem ?? this.heldItem;
+        return hand ? { ...this.appearance, hand } : this.appearance;
     }
 
     setPose(pose) {

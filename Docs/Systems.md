@@ -214,6 +214,23 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   ball is carried on between snapshots and eased back. While playing the camera looks down from your side
   and your own avatar is hidden (others see it). Scoreboard sprite above the table; kick/goal sounds.
 
+## Right-click menu and gestures
+
+- **Right click** (no drag) on the 3D view opens a radial menu at the cursor (`src/ui/RadialMenu.js`):
+  😀 Emojis (the old emoji panel) and 🕺 Animaciones, a second ring with the gestures (‹ goes back).
+- **Gestures** (`src/entities/Gestures.js`) are procedural, on the rig's own bones (CORE, Body, Head and the
+  floating HandL/HandR; there are no arm bones). Poses are written in avatar space (the player mesh's
+  frame at size 1: +z forward, feet at y -1, hands rest at x ±0.4 / y -0.52, the big head up to +1.1)
+  and converted to each bone's space every frame, after the walk/idle animation, so they fit every
+  character and size. 0.25 s fade in/out; bones the clip doesn't key are put back each frame.
+  - 💃 Baile sexy and 💪 Flexiones loop (10 s max; push-ups tip the whole model face down onto its hands
+    and need you standing); ✊ Paja (comic hand pumping in front of the belly), 😘 Beso (hand to the mouth,
+    hearts), 💦 Escupir (head back, then droplets that splat on the floor), 🙌 Animar (hands up, jingle),
+    🍻 Brindar (raise, clink sound, sip; lends you a beer if your hand is empty).
+  - Walking cuts a gesture short, for everyone.
+- **Sync** (`GestureSync`, `server/features/gestures.js`): `playerGesture` / `playerGestureStop` relayed
+  to everyone else; not replayed for late joiners.
+
 ## Light switches
 
 - **Switches:** three switches on the inside of each bar's front wall (`LightSwitches.js`): 💡 normal

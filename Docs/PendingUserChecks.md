@@ -121,6 +121,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       from your side, W/S to slide the rods, Space/click to kick. Is the ball speed, kick strength and rod
       speed fun (`server/features/foosball.js` top, `INPUT_SPEED` in `FoosballSync.js`)? Does it feel laggy
       over the internet? Try 2 vs 2 (back/front split), practice alone, a goal and a full match to 5.
+- [ ] **Right-click menu and animations.** Right click (no drag): Emojis / Animaciones. Try every
+      animation on several characters (and sizes) with a friend watching: do they read as what they are
+      (sexy dance, push-ups, paja, beso, escupir, animar, brindar)? Too subtle / too much? Walking stops
+      them. Tune the poses in `src/entities/Gestures.js` (avatar-space numbers per gesture).
 - [ ] **Your clock.** In a normal browser the bar asks for your location once: allow it and the clock
       above the door shows your local time, your weather and "Tu zona"; deny it and it shows Madrid's
       (Las Palmas in the Canaries). Is asking on entry OK, or should it wait for something?

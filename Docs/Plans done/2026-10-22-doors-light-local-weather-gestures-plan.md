@@ -35,3 +35,9 @@ spitting, cheering and a toast. Each task is pushed to `main` on its own.
   ✊ paja (comic, hand pumping at the hips), 😘 kiss (hearts), 💦 spit (droplets), 🙌 cheer, 🍻 toast
   (shows a beer if your hand is empty). Loops stop when you move or after 10 s.
 - **Sync:** `playerGesture {gesture}` → everyone else; `playerGestureStop`. Not replayed on join.
+
+## Deviations (2026-10-22, all three done and pushed)
+- **Gestures:** the ✊ hand is in front of the belly, which on chunky characters is low and small.
+  Remote players needed the gesture step in their own update (RemotePlayer doesn't call Player.update).
+- **Clock:** with location denied it shows that fallback city's weather, as planned; while nothing has
+  loaded yet it shows Spain's.

@@ -51,5 +51,6 @@ export class RemotePlayer extends Player {
         } else if (this.animations.actions.get('idle')) {
             this.fadeToAction('idle');
         }
+        this.updateGesture(deltaTime);
     }
 }

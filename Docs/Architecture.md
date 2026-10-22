@@ -26,7 +26,8 @@ rendering/     Scene (level.json template), Renderer, Camera, RoomLighting (ligh
 appearance/    catalog (slots, items, tints, name colors; one entry per accessory), items (builders),
                Accessories (bone anchors, tint, size)
 network/       WebSocketManager: transport only (JSON in → emit(type), send(type, data))
-entities/      Player, LocalPlayer (input + collisions), RemotePlayer, PlayerManager
+entities/      Player, LocalPlayer (input + collisions), RemotePlayer, PlayerManager, Gestures (procedural
+               right-click animations on the bones) + GestureSync
 world/         RoomLayout (where rooms are), Room, World (shells, colliders, street), Environment (props per room),
                Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, VirconCabinet +
                Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), GraffitiWall +
@@ -42,7 +43,7 @@ audio/         OcclusionChain (wall/door muffling shared by radios and voices)
 voice/         VoiceChat (mesh, PTT, positional voices), VoicePeer (one RTCPeerConnection)
 ui/            StartScreen, LoadingScreen, ModelSelector, RoomSelector, CustomizeUI (👤 menu),
                ControlsHelpUI (❔ panel: the list of every control, keep it in sync), ChatUI,
-               EmotesUI, VoiceUI, VoiceSettingsUI, RadioUI, ProjectorUI, VirconUI, FloatingPanel
+               EmotesUI, RadialMenu (right click), VoiceUI, VoiceSettingsUI, RadioUI, ProjectorUI, VirconUI, FloatingPanel
 ```
 
 Flow: `Game` builds every system in its constructor. The path picks the entry: `/<roomId>`

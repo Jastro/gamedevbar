@@ -26,6 +26,9 @@ import { DartsSync } from '../bar/DartsSync';
 import { GraffitiSync } from '../world/GraffitiSync';
 import { Weather } from '../world/Weather';
 import { LocalWeather } from '../world/LocalWeather';
+import { GestureSync } from '../entities/GestureSync';
+import { GESTURES, GESTURE_IDS, updateGestureEffects } from '../entities/Gestures';
+import { RadialMenu } from '../ui/RadialMenu';
 import { SlotSync } from '../bar/SlotSync';
 import { createSlotInteraction } from '../interactions/slotInteraction';
 import { FoosballSync } from '../world/FoosballSync';
@@ -99,6 +102,8 @@ export class Game {
         this.graffitiSync = new GraffitiSync(this);
         this.weather = new Weather(this);
         this.localWeather = new LocalWeather();
+        this.gestureSync = new GestureSync(this);
+        this.ui.radial = new RadialMenu();
         this.slotSync = new SlotSync(this);
         this.foosballSync = new FoosballSync(this);
         this.lighting = new RoomLighting(this);
@@ -229,6 +234,7 @@ export class Game {
         this.dartsSync.bind();
         this.graffitiSync.bind();
         this.weather.bind();
+        this.gestureSync.bind();
         this.slotSync.bind();
         this.foosballSync.bind();
         this.virconSpectating.bind();
@@ -261,10 +267,11 @@ export class Game {
 
         window.addEventListener('keydown', (e) => this.ui.voice.handleKey(e, true, this.chatActive));
         window.addEventListener('keyup', (e) => this.ui.voice.handleKey(e, false, this.chatActive));
-        // A right click on the 3D view (a drag still rotates): emoji menu.
+        // A right click on the 3D view (a drag still rotates): the radial menu,
+        // emojis or gestures.
         this.camera.onRightClick = (e) => {
             if (this.playMode || this.chatActive) return;
-            this.ui.chat.emotesUI?.openAt(e.clientX, e.clientY);
+            this.openRadialMenu(e.clientX, e.clientY);
         };
         // R: reset the camera (zoom, angle, pan).
         window.addEventListener('keydown', (e) => {
@@ -297,6 +304,20 @@ export class Game {
         window.addEventListener('blur', () => this.voice.stopTalking());
     }
 
+    openRadialMenu(x, y) {
+        const radial = this.ui.radial;
+        const gestures = GESTURE_IDS.map(id => ({
+            icon: GESTURES[id].icon,
+            label: GESTURES[id].label,
+            onSelect: () => this.gestureSync.play(id)
+        }));
+        radial.openAt(x, y, [
+            // Next tick: this click would otherwise close the emoji panel again.
+            { icon: '😀', label: 'Emojis', onSelect: (cx, cy) => setTimeout(() => this.ui.chat.emotesUI?.openAt(cx, cy)) },
+            { icon: '🕺', label: 'Animaciones', onSelect: (cx, cy) => radial.openAt(cx, cy, gestures, { onBack: () => this.openRadialMenu(cx, cy) }) }
+        ]);
+    }
+
     handleResize() {
         this.camera.updateAspect(window.innerWidth / window.innerHeight);
         this.renderer.updateSize(window.innerWidth, window.innerHeight);
@@ -326,6 +347,7 @@ export class Game {
         this.weather.update(deltaTime);
         this.slotSync.update(deltaTime);
         this.foosballSync.update(deltaTime);
+        updateGestureEffects(deltaTime);
         const clockLabel = this.localWeather.label(this.weather);
         this.environment.rooms.forEach(({ clock }) => clock.update(clockLabel));
         this.voice.update(playerPosition);

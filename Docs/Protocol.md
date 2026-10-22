@@ -43,6 +43,8 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `foosballLeave` | `roomId` | frees your slot → `foosballTable` |
 | `foosballRods` | `roomId`, `offsets` (`{ rodIndex: z }`, only your rods count; clamped) | ≥ 30 ms apart; the server slides those rods there |
 | `foosballKick` | `roomId` | ≥ 250 ms apart; your rods kick for 0.2 s |
+| `playerGesture` | `gesture` (`dance`, `pushups`, `jerk`, `kiss`, `spit`, `cheer`, `toast`) | joined players, ≥ 400 ms apart → `playerGesture {userId, gesture}` to others |
+| `playerGestureStop` | – | → `playerGestureStop {userId}` to others |
 | `lightsToggle` | `roomId`, `light` (`normal` \| `low` \| `disco`) | flip it for that room → `lightsState` to all |
 | `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, always with `peerId`; ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player; an offer that can't be relayed gets `{refused, peerId}` back (as if from the target) |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
@@ -97,6 +99,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `foosballTables` | `tables: { roomId: { slots, phase, score } }` | join snapshot |
 | `foosballState` | `roomId`, `ball` [x, z, vx, vz], `rods` (8 offsets), `kicks` (8 × 0/1), `score`, `phase`, `timer`, `winner`, `events` (`kick`/`hit`/`goal`/`win`) | 20/s while active: draw the table |
 | `foosballFull` | `roomId`, `team` | chat line |
+| `playerGesture` / `playerGestureStop` | `userId` (+ `gesture`) | play / end that player's gesture |
 | `lightsState` | `roomId`, `state` (`{ normal, low, disco }`) | `LightsSync` → switches + `RoomLighting` |
 | `lightsStates` | `rooms: { roomId: state }` (only rooms someone touched) | join snapshot; unlisted rooms → default (normal on) |
 | `virconSignal` | `roomId`, `fromId`, `signal` | `VirconSpectating`: answer (player) or apply (watcher) |

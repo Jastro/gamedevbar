@@ -1,10 +1,10 @@
 # Handover
 
 ## Start here
-2026-10-22 (later). Done and pushed: real time and weather in Madrid, the meme slot machine and the
-futbolín (plan in `Docs/Plans done/2026-10-22-futbolin-slots-weather-plan.md`), after the bar games batch
-(drinks, darts, graffiti, karaoke, two-player Pong). Next: Borja's checks in `Docs/PendingUserChecks.md`;
-the forum embed waits for permission from the Mediavida add-on admin.
+2026-10-22 (night). Done and pushed: light through open doors, Spain weather outside with each player's
+local clock, and the right-click radial menu with seven gestures (plan in `Docs/Plans done/`). Before
+that: futbolín, meme slots, Madrid time/weather and the bar games batch. Next: Borja's checks in
+`Docs/PendingUserChecks.md`; the forum embed waits for the Mediavida add-on admin.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
@@ -17,6 +17,14 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Right-click radial menu and gestures: Emojis / Animaciones; 💃 dance, 💪 push-ups, ✊ paja,
+  😘 kiss, 💦 spit, 🙌 cheer, 🍻 toast, procedural on the bones in avatar space, synced to everyone.
+  **Verified in-app with two clients:** both rings (7 gestures + back); dance and cheer move the
+  hands/body (screenshots); push-ups lay the body face down just above the floor (lowest point 0.09,
+  screenshot); the toast lends a beer (screenshot); spit spawns 6 droplets and kiss hearts, all cleaned
+  up; ✊ hand at its target; the other client plays them (time advancing, model tipped for push-ups);
+  walking stops it on both and the model returns to rest; Emojis still opens and closes the panel.
+  **Not judged:** how each one looks and reads on every character.
 - 2026-10-22 Spain weather outside, local clock: the street shows Spain in general (8 cities, rain if 3+
   have it); the clocks show each player's local time and weather (browser location, rounded, cached a
   day; fallback Madrid / Las Palmas). **Verified:** combine asserts (dry with 2 wet cities, rain with 3,
@@ -93,6 +101,7 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 
 ## Decisions to review
 - Futbolín / slots / weather (2026-10-22):
+  - **Gestures aren't replayed for late joiners**, and loops stop after 10 s.
   - **The location prompt shows on entry** (for the clock). If wrong: ask only when someone looks at
     the clock, or drop local weather and keep local time.
   - **Meme symbols are emoji + captions** drawn in code, not downloaded meme images (copyright, and

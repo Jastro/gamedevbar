@@ -22,7 +22,7 @@ const SECTIONS = [
             ['Rueda', 'Acercar / alejar'],
             ['Clic en la rueda + arrastrar', 'Mover la cámara'],
             ['R', 'Centrar la cámara'],
-            ['Clic derecho', 'Emojis'],
+            ['Clic derecho', 'Menú: emojis o animaciones (baile, flexiones, beso, brindar…)'],
             ['V (mantener)', 'Hablar por micrófono (en ⚙️: micrófono abierto)'],
             ['Enter', 'Escribir en el chat (Enter envía, /me para acciones)'],
             ['Esc', 'Cerrar paneles y emojis']
