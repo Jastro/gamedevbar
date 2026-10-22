@@ -59,6 +59,13 @@ const RECIPES = {
         filter: { type: 'lowpass', from: 420, to: 70, q: 0.7 },
         volume: 1
     },
+    // A sharp sniff up the nose.
+    sniff: {
+        duration: 0.4,
+        envelope: (t, d) => fade(t, d, 0.05, 0.12) * (0.7 + 0.3 * Math.sin(t * 40)),
+        filter: { type: 'bandpass', from: 1800, to: 4200, q: 1.6 },
+        volume: 0.7
+    },
     // Spitting: a short, wet "ptuh".
     spit: {
         duration: 0.16,

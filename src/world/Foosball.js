@@ -154,19 +154,22 @@ export class Foosball {
         this.ball.raycast = () => {};
         group.add(this.ball);
 
-        // Scoreboard above the middle (a sprite, readable from both sides).
+        // The score, printed on the outside of both long side walls (nothing
+        // floats over the table).
         this.scoreCanvas = document.createElement('canvas');
         this.scoreCanvas.width = 512;
-        this.scoreCanvas.height = 128;
+        this.scoreCanvas.height = 96;
         this.scoreTexture = new THREE.CanvasTexture(this.scoreCanvas);
         this.scoreTexture.colorSpace = THREE.SRGBColorSpace;
-        const board = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.scoreTexture }));
-        // High enough to stay out of the players' view of the pitch.
-        board.scale.set(1.4, 0.35, 1);
-        board.position.set(0, FIELD_Y + 1.55, 0);
-        board.raycast = () => {};
-        group.add(board);
-        this.setScoreText('FUTBOLÍN · F para jugar');
+        const scoreMaterial = new THREE.MeshBasicMaterial({ map: this.scoreTexture });
+        [1, -1].forEach(side => {
+            const board = new THREE.Mesh(new THREE.PlaneGeometry(0.9, WALL_HEIGHT * 0.8), scoreMaterial);
+            board.position.set(0, FIELD_Y + WALL_HEIGHT / 2, side * (width / 2 + 0.061));
+            board.rotation.y = side > 0 ? 0 : Math.PI;
+            board.raycast = () => {};
+            group.add(board);
+        });
+        this.setScoreText('🔴 0 - 0 🔵');
 
         parts.forEach(mesh => {
             mesh.userData.originalMaterial = mesh.material;
@@ -252,14 +255,14 @@ export class Foosball {
         if (text === this.scoreText) return;
         this.scoreText = text;
         const ctx = this.scoreCanvas.getContext('2d');
-        ctx.clearRect(0, 0, 512, 128);
-        ctx.fillStyle = 'rgba(10, 10, 10, 0.85)';
-        ctx.fillRect(0, 0, 512, 128);
+        const { width, height } = this.scoreCanvas;
+        ctx.fillStyle = '#1b1b1b';
+        ctx.fillRect(0, 0, width, height);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 54px "Segoe UI", sans-serif';
+        ctx.font = 'bold 56px "Segoe UI", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(text, 256, 66, 490);
+        ctx.fillText(text, width / 2, height / 2 + 4, width - 16);
         this.scoreTexture.needsUpdate = true;
     }
 }

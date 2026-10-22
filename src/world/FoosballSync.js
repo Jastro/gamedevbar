@@ -277,7 +277,7 @@ export class FoosballSync {
             case 'play': return `🔴 ${red} - ${blue} 🔵`;
             case 'goal': return `¡GOL! 🔴 ${red} - ${blue} 🔵`;
             case 'over': return `🏆 Gana ${red > blue ? TEAM_NAMES[0] : TEAM_NAMES[1]}`;
-            default: return 'FUTBOLÍN · F para jugar';
+            default: return `🔴 ${red} - ${blue} 🔵`;
         }
     }
 }

@@ -115,13 +115,15 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       for it, in the browser console: `Object.assign(game.weather.state, { code: 95 })` (storm; 61 rain,
       73 snow, 45 fog, 0 clear). Rain sound volume outside/inside, thunder volume, snow look.
 - [ ] **Tragaperras** (left wall). F pulls the lever: do the reels, sounds and jingles feel like a
-      tragaperras? Are the video-game memes (all your base, barrel roll, YOU DIED, take this, 1UP, cake,
+      tragaperras? Are the video-game memes (Leeroy Jenkins, barrel roll, YOU DIED, take this, 1UP, cake,
       press F, GG EZ, WASTED) readable from a step back, and funny enough? Too stingy or too
       generous (~88%)? A friend nearby sees the same spin.
 - [ ] **Futbolín** (left side of the bar). With a friend, one on each long side, F: the camera view
       from your side, W/S to slide the rods, Space/click to kick. Is the ball speed, kick strength and rod
       speed fun (`server/features/foosball.js` top, `INPUT_SPEED` in `FoosballSync.js`)? Does it feel laggy
       over the internet? Try 2 vs 2 (back/front split), practice alone, a goal and a full match to 5.
+- [ ] **Powder table** (bathroom, corner right of the mirror). F → Esnifar: the sniff + power-up sound,
+      the lean-in, the line gone for 45 s for everyone. Is the power-up loud enough / too long?
 - [ ] **Right-click menu and animations.** Right click (no drag): Emojis / Animaciones. Try every
       animation on several characters (and sizes) with a friend watching: do they read as what they are
       (sexy dance, push-ups, paja, beso, escupir, animar, brindar)? Too subtle / too much? Walking stops

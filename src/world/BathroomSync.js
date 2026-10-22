@@ -65,7 +65,9 @@ export class BathroomSync {
         network.on('bathroomRefused', (data) => {
             const message = data.reason === 'latched'
                 ? '🔒 Está cerrado por dentro.'
-                : '🚽 Está ocupado, espera tu turno.';
+                : data.reason === 'empty'
+                    ? '👃 No queda nada. Vuelve en un rato.'
+                    : '🚽 Está ocupado, espera tu turno.';
             this.game.ui.chat?.addMessage({ type: 'system', message });
         });
         // Getting up from the toilet (WASD) frees it.
@@ -141,6 +143,14 @@ export class BathroomSync {
         this.send('airFreshener', bathroom);
     }
 
+    snort(bathroom) {
+        if (!bathroom.hasPowder()) {
+            this.game.ui.chat?.addMessage({ type: 'system', message: '👃 No queda nada. Vuelve en un rato.' });
+            return;
+        }
+        this.send('powderSnort', bathroom);
+    }
+
     // --- Server events -----------------------------------------------------
 
     handleEvent({ roomId, kind, userId }) {
@@ -149,6 +159,11 @@ export class BathroomSync {
         bathroom.playEvent(kind, this.game.environment.audioListener);
         const player = this.game.players.localPlayer;
         if (userId !== this.localId || !player) return;
+        // Our line: lean in (everyone sees it through the gesture relay).
+        if (kind === 'snort') {
+            this.game.gestureSync.play('snort');
+            return;
+        }
         // Our own toilet visit: sit down (poo) or stand facing the bowl (pee),
         // only if we're still in there.
         if ((kind === 'pee' || kind === 'poo') && bathroom.containsPoint(player.position)) {

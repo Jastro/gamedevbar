@@ -14,7 +14,7 @@ const PAIR = 18;               // any pair: the bet back and a bit
 // Rarer symbols pay more; with PAIR the machine returns ~88% of what's bet.
 // Keep ids in sync with SYMBOLS in SlotMachine.js.
 const SYMBOLS = [
-    { id: 'allyourbase', weight: 22, triple: 60 },  // All your base are belong to us
+    { id: 'leeroy', weight: 22, triple: 60 },       // LEEROY JENKINS (at least I have chicken)
     { id: 'barrelroll', weight: 20, triple: 80 },   // Do a barrel roll!
     { id: 'youdied', weight: 14, triple: -20 },     // YOU DIED: three take 20 more
     { id: 'takethis', weight: 14, triple: 120 },    // It's dangerous to go alone!

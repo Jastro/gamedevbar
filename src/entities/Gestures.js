@@ -11,10 +11,18 @@ import { playSynth, playTones } from '../audio/synth';
 const FADE = 0.25; // s
 const BONES = ['CORE', 'Body', 'Head', 'HandL', 'HandR'];
 
-// pose(t) → { core: {pos, rot}, body: {rot}, head: {rot}, handL: {pos, rot?}, handR: {pos, rot?}, root: {pos, rot} }
+// pose(t) → { core: {pos, rot}, body: {rot}, head: {rot}, handL/handR: {pos, aim?}, root: {pos, rot} }
 // pos are avatar-space points (hands) or offsets (core, root); rot are
 // avatar-space Euler angles [x, y, z] added on top of the animation.
+// aim turns a hand: { fingers, thumb, amount } are the avatar-space directions
+// the fingers and the thumb should point (at rest the fingers hang down), and
+// how much (0..1). handR.item keeps what it holds upright, tilted by `tilt`
+// (radians about the avatar's x axis: negative tips the top toward the face).
 const wave = (t, hz, phase = 0) => Math.sin(t * hz * Math.PI * 2 + phase);
+const step = THREE.MathUtils.smoothstep;
+// Hands up, palms forward: fingers up, thumbs toward the middle.
+const UP_LEFT = { fingers: [0, 1, 0], thumb: [1, 0, 0] };
+const UP_RIGHT = { fingers: [0, 1, 0], thumb: [-1, 0, 0] };
 
 export const GESTURES = {
     dance: {
@@ -22,11 +30,15 @@ export const GESTURES = {
         pose(t) {
             const sway = wave(t, 0.8);
             const slide = (offset) => 0.95 - 1.35 * (0.5 + 0.5 * wave(t, 0.4, offset)); // hands down the body
+            const yL = slide(0);
+            const yR = slide(Math.PI);
+            // Fingers up while the hands are high, back to hanging as they reach the hips.
+            const up = (y) => step(y, -0.4, 0.4);
             return {
                 core: { pos: [0.1 * sway, 0.05 * Math.abs(wave(t, 1.6)), 0], rot: [0, 0.35 * sway, 0.12 * sway] },
                 head: { rot: [0.05, -0.2 * sway, -0.15 * sway] },
-                handL: { pos: [-0.45 - 0.05 * sway, slide(0), 0.2] },
-                handR: { pos: [0.45 - 0.05 * sway, slide(Math.PI), 0.2] }
+                handL: { pos: [-0.45 - 0.05 * sway, yL, 0.2], aim: { ...UP_LEFT, amount: up(yL) } },
+                handR: { pos: [0.45 - 0.05 * sway, yR, 0.2], aim: { ...UP_RIGHT, amount: up(yR) } }
             };
         }
     },
@@ -34,11 +46,12 @@ export const GESTURES = {
         label: 'Flexiones', icon: '💪', duration: 10, loop: true, standing: true,
         pose(t) {
             const up = 0.5 + 0.5 * wave(t, 0.7);
+            // Flat on the floor, fingers forward, thumbs in.
             return {
                 // Face down along +z, lifted onto the hands; the whole body goes up and down.
                 root: { pos: [0, 0.62 + 0.22 * up, -1.0], rot: [Math.PI / 2 - 0.12, 0, 0] },
-                handL: { pos: [-0.38, -0.96, 0.15] },
-                handR: { pos: [0.38, -0.96, 0.15] }
+                handL: { pos: [-0.38, -0.86, 0.2], aim: { fingers: [0, 0, 1], thumb: [1, 0, 0], amount: 1 } },
+                handR: { pos: [0.38, -0.86, 0.2], aim: { fingers: [0, 0, 1], thumb: [-1, 0, 0], amount: 1 } }
             };
         }
     },
@@ -46,14 +59,17 @@ export const GESTURES = {
         label: 'Paja', icon: '✊', duration: 4.2,
         pose(t) {
             // Faster and faster, then the finish (and a sigh of relief).
-            const done = THREE.MathUtils.smoothstep(t, 3.2, 3.5);
+            const done = step(t, 3.2, 3.5);
             const stroke = wave(t, 2.6 + t * 0.6) * (1 - done);
             return {
                 core: { pos: [0, 0, 0], rot: [0.08 - 0.12 * done, 0, 0] },
                 head: { rot: [-0.3 - 0.05 * wave(t, 1.5) - 0.2 * done, 0, 0] },
-                // In front of the belly (bulky characters reach ~0.6 forward),
-                // a sideways fist tilting with each stroke.
-                handR: { pos: [0.06, -0.62 + 0.08 * stroke, 0.66], rot: [0.35 * stroke, 0, 1.4] },
+                // In front of the belly (bulky characters reach ~0.6 forward): a fist
+                // gripping something upright, thumb on top, rocking with each stroke.
+                handR: {
+                    pos: [0.06, -0.62 + 0.08 * stroke, 0.66],
+                    aim: { fingers: [-0.7, 0.15 * stroke, -0.7], thumb: [0, 1, 0], amount: 1 }
+                },
                 handL: { pos: [-0.42, -0.5, 0.05] }
             };
         },
@@ -62,15 +78,17 @@ export const GESTURES = {
     kiss: {
         label: 'Beso', icon: '😘', duration: 2.2,
         pose(t) {
-            const toMouth = THREE.MathUtils.smoothstep(t, 0, 0.6) * (1 - THREE.MathUtils.smoothstep(t, 0.8, 1.2));
-            const blow = THREE.MathUtils.smoothstep(t, 0.8, 1.2) * (1 - THREE.MathUtils.smoothstep(t, 1.6, 2.1));
+            const toMouth = step(t, 0, 0.6) * (1 - step(t, 0.8, 1.2));
+            const blow = step(t, 0.8, 1.2) * (1 - step(t, 1.6, 2.1));
             const hand = new THREE.Vector3(0.4, -0.52, 0)
                 .lerp(new THREE.Vector3(0.06, 0.2, 0.74), toMouth)
                 .lerp(new THREE.Vector3(0.25, 0.45, 1.1), blow);
+            // Fingertips up at the lips (palm toward the face), then the hand opens
+            // forward, palm out, sending it.
+            const fingers = new THREE.Vector3(0, 1, 0).lerp(new THREE.Vector3(0, 0.6, 1), blow / Math.max(0.001, toMouth + blow));
             return {
                 head: { rot: [0.15 * toMouth - 0.1 * blow, 0, 0] },
-                // Fingers to the lips, then the palm flips out toward everyone.
-                handR: { pos: hand.toArray(), rot: [-1.3 * toMouth + 0.9 * blow, 0, -0.4 * toMouth + 0.3 * blow] }
+                handR: { pos: hand.toArray(), aim: { fingers: fingers.toArray(), thumb: [-1, 0, 0], amount: Math.max(toMouth, blow) } }
             };
         },
         effect: { at: 0.95, kind: 'hearts' }
@@ -78,9 +96,9 @@ export const GESTURES = {
     spit: {
         label: 'Escupir', icon: '💦', duration: 1.8,
         pose(t) {
-            const back = THREE.MathUtils.smoothstep(t, 0, 0.55);
-            const snap = THREE.MathUtils.smoothstep(t, 0.55, 0.75);
-            const lean = -0.35 * back * (1 - snap) + 0.3 * snap * (1 - THREE.MathUtils.smoothstep(t, 1.1, 1.6));
+            const back = step(t, 0, 0.55);
+            const snap = step(t, 0.55, 0.75);
+            const lean = -0.35 * back * (1 - snap) + 0.3 * snap * (1 - step(t, 1.1, 1.6));
             return {
                 core: { pos: [0, 0, 0], rot: [lean * 0.4, 0, 0] },
                 head: { rot: [lean, 0, 0] }
@@ -94,8 +112,8 @@ export const GESTURES = {
             return {
                 core: { pos: [0, 0.08 * Math.abs(wave(t, 1.5)), 0], rot: [0, 0, 0] },
                 head: { rot: [-0.15, 0, 0] },
-                handL: { pos: [-0.55, 1.0 + 0.18 * wave(t, 1.5), 0.15] },
-                handR: { pos: [0.55, 1.0 + 0.18 * wave(t, 1.5, Math.PI), 0.15] }
+                handL: { pos: [-0.55, 1.0 + 0.18 * wave(t, 1.5), 0.15], aim: { ...UP_LEFT, amount: 1 } },
+                handR: { pos: [0.55, 1.0 + 0.18 * wave(t, 1.5, Math.PI), 0.15], aim: { ...UP_RIGHT, amount: 1 } }
             };
         },
         effect: { at: 0.2, kind: 'cheer' }
@@ -103,24 +121,43 @@ export const GESTURES = {
     toast: {
         label: 'Brindar', icon: '🍻', duration: 2.8, item: 'beer',
         pose(t) {
-            const raise = THREE.MathUtils.smoothstep(t, 0, 0.5);
-            const clink = THREE.MathUtils.smoothstep(t, 0.6, 0.8) * (1 - THREE.MathUtils.smoothstep(t, 0.9, 1.2));
-            const drink = THREE.MathUtils.smoothstep(t, 1.4, 1.8) * (1 - THREE.MathUtils.smoothstep(t, 2.3, 2.7));
+            const raise = step(t, 0, 0.5) * (1 - step(t, 2.4, 2.8));
+            const clink = step(t, 0.6, 0.8) * (1 - step(t, 0.9, 1.2));
+            const drink = step(t, 1.4, 1.8) * (1 - step(t, 2.3, 2.7));
             const hand = new THREE.Vector3(0.4, -0.52, 0)
-                .lerp(new THREE.Vector3(0.3, 0.75, 0.55), raise)
+                .lerp(new THREE.Vector3(0.3, 0.75, 0.55), step(t, 0, 0.5))
                 .add(new THREE.Vector3(-0.08, 0.05, 0.3).multiplyScalar(clink))
                 .lerp(new THREE.Vector3(0.08, 0.2, 0.74), drink);
             return {
                 head: { rot: [-0.25 * drink, 0, 0] },
-                // Raised a little tilted, a forward clink, then tipped toward the mouth.
-                handR: { pos: hand.toArray(), rot: [0.35 * clink - 1.3 * drink, 0, -0.2 * raise] }
+                // Wrapped around the glass: fingers forward-in, thumb up; the glass
+                // stays upright, leans into the clink and tips into the mouth.
+                handR: {
+                    pos: hand.toArray(),
+                    aim: { fingers: [-0.5, 0, 0.85], thumb: [0, 1, 0], amount: Math.max(raise, drink) },
+                    item: { tilt: 0.25 * clink - 1.25 * drink }
+                }
             };
         },
         effect: { at: 0.8, kind: 'clink' }
+    },
+    // Not in the menu: the bathroom's "Esnifar" (BathroomSync).
+    snort: {
+        label: 'Esnifar', icon: '👃', duration: 1.6, hidden: true,
+        pose(t) {
+            const down = step(t, 0, 0.35) * (1 - step(t, 0.9, 1.3));
+            const jolt = step(t, 0.9, 1.0) * (1 - step(t, 1.0, 1.5));
+            return {
+                core: { pos: [0, -0.05 * down, 0.05 * down], rot: [0.35 * down - 0.15 * jolt, 0, 0] },
+                head: { rot: [0.35 * down - 0.35 * jolt, 0, 0] },
+                handR: { pos: [0.06, 0.05, 0.72], aim: { ...UP_RIGHT, amount: 1 } }
+            };
+        }
     }
 };
 
-export const GESTURE_IDS = Object.keys(GESTURES);
+// The right-click menu's (the hidden ones are played by other actions).
+export const GESTURE_IDS = Object.keys(GESTURES).filter(id => !GESTURES[id].hidden);
 
 // --- Applying ------------------------------------------------------------------
 
@@ -171,6 +208,59 @@ function shiftBone(player, bone, [x, y, z], weight) {
     const world = bone.getWorldPosition(new THREE.Vector3()).add(to.sub(from));
     bone.position.copy(bone.parent.worldToLocal(world));
     bone.updateMatrixWorld(true);
+}
+
+// Turns a hand so its fingers (and thumb) point the given avatar-space ways,
+// measured from the rig's own finger bones, weighted.
+function aimHand(player, hand, side, { fingers, thumb, amount = 1 }, weight) {
+    const tip = hand.getObjectByName(`IndexUpper${side}`);
+    const thumbTip = hand.getObjectByName(`ThumbUpper${side}`);
+    const blend = amount * weight;
+    if (!tip || !thumbTip || blend <= 0) return;
+    const origin = hand.getWorldPosition(new THREE.Vector3());
+    const currentFingers = tip.getWorldPosition(new THREE.Vector3()).sub(origin).normalize();
+    const currentThumb = thumbTip.getWorldPosition(new THREE.Vector3()).sub(origin);
+    player.mesh.getWorldQuaternion(scratch.meshQuaternion);
+    const targetFingers = new THREE.Vector3(...fingers).normalize().applyQuaternion(scratch.meshQuaternion);
+    const targetThumb = new THREE.Vector3(...thumb).applyQuaternion(scratch.meshQuaternion);
+    const basis = (f, th) => {
+        const side = th.clone().sub(f.clone().multiplyScalar(th.dot(f))).normalize();
+        return new THREE.Matrix4().makeBasis(f, side, new THREE.Vector3().crossVectors(f, side));
+    };
+    const from = new THREE.Quaternion().setFromRotationMatrix(basis(currentFingers, currentThumb));
+    const to = new THREE.Quaternion().setFromRotationMatrix(basis(targetFingers, targetThumb));
+    const turn = to.multiply(from.invert());
+    const partial = new THREE.Quaternion().slerp(turn, blend);
+    hand.getWorldQuaternion(scratch.quaternion);
+    hand.parent.getWorldQuaternion(scratch.parentQuaternion);
+    hand.quaternion.copy(scratch.parentQuaternion.invert().multiply(partial.multiply(scratch.quaternion)));
+    hand.updateMatrixWorld(true);
+}
+
+// What the hand holds (an accessory): keep it as upright as it was before
+// the hand turned, plus a tilt about the avatar's x axis.
+function keepItemUpright(player, hand, uprightWorld, tilt, weight) {
+    const item = hand.children.find(child => child.userData.isAccessory);
+    if (!item || !uprightWorld) return;
+    item.userData.gestureRest ??= item.quaternion.clone();
+    player.mesh.getWorldQuaternion(scratch.meshQuaternion);
+    scratch.euler.set(tilt * weight, 0, 0);
+    scratch.delta.setFromEuler(scratch.euler);
+    const world = scratch.meshQuaternion.clone().multiply(scratch.delta)
+        .multiply(scratch.meshQuaternion.clone().invert()).multiply(uprightWorld);
+    hand.getWorldQuaternion(scratch.quaternion);
+    item.quaternion.copy(scratch.quaternion.invert().multiply(world));
+}
+
+// Puts held items back as their anchors had them.
+function releaseItems(player) {
+    ['HandL', 'HandR'].forEach(name => {
+        player.model?.getObjectByName(name)?.children.forEach(child => {
+            if (!child.userData.gestureRest) return;
+            child.quaternion.copy(child.userData.gestureRest);
+            delete child.userData.gestureRest;
+        });
+    });
 }
 
 // Bones the animation clip doesn't key keep whatever we set last frame, so
@@ -224,6 +314,7 @@ export function applyGesture(player, deltaTime) {
             model.position.copy(gesture.rest.position);
             model.rotation.copy(gesture.rest.rotation);
             restoreBones(gesture);
+            releaseItems(player);
             return false;
         }
     }
@@ -255,10 +346,15 @@ export function applyGesture(player, deltaTime) {
     if (head && pose.head) rotateBone(player, head, pose.head.rot, weight);
     const handL = bone('HandL');
     const handR = bone('HandR');
-    [[handL, pose.handL], [handR, pose.handR]].forEach(([hand, target]) => {
+    [[handL, pose.handL, 'L'], [handR, pose.handR, 'R']].forEach(([hand, target, side]) => {
         if (!hand || !target) return;
+        // How the held item sits before the hand turns: that's "upright".
+        const held = hand.children.find(child => child.userData.isAccessory);
+        if (held?.userData.gestureRest) held.quaternion.copy(held.userData.gestureRest);
+        const upright = target.item && held ? held.getWorldQuaternion(new THREE.Quaternion()) : null;
         placeBone(player, hand, target.pos, weight);
-        if (target.rot) rotateBone(player, hand, target.rot, weight);
+        if (target.aim) aimHand(player, hand, side, target.aim, weight);
+        if (target.item) keepItemUpright(player, hand, upright, target.item.tilt ?? 0, weight);
     });
     rememberBones(gesture, bones);
 

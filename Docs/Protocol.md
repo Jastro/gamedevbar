@@ -43,8 +43,9 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `foosballLeave` | `roomId` | frees your slot → `foosballTable` |
 | `foosballRods` | `roomId`, `offsets` (`{ rodIndex: z }`, only your rods count; clamped) | ≥ 30 ms apart; the server slides those rods there |
 | `foosballKick` | `roomId` | ≥ 250 ms apart; your rods kick for 0.2 s |
-| `playerGesture` | `gesture` (`dance`, `pushups`, `jerk`, `kiss`, `spit`, `cheer`, `toast`) | joined players, ≥ 400 ms apart → `playerGesture {userId, gesture}` to others |
+| `playerGesture` | `gesture` (`dance`, `pushups`, `jerk`, `kiss`, `spit`, `cheer`, `toast`, `snort`) | joined players, ≥ 400 ms apart → `playerGesture {userId, gesture}` to others |
 | `playerGestureStop` | – | → `playerGestureStop {userId}` to others |
+| `powderSnort` | `roomId` | 3 s cooldown; line gone → `bathroomRefused {reason: 'empty'}`; else empty it for 45 s → `bathroomEvent snort` + `bathroomState` |
 | `lightsToggle` | `roomId`, `light` (`normal` \| `low` \| `disco`) | flip it for that room → `lightsState` to all |
 | `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, always with `peerId`; ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player; an offer that can't be relayed gets `{refused, peerId}` back (as if from the target) |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
@@ -78,9 +79,9 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `carState` | `slots` (5 × playerId or null), `countdownEndsAt` (server ms or null), `riding` | `CarSync`: sit down when listed, countdown overlay; also the join snapshot |
 | `carSmoke` | `occupants` (playerIds) | smoke + hiss for all; the occupants fade out and land at random spots. Seats are already cleared; `riding` stays true 6 s |
 | `carDenied` | `reason` | chat line |
-| `bathroomState` | `roomId`, `state` (`{ doorOpen, latchedBy, lightOn, mess, stinkUntil, occupant, occupantKind }`; `occupantKind` 'poo' = seated pose) | `Bathroom.applyState` |
+| `bathroomState` | `roomId`, `state` (`{ doorOpen, latchedBy, lightOn, mess, stinkUntil, occupant, occupantKind, powderEmptyUntil }`; `occupantKind` 'poo' = seated pose) | `Bathroom.applyState` |
 | `bathroomStates` | `rooms: { roomId: state }`, `dirty` (userIds) | join snapshot |
-| `bathroomEvent` | `roomId`, `kind` (`pee`, `poo`, `flush`, `wash`, `spray`), `userId` | sounds/particles; the sender sits (poo) or stands at the bowl (pee) |
+| `bathroomEvent` | `roomId`, `kind` (`pee`, `poo`, `flush`, `wash`, `spray`, `snort`), `userId` | sounds/particles; the sender sits (poo) or stands at the bowl (pee) |
 | `hygiene` | `userId`, `dirty` | shame on/off (cleared by washing or after 10 min) |
 | `bathroomRefused` | `roomId`, `reason` | chat line |
 | `drinkState` | `userId`, `drink` (id or `null`), `sips`, `drunk` (level at `at`), `at` (server ms) | `DrinkSync`: held item, tag, local effects; the level now is `drunk - (now - at) / 120000` |

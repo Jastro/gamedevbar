@@ -16,7 +16,7 @@ export const BET = 10;
 
 // Keep ids in sync with server/features/slots.js.
 export const SYMBOLS = {
-    allyourbase: { emoji: '👾', caption: 'ALL YOUR BASE', tile: ['#2b2bd9', '#120a5c'] },
+    leeroy: { emoji: '🐔', caption: 'LEEROY JENKINS', tile: ['#ff8a00', '#9c3d00'] },
     barrelroll: { emoji: '🛩️', caption: 'DO A BARREL ROLL', tile: ['#2fa8ff', '#0b4f8a'] },
     youdied: { emoji: '💀', caption: 'YOU DIED', tile: ['#4a0000', '#0d0000'], captionColor: '#ff2a2a' },
     takethis: { emoji: '🗡️', caption: 'TAKE THIS', tile: ['#2e9e3a', '#0f4a16'] },
@@ -33,7 +33,7 @@ const TRIPLE_LINES = {
     oneup: '1UP 1UP 1UP',
     takethis: "IT'S DANGEROUS TO GO ALONE!",
     barrelroll: 'DO A BARREL ROLL!',
-    allyourbase: 'ALL YOUR BASE ARE BELONG TO US',
+    leeroy: 'LEEEEEROY JENKINS!!!',
     cake: 'THE CAKE IS A LIE',
     youdied: 'YOU DIED'
 };

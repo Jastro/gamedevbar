@@ -88,6 +88,10 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   - The other sounds are synthesized noise (`src/audio/synth.js`), so there are no new files.
 - **Sink:** washes your hands. The mirror above it is a `Reflector`, rendered only while you're inside.
 - **Air freshener:** a spray hiss and particles; the stink is gone.
+- **Powder table:** a small table in the corner right of the mirror (as you face it) with a mirror tray, a
+  white line and a rolled-up note. F → "Esnifar": a sniff and a video-game power-up for everyone near, you
+  lean in (the `snort` gesture), and the line is gone for everyone for 45 s (`powderEmptyUntil`).
+- **Toilet paper** on a holder on the side wall next to the toilet.
 - **Light:** the cubicle's own lamp and switch. While you're inside, `RoomLighting` follows that switch
   instead of the bar's (on = normal, off = dark, no disco).
 - **Dirty hands:** using the toilet dirties them. Outside any bathroom, a dirty-handed player gets rising
@@ -194,7 +198,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   click pulls the lever; one spin at a time per machine (2.6 s), and everyone sees the same spin: the
   reels stop one by one on the server's result.
 - **Symbols** are drawn in code, no images: emoji on a loud gradient tile with a meme caption (Impact,
-  white with a black outline): 👾 ALL YOUR BASE, 🛩️ DO A BARREL ROLL, 💀 YOU DIED, 🗡️ TAKE THIS (it's
+  white with a black outline): 🐔 LEEROY JENKINS, 🛩️ DO A BARREL ROLL, 💀 YOU DIED, 🗡️ TAKE THIS (it's
   dangerous to go alone), 🍄 1UP, 🎂 IS A LIE, a keyboard F (PRESS F) and 🏆 GG EZ (jackpot). The
   screen shouts the result: the full meme line on three of a kind, "COMBO x2" on a pair, a red
   "WASTED" on nothing. The sign says TRAGAPERRAS.
@@ -218,7 +222,8 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   a new match). A kick sweeps the foot 0.16 along the table; a still ball gets nudged after 2.5 s.
 - **Client** (`FoosballSync`): your rods move at once from W/S (↑/↓), others' follow the snapshots, the
   ball is carried on between snapshots and eased back. While playing the camera looks down from your side
-  and your own avatar is hidden (others see it). Scoreboard sprite above the table; kick/goal sounds.
+  and your own avatar is hidden (others see it). The score is printed on both long side walls (nothing
+  floats over the table); kick/goal sounds.
 
 ## Right-click menu and gestures
 
@@ -234,8 +239,11 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
     juicy finish: droplets from the hand and a squelch), 😘 Beso (hand to the mouth,
     hearts), 💦 Escupir (head back, then droplets that splat on the floor), 🙌 Animar (hands up, jingle),
     🍻 Brindar (raise, clink sound, sip; lends you a beer if your hand is empty).
-  - Hands can rotate too (`handR.rot`): the kiss turns the fingers to the lips then flips the palm out,
-    the toast tilts the glass into the mouth. Spitting has a short "ptuh" (`spit` recipe).
+  - Hands are aimed, not just moved (`aim: { fingers, thumb }`, avatar-space directions; at rest the
+    fingers hang down): up with palms forward when cheering or dancing high, flat and forward on the
+    floor for push-ups, at the lips for the kiss, a thumb-up grip for the paja and the toast. What the
+    hand holds stays upright (`item.tilt` tips the glass into the mouth). Spitting has a short "ptuh".
+  - `snort` is a hidden gesture (not in the menu) played by the bathroom's "Esnifar".
   - Walking cuts a gesture short, for everyone.
 - **Sync** (`GestureSync`, `server/features/gestures.js`): `playerGesture` / `playerGestureStop` relayed
   to everyone else; not replayed for late joiners.

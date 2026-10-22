@@ -9,11 +9,12 @@ const DIRTY_HANDS_MS = 10 * 60 * 1000;
 // forgotten after this.
 const OCCUPANT_TIMEOUT_MS = 2 * 60 * 1000;
 // Per user and action, so mashing a button can't pile up sounds for everyone.
-const COOLDOWN_MS = { door: 300, latch: 300, light: 300, toilet: 5000, flush: 2500, wash: 2000, spray: 2000 };
+const COOLDOWN_MS = { door: 300, latch: 300, light: 300, toilet: 5000, flush: 2500, wash: 2000, spray: 2000, snort: 3000 };
+const POWDER_REFILL_MS = 45 * 1000; // the line on the corner table comes back after this
 
 function freshState() {
     // occupantKind: 'pee' (standing at the bowl) or 'poo' (seated).
-    return { doorOpen: false, latchedBy: null, lightOn: true, mess: null, stinkUntil: 0, occupant: null, occupantKind: null, occupiedAt: 0 };
+    return { doorOpen: false, latchedBy: null, lightOn: true, mess: null, stinkUntil: 0, occupant: null, occupantKind: null, occupiedAt: 0, powderEmptyUntil: 0 };
 }
 
 function registerBathroom(hub) {
@@ -142,6 +143,19 @@ function registerBathroom(hub) {
         if (!validRoom(roomId) || !ready(user, 'spray')) return;
         stateOf(roomId).stinkUntil = 0;
         event(roomId, 'spray', user.id);
+        publish(roomId);
+    });
+
+    // The powder line on the corner table: gone for everyone until it refills.
+    hub.on('powderSnort', ({ ws, user }, { roomId }) => {
+        if (!validRoom(roomId) || !ready(user, 'snort')) return;
+        const state = stateOf(roomId);
+        if (Date.now() < state.powderEmptyUntil) {
+            hub.send(ws, { type: 'bathroomRefused', roomId, reason: 'empty' });
+            return;
+        }
+        state.powderEmptyUntil = Date.now() + POWDER_REFILL_MS;
+        event(roomId, 'snort', user.id);
         publish(roomId);
     });
 

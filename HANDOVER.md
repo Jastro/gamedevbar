@@ -18,6 +18,19 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 Second round of fixes:
+  - **Gesture hands** are aimed by finger/thumb direction from the rig's finger bones (they hung
+    fingers-down when raised): cheer and dance palms forward, push-ups flat on the floor (lifted, they
+    were sinking), kiss at the lips, paja thumb-up grip, toast grip with the glass kept upright and tipped
+    to drink. **Verified:** measured finger directions match each target, the raised glass points up
+    (0.99) and tips toward the face to drink; screenshots of cheer, toast (raised and sip), push-ups.
+  - **Futbolín:** no floating scoreboard; the score is printed on both long sides (screenshot).
+  - **Tragaperras:** 🐔 LEEROY JENKINS replaces "All your base".
+  - **👤 panel** on the right (from 800 px wide; measured 24 px from the right edge).
+  - **Bathroom:** a small table in the corner with a powder line, "Esnifar" (sniff + power-up for
+    everyone, a lean-in gesture, the line gone 45 s for everyone); the toilet roll was floating, now on a
+    wall holder. **Verified with two clients:** hint "Esnifar", line gone on both, the other gets "No queda
+    nada" and the "(no queda nada)" hint; screenshots of the corner.
 - 2026-10-23 Borja's round of fixes:
   - **Seated pose on every seat** (stools, chairs, car), shown to everyone (`userSat` carries the pose).
   - **Gestures:** hands rotate (kiss: fingers to the lips then palm out; toast: glass tipped into the
@@ -133,6 +146,9 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   branches or PRs. Every push deploys, so only finished, built, checked slices get pushed.
 
 ## Open questions
+- More characters: the six models share one rig (CORE/Body/Head + floating hands/feet; materials CryptoBro,
+  ChickenGuy, Officer, HalloweenBits, GenericFemale, SantaClaus; clips Grounded/Idle/Jump/Sprint/Walk) but
+  their source pack isn't recorded anywhere. Which pack (and license) are they from?
 - Carra's own Vircon32 games (BSD-3) are only on itch.io as zips: download them by hand to add them?
 - Should chat become per-room (or show which bar someone is in)?
 - Desarrollo's identity: different decoration, default music?

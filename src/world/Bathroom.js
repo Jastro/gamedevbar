@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Reflector } from 'three/examples/jsm/objects/Reflector';
-import { playSynth, playFile } from '../audio/synth';
+import { playSynth, playFile, playTones } from '../audio/synth';
 
 // A bar's bathroom: a cubicle in the front-left corner with a swinging door
 // (latch inside, Libre/Ocupado sign outside), toilet with flush, sink with a
@@ -19,6 +19,11 @@ const TOILET = { x: -14.3, z: 7.5 };
 const TOILET_SCALE = 1.25;
 const SINK = { x: -12.2, z: 9.62 };
 const FRESHENER = { x: -11.05, y: 1.3, z: 9.78 };
+// A little side table in the corner right of the mirror (as you face it),
+// with a line of powder: "Esnifar".
+const POWDER_TABLE = { x: -14.35, z: 9.4, height: 0.95 };
+// The toilet roll on its holder, on the side wall next to the toilet.
+const PAPER = { y: 0.85, z: TOILET.z + 0.75 };
 const SWITCH = { x: -10.4, y: 1.5, z: 5 + WALL_THICKNESS / 2 + 0.02 };
 const LAMP = { x: -12.5, y: 3.0, z: 7.5 };
 const LAMP_INTENSITY = 6;
@@ -96,12 +101,15 @@ export class Bathroom {
         this.createToilet();
         this.createSink();
         this.createFreshener();
+        this.createPowderTable();
         this.createLight();
         this.createStink();
         this.room.add(this.group);
         this.group.updateMatrixWorld(true);
         this.colliders.forEach(mesh => this.collisionManager.addCollider(mesh));
         this.doorCollider = this.collisionManager.addCollider(this.doorBlocker);
+        // You can't walk through the little table (it's no camera wall, though).
+        this.collisionManager.addCollider(this.powderBlocker);
         // The third-person camera stays out of the walls and under the ceiling.
         this.world?.cameraOccluders.push(...this.colliders, this.ceiling, this.lintel, this.doorPanel);
         this.applyState(this.state);
@@ -217,11 +225,16 @@ export class Bathroom {
         handle.userData = { type: 'toiletFlush', bathroom: this };
         toilet.add(handle);
 
-        // Toilet paper on the side wall.
+        // Toilet paper on a holder on the side wall (the room's wall, x -15).
+        const wallX = BATHROOM_BOUNDS.minX + 0.1;
+        this.group.add(box(0.03, 0.06, 0.2, chrome, wallX + 0.015, PAPER.y + 0.08, PAPER.z));
+        const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 8), chrome);
+        bar.rotation.x = Math.PI / 2;
+        bar.position.set(wallX + 0.1, PAPER.y, PAPER.z);
         const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 14), new THREE.MeshStandardMaterial({ color: 0xffffff }));
         roll.rotation.x = Math.PI / 2;
-        roll.position.set(TOILET.x + 0.1, 0.8, TOILET.z + 0.7);
-        this.group.add(roll);
+        roll.position.set(wallX + 0.1, PAPER.y, PAPER.z);
+        this.group.add(bar, roll);
 
         // Where you sit (number 2) and where you stand (number 1).
         // LocalPlayer.sitDown reads sitHeight / faceTarget (room-local).
@@ -275,6 +288,32 @@ export class Bathroom {
         hoverable(can);
         can.userData = { type: 'airFreshener', bathroom: this };
         this.group.add(can);
+    }
+
+    createPowderTable() {
+        const wood = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.6 });
+        const table = new THREE.Group();
+        table.position.set(POWDER_TABLE.x, 0, POWDER_TABLE.z);
+        const top = placed(new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 20), wood), 0, POWDER_TABLE.height, 0);
+        const leg = placed(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, POWDER_TABLE.height, 10), wood), 0, POWDER_TABLE.height / 2, 0);
+        const foot = placed(new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.03, 16), wood), 0, 0.015, 0);
+        // A small mirror tray, the line and a rolled-up banknote.
+        const tray = box(0.34, 0.012, 0.22, new THREE.MeshStandardMaterial({ color: 0x9fb4c0, metalness: 0.9, roughness: 0.05 }), 0, POWDER_TABLE.height + 0.026, 0);
+        this.powderLine = box(0.2, 0.012, 0.025, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }), 0, POWDER_TABLE.height + 0.038, 0.02);
+        const note = placed(new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.12, 8), new THREE.MeshStandardMaterial({ color: 0x7cb342 })), 0.05, POWDER_TABLE.height + 0.045, -0.06);
+        note.rotation.z = Math.PI / 2;
+        table.add(top, leg, foot, tray, this.powderLine, note);
+        hoverable(table);
+        table.userData = { type: 'powderTable', bathroom: this };
+        this.group.add(table);
+        this.powderBlocker = box(0.6, POWDER_TABLE.height, 0.6, new THREE.MeshBasicMaterial({ visible: false }), POWDER_TABLE.x, POWDER_TABLE.height / 2, POWDER_TABLE.z);
+        this.powderBlocker.raycast = () => {};
+        this.group.add(this.powderBlocker);
+    }
+
+    // Is there a line to take (it refills on the server's clock)?
+    hasPowder() {
+        return !this.stinkClock || this.stinkClock.now() >= (this.state.powderEmptyUntil ?? 0);
     }
 
     createLight() {
@@ -409,6 +448,12 @@ export class Bathroom {
         } else if (kind === 'spray') {
             playSynth(listener, this.group, at(FRESHENER.x, FRESHENER.y + 0.25, FRESHENER.z), 'spray');
             this.startSpray();
+        } else if (kind === 'snort') {
+            // A sniff, then a video-game power-up.
+            const table = at(POWDER_TABLE.x, POWDER_TABLE.height + 0.3, POWDER_TABLE.z);
+            playSynth(listener, this.group, table, 'sniff', 3);
+            const notes = [392, 523, 659, 784, 1047, 1319, 1568, 2093].map((frequency, i) => [frequency, 0.45 + i * 0.055, 0.09]);
+            playTones(listener, this.group, table, notes, 0.22, 4);
         }
     }
 
@@ -448,6 +493,7 @@ export class Bathroom {
         const dt = Math.min(deltaTime, 0.1);
         this.time += dt;
         this.stinkClock = serverClock;
+        this.powderLine.visible = this.hasPowder();
 
         // Door swing (inward).
         const target = this.state.doorOpen ? -Math.PI / 2 : 0;

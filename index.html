@@ -737,11 +737,12 @@
       touch-action: none;
     }
 
-    /* Wide screens: keep the panel at the side so your avatar stays in view
-       while you dress it. */
-    @media (min-width: 1100px) {
+    /* Wide enough screens: the panel on the right, so your avatar stays in view
+       while you dress it (the chat is on the left). */
+    @media (min-width: 800px) {
       #customize-panel {
-        left: 24px;
+        left: auto;
+        right: 24px;
         transform: translateY(-50%);
       }
     }

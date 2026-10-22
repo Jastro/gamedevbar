@@ -1,6 +1,7 @@
 // Right-click gestures (src/entities/Gestures.js): relayed to everyone else
 // so they see them; nothing is kept (late joiners don't see one in progress).
-const GESTURES = ['dance', 'pushups', 'jerk', 'kiss', 'spit', 'cheer', 'toast'];
+// 'snort' isn't in the menu: the bathroom's powder table plays it.
+const GESTURES = ['dance', 'pushups', 'jerk', 'kiss', 'spit', 'cheer', 'toast', 'snort'];
 const MIN_INTERVAL_MS = 400;
 
 function registerGestures(hub) {
