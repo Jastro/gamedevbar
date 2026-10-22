@@ -79,8 +79,11 @@ export class LocalPlayer extends Player {
         } else if (room && faceTarget) {
             const target = room.toWorld(faceTarget.x, this.position.y, faceTarget.z);
             this.rotation = Math.atan2(target.x - this.position.x, target.z - this.position.z);
-        } else if (room && seat.position.z < 0) {
-            const barPosition = room.toWorld(0, this.position.y, -3);
+        } else if (room && room.toLocal(seatPosition).z < 0) {
+            // Stools: straight at the counter (z = -3), not at its middle,
+            // which turned the outer stools sideways.
+            const local = room.toLocal(seatPosition);
+            const barPosition = room.toWorld(local.x, this.position.y, -3);
             const direction = barPosition.sub(this.position).normalize();
             this.rotation = Math.atan2(direction.x, direction.z);
         }

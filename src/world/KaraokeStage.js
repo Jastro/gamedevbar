@@ -54,10 +54,11 @@ export class KaraokeStage {
         base.position.y = 0.02;
         const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.7, 8), metal);
         pole.position.y = 0.85;
-        // Head tilted toward the audience (-x).
+        // Head tilted toward the singer, who stands on the wall side (+x)
+        // facing the room.
         const head = new THREE.Group();
-        head.position.set(-0.08, 1.72, 0);
-        head.rotation.z = Math.PI / 3;
+        head.position.set(0.08, 1.72, 0);
+        head.rotation.z = -Math.PI / 3;
         const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.025, 0.22, 10), metal);
         const grille = new THREE.Mesh(
             new THREE.SphereGeometry(0.055, 14, 10),

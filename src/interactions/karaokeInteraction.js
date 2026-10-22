@@ -6,6 +6,8 @@ export function createKaraokeInteraction(game) {
     return {
         type: 'karaokeMic',
         range: 2.5,
+        // Already on the stage: nothing to offer (F stays free).
+        canReach: (object, position) => !object.userData.stage.contains(position),
         use(object) {
             const { stage } = object.userData;
             const player = game.players.localPlayer;
@@ -22,9 +24,8 @@ export function createKaraokeInteraction(game) {
             player.stopMoving?.();
             game.ui.chat?.addMessage({ type: 'system', message: '🎤 ¡Al escenario! Tu voz llega a todo el bar (V para hablar). Pon la letra en el proyector.' });
         },
-        hint(object) {
-            const player = game.players.localPlayer;
-            return player && object.userData.stage.contains(player.position) ? 'Colocarte en el micro' : 'Subir al escenario';
+        hint() {
+            return 'Subir al escenario';
         }
     };
 }
