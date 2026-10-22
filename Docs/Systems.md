@@ -221,6 +221,12 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   - all off = almost dark;
   - disco = three colored point lights circling that bar's ceiling. They always exist (intensity 0
     when off), so the light count never changes and no material recompiles.
+- **Through open doors:** the ambient + directional light follow where you are, so other spaces get help:
+  - a bar you're not in has two door lights inside (room-local (0, 5.5, ±4)), following its switches,
+    on only while its front door is open (weaker by day), so from the street you see it lit;
+  - while you're in a bar, the street's own materials (ground, sidewalks, fences, lamp posts, car) are
+    dimmed to the sky's light (`RoomLighting.outdoorDim`), so the night street looks dark through the
+    door. Room walls are shared by both faces and aren't touched.
 
 ## Empty rooms
 

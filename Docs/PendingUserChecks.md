@@ -121,6 +121,9 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       from your side, W/S to slide the rods, Space/click to kick. Is the ball speed, kick strength and rod
       speed fun (`server/features/foosball.js` top, `INPUT_SPEED` in `FoosballSync.js`)? Does it feel laggy
       over the internet? Try 2 vs 2 (back/front split), practice alone, a goal and a full match to 5.
+- [ ] **Light through the door.** At night, from the street, open a bar's door: the inside should look
+      lit (and dark again when the door closes). From inside, the street through the open door should
+      look like night. Too bright or too dim (`DOOR_LIGHT_INTENSITY` in `RoomLighting.js`)?
 - [ ] **Bar counter and sign.** Jump onto the counter and walk along it. Is the "Gamedev MV" sign on the
       back wall (above the paintings) readable from the entrance?
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a

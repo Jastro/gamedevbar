@@ -123,6 +123,8 @@ export class Weather {
     createLamps(scene) {
         const pole = new THREE.MeshStandardMaterial({ color: 0x2f3337, metalness: 0.6, roughness: 0.5 });
         this.bulbMaterial = new THREE.MeshStandardMaterial({ color: 0x555555, emissive: 0xffd590, emissiveIntensity: 0 });
+        this.lampGroup = new THREE.Group(); // RoomLighting dims it with the street
+        scene.add(this.lampGroup);
         this.lampLights = LAMPS.map(({ x, z }) => {
             const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, LAMP_HEIGHT, 10), pole);
             post.position.set(x, LAMP_HEIGHT / 2, z);
@@ -130,7 +132,8 @@ export class Weather {
             head.position.set(x, LAMP_HEIGHT + 0.1, z);
             const light = new THREE.PointLight(0xffd590, 0, 18, 1);
             light.position.set(x, LAMP_HEIGHT, z);
-            scene.add(post, head, light);
+            this.lampGroup.add(post, head);
+            scene.add(light);
             post.updateMatrixWorld(true);
             this.game.world.collisionManager.addCollider(post);
             return light;

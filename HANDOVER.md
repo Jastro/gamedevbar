@@ -17,6 +17,11 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Light through open doors (plan `Docs/Plans to be done/2026-10-22-doors-light-local-weather-gestures-plan.md`):
+  a bar you're not in is lit by two door lights while its door is open; from inside, the street's
+  materials are dimmed to the sky's light. **Verified** at night: from the street the open doorway shows
+  a lit inside (Gamedev's door lights at 9, Desarrollo's at 0 with its door closed); from inside, the
+  street through the door is dark (dim 0.35); screenshots.
 - 2026-10-22 Futbolín:
   - **Table** on the left side of each bar; F on a long side joins that team, 2 per team (alone you have
     all 4 rods, partners split back/front). Practice alone, matches to 5 with countdown and goal pauses.

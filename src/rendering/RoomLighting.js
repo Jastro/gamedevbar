@@ -7,6 +7,10 @@ import { DEFAULT_LIGHTS } from '../world/LightSwitches';
 // the default). Disco is three colored point lights circling that bar's
 // ceiling. They always exist (intensity 0 when off), so flipping a switch
 // never changes the light count, which would recompile every material.
+// Because those two lights follow where you are, the other spaces need help
+// to look right through an open door: a bar you're not in gets two door
+// lights inside (its switches, only while its door is open), and while
+// you're inside, the street's own materials are dimmed to the sky's light.
 
 const LEVELS = {
     // Base light when only normal is on, or normal and low together.
@@ -23,6 +27,10 @@ const DISCO_RADIUS = { x: 8, z: 5 }; // room-local ellipse they circle
 const DISCO_SPEED = 0.8; // rad/s
 const DISCO_INTENSITY = 14;
 const DISCO_DISTANCE = 22;
+// Each bar's light seen from outside (room-local spots, intensity by switch).
+const DOOR_LIGHTS = [{ x: 0, y: 5.5, z: 4 }, { x: 0, y: 5.5, z: -4 }];
+const DOOR_LIGHT_INTENSITY = { normal: 9, low: 3, off: 0 };
+const DOOR_LIGHT_DISTANCE = 18;
 const LEVEL_COLORS = Object.fromEntries(Object.entries(LEVELS).map(([name, level]) => [name, new THREE.Color(level.ambientColor)]));
 const scratch = new THREE.Vector3();
 
@@ -34,6 +42,9 @@ export class RoomLighting {
         this.time = 0;
         this.disco = [];
         this.discoLevel = 0;
+        this.doorLights = new Map(); // roomId -> PointLight[]
+        this.outdoorMaterials = [];
+        this.outdoorDim = 1;
     }
 
     // After the level has loaded (its lights are in the scene).
@@ -53,6 +64,44 @@ export class RoomLighting {
             scene.add(light);
             this.disco.push(light);
         }
+        this.game.environment.rooms.forEach(({ room }) => {
+            this.doorLights.set(room.id, DOOR_LIGHTS.map(({ x, y, z }) => {
+                const light = new THREE.PointLight(0xfff0d8, 0, DOOR_LIGHT_DISTANCE, 1);
+                light.position.set(x, y, z);
+                room.add(light);
+                return light;
+            }));
+        });
+        this.collectOutdoorMaterials();
+    }
+
+    // Lit materials that only exist outside (street, car, lamp posts). Room walls
+    // are shared by both faces, so they stay as they are.
+    collectOutdoorMaterials() {
+        const groups = [this.game.world.street?.group, this.game.environment.car?.group, this.game.weather?.lampGroup];
+        const materials = new Set();
+        groups.filter(Boolean).forEach(group => group.traverse(object => {
+            if (!object.isMesh) return;
+            [object.material, object.userData.originalMaterial].flat().forEach(material => {
+                if (material?.color && !material.isMeshBasicMaterial) materials.add(material);
+            });
+        }));
+        this.outdoorMaterials = [...materials].map(material => ({ material, base: material.color.clone() }));
+    }
+
+    // A bar you're not in, seen through its open door: lit by its switches
+    // (a little less by day, when the street is bright anyway).
+    updateDoorLights(currentRoom, t) {
+        const { environment } = this.game;
+        const daylight = this.game.weather?.daylight() ?? 1;
+        this.doorLights.forEach((lights, roomId) => {
+            const contents = environment.rooms.get(roomId);
+            const state = environment.getLights(roomId);
+            const levelName = state.normal ? 'normal' : state.low ? 'low' : 'off';
+            const on = contents.room !== currentRoom && contents.door.isOpen;
+            const target = on ? DOOR_LIGHT_INTENSITY[levelName] * (1 - 0.6 * daylight) : 0;
+            lights.forEach(light => { light.intensity += (target - light.intensity) * t; });
+        });
     }
 
     update(deltaTime) {
@@ -87,6 +136,16 @@ export class RoomLighting {
         }
         if (this.directional) {
             this.directional.intensity += (this.base.directional * level.directional - this.directional.intensity) * t;
+        }
+
+        this.updateDoorLights(room, t);
+        // Inside: the street (seen through the door) gets the sky's light, not the bar's.
+        const sky = room ? this.game.weather?.outdoorLight() : null;
+        const dim = sky ? THREE.MathUtils.clamp(sky.ambient / Math.max(0.05, level.ambient), 0.15, 1.3) : 1;
+        this.outdoorDim += (dim - this.outdoorDim) * t;
+        if (Math.abs(this.outdoorDim - (this.appliedDim ?? -1)) > 0.01) {
+            this.appliedDim = this.outdoorDim;
+            this.outdoorMaterials.forEach(({ material, base }) => material.color.copy(base).multiplyScalar(this.outdoorDim));
         }
 
         this.discoLevel += ((room && state.disco ? 1 : 0) - this.discoLevel) * t;
