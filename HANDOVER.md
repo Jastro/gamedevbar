@@ -17,6 +17,24 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Bathroom and bar tweaks:
+  - **Bathroom:**
+    - the flush is quieter and the latch clicks;
+    - the toilet is centered on its wall and 25% bigger;
+    - the cubicle has a ceiling, and the camera collides with its walls, ceiling and closed door;
+    - the menu says "¿Qué vas a hacer, guarro?" with Mear / Cagar;
+    - the shame tag text is smaller (64 px, was 72);
+    - three paintings over the cubicle were raised to clear the ceiling.
+  - **Bar:**
+    - the counter is a platform you can jump onto;
+    - the "Gamedev MV" sign moved from the counter to the back wall, above the paintings, and got bigger.
+  - **Verified in-app:**
+    - a jump lands on the counter (y 2.3), and walking into it still blocks;
+    - the camera stays inside the cubicle below the ceiling, and stops at the wall from outside;
+    - you sit on the toilet at its new spot (z 7.5, y 1.1);
+    - the latch clicks on each toggle;
+    - the new labels show;
+    - screenshots of the toilet and the sign.
 - 2026-10-22 Bathroom in each bar (plan `Docs/Plans done/2026-10-22-bathroom-plan.md`):
   - **Features:** door with latch and Libre/Ocupado sign, toilet (pee/poo with sounds and bowl visuals),
     flush, sink, mirror, air freshener, its own light and switch, the 10-min stink, and dirty-hands shame

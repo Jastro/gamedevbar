@@ -4,8 +4,9 @@ import * as THREE from 'three';
 // - blockers (walls, bar, fences, cabinets, doors): block from their bottom
 //   up, with no top, so jumping can't carry you over one and drop you inside
 //   it; one entirely above your head (a door's lintel) doesn't block;
-// - platforms (tables): round, with a top you can jump onto and stand on;
-//   they block only while your feet are below that top.
+// - platforms (tables, the bar counter): a top you can jump onto and stand
+//   on; they block only while your feet are below that top. Tables are
+//   round (addPlatform), the counter is a box (addBoxPlatform).
 // Everything is static (doors toggle `enabled` instead of moving their
 // blocker), so each shape is measured once, on the first check, when the
 // room groups are in place.
@@ -59,6 +60,18 @@ export class CollisionManager {
         return collider;
     }
 
+    // A box-shaped platform: the mesh's bounding box, top included.
+    addBoxPlatform(mesh) {
+        const collider = this.addCollider(mesh, 'platform');
+        collider.shape = 'box';
+        const measure = collider.update;
+        collider.update = () => {
+            measure();
+            collider.top = collider.box.max.y;
+        };
+        return collider;
+    }
+
     // position: the player's center (feet at y - 1). radius: half its width.
     checkCollision(position, radius = 0.5) {
         const feet = position.y - 1;
@@ -68,7 +81,11 @@ export class CollisionManager {
             collider.ensureMeasured();
             if (collider.type === 'platform') {
                 if (feet >= collider.top - STEP_TOLERANCE) continue;
-                if (centerDistance(position, collider) < collider.radius + radius) return true;
+                if (collider.shape === 'box') {
+                    if (overlapsBoxXZ(position, radius, collider.box)) return true;
+                } else if (centerDistance(position, collider) < collider.radius + radius) {
+                    return true;
+                }
             } else if (collider.box.min.y < head && overlapsBoxXZ(position, radius, collider.box)) {
                 return true;
             }
@@ -85,7 +102,10 @@ export class CollisionManager {
             if (collider.type !== 'platform' || !collider.enabled) continue;
             collider.ensureMeasured();
             if (collider.top > feet + LANDING_SNAP || collider.top <= ground) continue;
-            if (centerDistance(position, collider) < collider.radius + PLATFORM_EDGE) ground = collider.top;
+            const under = collider.shape === 'box'
+                ? overlapsBoxXZ(position, PLATFORM_EDGE, collider.box)
+                : centerDistance(position, collider) < collider.radius + PLATFORM_EDGE;
+            if (under) ground = collider.top;
         }
         return ground;
     }

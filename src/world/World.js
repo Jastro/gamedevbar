@@ -154,7 +154,8 @@ export class World {
         bar.castShadow = true;
         bar.receiveShadow = true;
         room.add(bar);
-        this.collisionManager.addCollider(bar);
+        // You can jump onto the counter and walk on it, like the tables.
+        this.collisionManager.addBoxPlatform(bar);
 
         // Estantería trasera
         const backBarGeometry = new THREE.BoxGeometry(12, 3, 0.5);

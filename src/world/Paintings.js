@@ -18,12 +18,13 @@ export class Paintings {
             // Front wall, left of the door (the right wall has the projector).
             { x: -4, y: 4, z: 9.8, rotation: Math.PI },
             { x: -7, y: 4, z: 9.8, rotation: Math.PI },
-            { x: -10, y: 4, z: 9.8, rotation: Math.PI },
-            { x: -13, y: 4, z: 9.8, rotation: Math.PI },
+            // Higher above the bathroom cubicle (its ceiling is at 3.35).
+            { x: -10, y: 4.6, z: 9.8, rotation: Math.PI },
+            { x: -13, y: 4.6, z: 9.8, rotation: Math.PI },
             { x: -14.8, y: 4, z: -6, rotation: -4.7 },
             { x: -14.8, y: 4, z: -2, rotation: -4.7 },
             { x: -14.8, y: 4, z: 2, rotation: -4.7 },
-            { x: -14.8, y: 4, z: 6, rotation: -4.7 },
+            { x: -14.8, y: 4.6, z: 6, rotation: -4.7 },
         ];
 
         paintingPositions.forEach((pos, index) => {

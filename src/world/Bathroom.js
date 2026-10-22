@@ -14,7 +14,9 @@ const WALL_HEIGHT = 3.2;
 const WALL_THICKNESS = 0.15;
 const DOOR = { minX: -11.9, maxX: -10.7, height: 2.4 };
 const DOOR_SWING_SPEED = 5; // 1/s
-const TOILET = { x: -14.3, z: 8.6 };
+// Centered on the left wall, away from the sink.
+const TOILET = { x: -14.3, z: 7.5 };
+const TOILET_SCALE = 1.25;
 const SINK = { x: -12.2, z: 9.62 };
 const FRESHENER = { x: -11.05, y: 1.3, z: 9.78 };
 const SWITCH = { x: -10.4, y: 1.5, z: 5 + WALL_THICKNESS / 2 + 0.02 };
@@ -73,9 +75,12 @@ function labelTexture(text, color, width = 256, height = 96) {
 }
 
 export class Bathroom {
-    constructor(room, collisionManager) {
+    // world: for the camera occluders (walls, ceiling, closed door).
+    constructor(room, collisionManager, world) {
         this.room = room;
         this.collisionManager = collisionManager;
+        this.world = world;
+        this.listener = null; // set by BathroomSync (sounds need the AudioListener)
         this.state = { doorOpen: false, latchedBy: null, lightOn: true, mess: null, stinkUntil: 0, occupant: null };
         this.doorAngle = 0;
         this.flushTime = null;
@@ -97,6 +102,8 @@ export class Bathroom {
         this.group.updateMatrixWorld(true);
         this.colliders.forEach(mesh => this.collisionManager.addCollider(mesh));
         this.doorCollider = this.collisionManager.addCollider(this.doorBlocker);
+        // The third-person camera stays out of the walls and under the ceiling.
+        this.world?.cameraOccluders.push(...this.colliders, this.ceiling, this.doorPanel);
         this.applyState(this.state);
     }
 
@@ -118,6 +125,10 @@ export class Bathroom {
             (DOOR.minX + DOOR.maxX) / 2, DOOR.height + lintelHeight / 2, minZ));
         // Partition along the room side.
         wall(WALL_THICKNESS, maxZ - minZ, maxX, (minZ + maxZ) / 2);
+        // Ceiling (privacy, and the camera stays under it while inside).
+        this.ceiling = box(maxX - minX, WALL_THICKNESS, maxZ - minZ, white,
+            (minX + maxX) / 2, WALL_HEIGHT + WALL_THICKNESS / 2, (minZ + maxZ) / 2);
+        this.group.add(this.ceiling);
         // Tiled floor inside.
         const floor = new THREE.Mesh(new THREE.PlaneGeometry(maxX - minX, maxZ - minZ), tiles);
         floor.rotation.x = -Math.PI / 2;
@@ -138,6 +149,7 @@ export class Bathroom {
         this.doorPivot.position.set(DOOR.minX, 0, BATHROOM_BOUNDS.minZ);
         const panelMaterial = new THREE.MeshStandardMaterial({ color: 0x6d8fa3, roughness: 0.5 });
         const panel = box(width - 0.04, DOOR.height - 0.04, 0.06, panelMaterial, width / 2, DOOR.height / 2, 0);
+        this.doorPanel = panel;
         const handle = box(0.05, 0.05, 0.14, chrome, width - 0.15, 1.05, 0);
         const door = new THREE.Group();
         door.add(panel, handle);
@@ -165,6 +177,7 @@ export class Bathroom {
     createToilet() {
         const toilet = new THREE.Group();
         toilet.position.set(TOILET.x, 0, TOILET.z);
+        toilet.scale.setScalar(TOILET_SCALE);
         // Facing +x (into the cubicle); the tank is against the wall (-x).
         toilet.add(
             box(0.36, 0.36, 0.3, porcelain, 0.02, 0.18, 0),
@@ -183,35 +196,35 @@ export class Bathroom {
         toilet.userData = { type: 'toilet', bathroom: this };
         this.group.add(toilet);
 
-        // What's in the bowl.
+        // What's in the bowl (in the toilet's own, scaled, space).
         this.peeMesh = new THREE.Mesh(new THREE.CircleGeometry(0.185, 20), new THREE.MeshStandardMaterial({ color: 0xf3d22b, transparent: true, opacity: 0.8, roughness: 0.1 }));
         this.peeMesh.rotation.x = -Math.PI / 2;
-        this.peeMesh.position.set(TOILET.x + 0.08, 0.505, TOILET.z);
+        this.peeMesh.position.set(0.08, 0.505, 0);
         this.pooMesh = createPoo();
-        this.pooMesh.position.set(TOILET.x + 0.08, 0.5, TOILET.z);
-        this.group.add(this.peeMesh, this.pooMesh);
+        this.pooMesh.position.set(0.08, 0.5, 0);
+        toilet.add(this.peeMesh, this.pooMesh);
 
         // Flush handle on the tank.
         const handle = new THREE.Group();
         handle.add(box(0.05, 0.05, 0.16, chrome, 0, 0, 0));
-        handle.position.set(TOILET.x - 0.18, 0.92, TOILET.z - 0.2);
+        handle.position.set(-0.18, 0.92, -0.2);
         hoverable(handle);
         handle.userData = { type: 'toiletFlush', bathroom: this };
-        this.group.add(handle);
+        toilet.add(handle);
 
         // Toilet paper on the side wall.
         const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 14), new THREE.MeshStandardMaterial({ color: 0xffffff }));
         roll.rotation.x = Math.PI / 2;
-        roll.position.set(TOILET.x + 0.1, 0.75, TOILET.z + 0.55);
+        roll.position.set(TOILET.x + 0.1, 0.8, TOILET.z + 0.7);
         this.group.add(roll);
 
         // Where you sit (number 2) and where you stand (number 1).
         // LocalPlayer.sitDown reads sitHeight / faceTarget (room-local).
         this.sitSpot = new THREE.Object3D();
-        this.sitSpot.position.set(TOILET.x + 0.05, 0, TOILET.z);
-        this.sitSpot.userData = { sitHeight: 0.95, faceTarget: { x: BATHROOM_BOUNDS.maxX, z: TOILET.z }, seatId: `${this.room.id}:toilet` };
+        this.sitSpot.position.set(TOILET.x + 0.06, 0, TOILET.z);
+        this.sitSpot.userData = { sitHeight: 1.1, faceTarget: { x: BATHROOM_BOUNDS.maxX, z: TOILET.z }, seatId: `${this.room.id}:toilet` };
         this.standSpot = new THREE.Object3D();
-        this.standSpot.position.set(TOILET.x + 0.85, 0, TOILET.z);
+        this.standSpot.position.set(TOILET.x + 1.05, 0, TOILET.z);
         this.standSpot.userData = { sitHeight: 1, faceTarget: { x: BATHROOM_BOUNDS.minX, z: TOILET.z }, seatId: `${this.room.id}:toilet-front` };
         this.group.add(this.sitSpot, this.standSpot);
     }
@@ -307,10 +320,17 @@ export class Bathroom {
 
     // --- State ---------------------------------------------------------
 
-    applyState(state) {
+    // silent: a snapshot (joining), not a change anyone made.
+    applyState(state, silent = false) {
         const previous = this.state;
         this.state = { ...this.state, ...state };
+        if (!silent && Boolean(previous.latchedBy) !== Boolean(this.state.latchedBy)) {
+            const knob = this.latchKnob.getWorldPosition(new THREE.Vector3());
+            playSynth(this.listener, this.group, this.group.worldToLocal(knob), 'latch', 2);
+        }
         this.doorCollider && (this.doorCollider.enabled = !this.state.doorOpen);
+        // Like the front doors: only a closed door pushes the camera in.
+        this.doorPanel.userData.blocksCamera = !this.state.doorOpen;
         const latched = Boolean(this.state.latchedBy);
         this.sign.draw(latched ? '🔴 OCUPADO' : '🟢 LIBRE', latched ? '#FF6B6B' : '#7CFC9A');
         this.latchKnob.material.color.setHex(latched ? 0xc62828 : 0x2e7d32);
@@ -368,7 +388,7 @@ export class Bathroom {
     playEvent(kind, listener) {
         const at = (x, y, z) => new THREE.Vector3(x, y, z);
         if (kind === 'pee') {
-            playSynth(listener, this.group, at(TOILET.x, 0.5, TOILET.z), 'pee');
+            playSynth(listener, this.group, at(TOILET.x, 0.6, TOILET.z), 'pee');
         } else if (kind === 'poo') {
             const fart = FART_SOUNDS[Math.floor(Math.random() * FART_SOUNDS.length)];
             playFile(listener, this.group, at(TOILET.x, 0.5, TOILET.z), fart);

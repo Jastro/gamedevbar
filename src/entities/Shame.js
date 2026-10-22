@@ -45,7 +45,7 @@ function getTagTexture() {
     ctx.beginPath();
     ctx.roundRect(40, 20, 944, 120, 60);
     ctx.fill();
-    ctx.font = 'bold 72px "Segoe UI", sans-serif';
+    ctx.font = 'bold 64px "Segoe UI", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#f1f8e9';

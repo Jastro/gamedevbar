@@ -84,8 +84,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       - Pee (stand) and poo (sit): sounds, bowl visuals, the stink haze and flies.
       - Flush, the air freshener, the light switch (dark inside when off), the mirror.
       - Leave without washing: green lines at your hands and the shame tag. Washing clears it.
-      - Judge: sound volumes (pee/flush/fart), haze density, room size for 3 people, how the cubicle looks
-        from the bar.
+      - Judge: sound volumes (pee/flush, which was lowered, fart, latch click), haze density, room size for
+        3 people, how the cubicle looks from the bar, the camera inside (under the ceiling).
+- [ ] **Bar counter and sign.** Jump onto the counter and walk along it. Is the "Gamedev MV" sign on the
+      back wall (above the paintings) readable from the entrance?
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a
       friend: both of you see the same thing. Does low look cosy, all off dark enough, disco fun
       (`RoomLighting.js`: `LEVELS`, `DISCO_*`)? Frame rate with disco on?

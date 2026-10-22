@@ -26,10 +26,10 @@ export class BathroomSync {
     }
 
     createToiletPanel() {
-        this.panel = new FloatingPanel('toilet-panel', '🚽 ¿Qué vas a hacer?');
+        this.panel = new FloatingPanel('toilet-panel', '🚽 ¿Qué vas a hacer, guarro?');
         const actions = document.createElement('div');
         actions.className = 'floating-panel-actions';
-        [['pee', '💧 Pis'], ['poo', '💩 Caca']].forEach(([kind, label]) => {
+        [['pee', '💧 Mear'], ['poo', '💩 Cagar']].forEach(([kind, label]) => {
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'floating-panel-button';
@@ -50,7 +50,7 @@ export class BathroomSync {
     bind() {
         const { network } = this.game;
         network.on('bathroomStates', (data) => {
-            Object.entries(data.rooms || {}).forEach(([roomId, state]) => this.bathroom(roomId)?.applyState(state));
+            Object.entries(data.rooms || {}).forEach(([roomId, state]) => this.bathroom(roomId)?.applyState(state, true));
             this.dirty = new Set(Array.isArray(data.dirty) ? data.dirty : []);
         });
         network.on('bathroomState', (data) => this.bathroom(data.roomId)?.applyState(data.state));
@@ -168,6 +168,7 @@ export class BathroomSync {
         const { players, environment, serverClock } = this.game;
         const local = players.localPlayer;
         this.bathrooms.forEach(bathroom => {
+            bathroom.listener = environment.audioListener;
             bathroom.update(deltaTime, serverClock);
             bathroom.setLocalInside(Boolean(local && bathroom.containsPoint(local.position)));
         });

@@ -28,12 +28,14 @@ export class Bar {
     }
 
     createBarSign() {
-        const signGeometry = new THREE.BoxGeometry(2, 0.5, 0.1);
+        // On the back wall, above the paintings (they span y 3..5), and bigger
+        // since it's seen from across the room.
+        const signGeometry = new THREE.BoxGeometry(4.2, 1.05, 0.1);
         const signMaterial = new THREE.MeshStandardMaterial({
             color: 0xff8c00,
         });
         const sign = new THREE.Mesh(signGeometry, signMaterial);
-        sign.position.set(0, 1.5, -2.2);
+        sign.position.set(0, 6.1, -9.8);
         this.scene.add(sign);
 
         // Texto del cartel
@@ -57,9 +59,9 @@ export class Bar {
             map: texture,
             transparent: true,
         });
-        const textGeometry = new THREE.PlaneGeometry(1.8, 0.4);
+        const textGeometry = new THREE.PlaneGeometry(3.8, 0.84);
         const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-        textMesh.position.set(0, 1.5, -2.14);
+        textMesh.position.set(0, 6.1, -9.74);
         this.scene.add(textMesh);
     }
 

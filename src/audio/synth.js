@@ -36,7 +36,14 @@ const RECIPES = {
         duration: 2.8,
         envelope: (t, d) => fade(t, d, 0.05, 1.4),
         filter: { type: 'lowpass', from: 5000, to: 250, q: 0.8 },
-        volume: 0.9
+        volume: 0.4
+    },
+    // A short metallic click.
+    latch: {
+        duration: 0.12,
+        envelope: (t) => Math.exp(-t * 60),
+        filter: { type: 'highpass', from: 3000, to: 2500, q: 1.5 },
+        volume: 0.7
     },
     wash: {
         duration: 2.4,

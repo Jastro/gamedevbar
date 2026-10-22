@@ -47,7 +47,7 @@ export class Environment {
                 vircon: new VirconCabinet(room, this.world.collisionManager, CABINETS.vircon),
                 pokebonk: new VirconCabinet(room, this.world.collisionManager, CABINETS.pokebonk),
                 lightSwitches: new LightSwitches(room),
-                bathroom: new Bathroom(room, this.world.collisionManager)
+                bathroom: new Bathroom(room, this.world.collisionManager, this.world)
             };
 
             contents.bar.create();
