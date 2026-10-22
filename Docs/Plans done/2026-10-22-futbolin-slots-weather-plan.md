@@ -37,3 +37,12 @@ videogames), and the realtime in spain and weather outside (no terrace yet)". Ea
   positions and kicks. No host on a client, so nobody's connection decides the game.
 - **Controls:** the camera locks above the table from your side; W/S (or ↑/↓) slide your rods, Space or
   click kicks, Esc leaves. First to 5 goals; the score shows on the table.
+
+## Deviations (2026-10-22, all three done and pushed)
+- **Weather:** the sky changes everywhere (the bars have no roof), but weather effects stay over the
+  street. Lamp posts are new (night on the street was too dark without them).
+- **Slots:** pairs pay 18 (not "bet back") and triples were doubled, after computing the expected
+  return: with the first table you got back 48% and went broke in ~20 spins; now ~88%.
+- **Futbolín:** the server steps against real time (Windows timers made it run at ~60% speed), kicks
+  sweep 0.16 along the table (otherwise a ball between the two midfield rods was unreachable), and your
+  own avatar is hidden while you play (it covered the view).

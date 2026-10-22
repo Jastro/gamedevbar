@@ -32,7 +32,8 @@ world/         RoomLayout (where rooms are), Room, World (shells, colliders, str
                Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), GraffitiWall +
                GraffitiSync (the drawable bathroom wall), Car + CarSync,
                VirconSync, SoccerGame, CollisionManager, BarTap, Dartboard, KaraokeStage, Weather (Madrid sky,
-               street light, rain/snow/fog/storms), WallClock, SlotMachine
+               street light, rain/snow/fog/storms), WallClock, SlotMachine, Foosball + FoosballSync
+               (futbolín; layout shared with the server in server/shared/foosball.json)
 bar/           drinks (menu, alcohol, decay math shared with the server), DrinkSync (order panel, B to sip,
                held drink, drunk tag and effects), DartsSync (taking the board, aiming, throwing),
                SlotSync (lever, shared spins, coins)

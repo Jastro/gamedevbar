@@ -2,6 +2,76 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-22: bar games batch)
+- 2026-10-22 Review fixes for the batch (independent review of `6026818..3f689ad`):
+  - **Bug fixes:**
+    - a client that never joined could take the darts board and leave a nameless turn that broke every
+      chalkboard until a restart;
+    - made-up room ids could fill the 32-id cap of darts, graffiti and Pong (now only the real rooms,
+      `ROOM_IDS` in `server/config.js`);
+    - every dart leaked its geometry and materials (now shared);
+    - a throw the server dropped for arriving early still counted on the client, which locked the thrower
+      in (throws now count on the server's confirmation);
+    - `drinkOrder {drink: 'constructor'}` was accepted;
+    - the drunk slur garbled `/` commands;
+    - a full graffiti wall redrew on every stroke (now every 200 segments).
+  - **Verified:** from a raw socket, unjoined `dartsStart`/`pongJoin`, fake room ids, a `constructor` drink
+    and an unknown darts room are all rejected (no state in the join snapshots); in-app, 6 rapid throws
+    give exactly 3 darts, the turn ends and the view comes back; Pong join/leave still work; no errors.
+- 2026-10-22 Two-player Pong:
+  - **Bug fix:** `WebSocketManager.send` let a `type` inside the data override the message type, so Pong's
+    messages never arrived as sent; `type` now always wins. The old relay (`arcadeState`/`arcadeUpdate`)
+    is gone.
+  - **Rebuilt:** the server owns who plays each room's machine (`server/features/pong.js`); player 1's
+    client runs the game per second and sends 20 snapshots/s, player 2 sends its paddle, watchers draw the
+    snapshots. Countdown, first to 5, angle by hit spot, Esc to leave, names on the screen.
+  - **Verified in-app with two clients:** F → player 1 vs CPU with the play hint; the second client watches
+    the live match (0-1, ball moving), sees "Retar a …", joins → both in a 1 vs 1 countdown; its paddle
+    (up 0.7 s → y 40) reaches the host; scores agree (3-0); the match ends 5-0, both go idle and the play
+    mode is released; Esc mid-match frees it; screenshot of the live screen; no errors.
+  - **Not judged:** smoothness over a real network, difficulty.
+- 2026-10-22 Karaoke stage:
+  - **Stage** in front of each projector: low platform, mic stand, stage light that fades in while anyone
+    is up (worked out from positions, no server state). F at the mic puts you on stage facing the room.
+  - **Voice:** a singer is heard at about full volume anywhere in that bar (ref distance 25 instead of 4),
+    and normally from outside. The projector panel links to a YouTube karaoke search.
+  - **Verified in-app with two clients:** F at the mic → on stage at y 1.25, light at full; the second
+    client sees the singer on stage and the light on (the other bar's stays off); a stand-in voice entry
+    switches to ref 25 inside the bar and back to 4 from the street; screenshot of the stage; no errors.
+  - **Not judged:** real singing over voice chat (needs two mics), loudness against the projector.
+- 2026-10-22 Bathroom graffiti:
+  - **Wall:** the inside of the cubicle's partition facing the bar is drawable. F → a panel showing the
+    wall's own canvas (6 colors, 🧽 eraser, 3 sizes, mouse/pen/touch). Shared live, last 3000 segments per
+    wall kept in server memory and sent to late joiners.
+  - **Verified in-app with two clients:** F inside facing the wall shows "Pintar en la pared" and opens
+    the panel; a drawn face + letter (57 segments) shows in the panel and on the wall (screenshot), the
+    second client gets all 57, and again after a reload; malformed batches (out-of-range coordinates,
+    bad color, non-array, bad room id, a bad segment mixed with a good one) only let the good segment
+    through; walking out closes the panel; no errors.
+  - **Not judged:** drawing feel, touch on a phone.
+- 2026-10-22 Darts:
+  - **Board** on each bar's right wall past the projector, a yellow throw line and a chalkboard (thrower's
+    darts, last 6 turns, day's best). F at the line takes the board; a close aiming view, the mouse aims
+    a swaying crosshair (wider when drunk), click/Space throws 3 darts, Esc leaves.
+  - **Scoring on the server only** (sectors, doubles, triples, 25, bull 50).
+  - **Verified:** scoring asserts for bull, 25, T20, D6, 11, 3 and the 5/1 sector edges, plus a wrong
+    expectation that fails; in-app with two clients: F at the line enters (hint "Jugar a los dardos"), 3
+    throws score 5, 5, 12 = 22 into history and best, the turn ends after 2.5 s and the camera comes back;
+    the second client sees the darts stuck, gets "Está tirando…" and can't take the board; Esc mid-turn
+    frees it; screenshots of the aiming view and the corner; no errors.
+  - **Not judged:** the difficulty, the darts' look in flight, the sounds.
+- 2026-10-22 Bar service and drunkenness:
+  - **Tap and drinks:** a beer tap at the right end of each counter; F → Caña, Vino, Chupito, Cubata,
+    Café, Refresco. The drink shows in your hand (new hand items: shot glass, cubata, coffee cup, soda
+    can) and B sips it (3 sips, positional sip sound).
+  - **Drunk level** 0..6 on the server, decaying 1 per 2 min; from level 1.5 the camera sways and rolls,
+    walking weaves, from 2 the chat slurs, from 3 a "🍺 Borracho/a" tag shows to everyone. Coffee sobers.
+  - **Verified in-app with two clients:** F at the tap picks it (not the stool) and opens the menu; a
+    cubata + 3 sips → level 1.98 and the hand empties; at level 3.4 the second client sees the wine in
+    the first player's hand bone and the tag, and the camera roll shows in a screenshot; slur samples
+    read OK (fixed a swap that moved spaces); no console or server errors.
+  - **Not judged:** how the effects feel, the drinks' look in the hand.
+
 ## Done (2026-10-22: bathroom)
 - 2026-10-22 Toilet seated pose and the camera gap:
   - **Seated pose:** pooping sits you properly, with hips on the seat and feet forward and up (a procedural

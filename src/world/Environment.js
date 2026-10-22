@@ -9,6 +9,7 @@ import { Dartboard } from './Dartboard';
 import { KaraokeStage } from './KaraokeStage';
 import { WallClock } from './WallClock';
 import { SlotMachine } from './SlotMachine';
+import { Foosball } from './Foosball';
 import { Furniture } from './Furniture';
 import { Radio } from './Radio';
 import { Paintings } from './Paintings';
@@ -47,6 +48,7 @@ export class Environment {
                 karaoke: new KaraokeStage(room, this.world.collisionManager),
                 clock: new WallClock(room),
                 slotMachine: new SlotMachine(room),
+                foosball: new Foosball(room, this.world.collisionManager),
                 furniture: new Furniture(room, this.world.collisionManager),
                 radio: new Radio(room),
                 paintings: hasPaintings ? new Paintings(room) : null,
@@ -67,6 +69,7 @@ export class Environment {
             contents.karaoke.create();
             contents.clock.create();
             contents.slotMachine.create();
+            contents.foosball.create();
             contents.furniture.create();
             contents.radio.create();
             if (contents.paintings) contents.paintings.create();

@@ -39,6 +39,10 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `dartsLeave` | `roomId` | the thrower gives up the board → `dartsState` |
 | `graffitiDraw` | `roomId`, `segments` (1-60 × `[x0, y0, x1, y1, color 0-6, size 0-2]`, coordinates 0..1) | 40 ms per-user rate limit; bad segments dropped, coordinates rounded to 0.001; kept (last 3000 per wall) → `graffitiDraw` to others |
 | `slotSpin` | `roomId` | joined players, real rooms; busy machine → `slotBusy`; broke and no bailout yet → `slotBroke {retryIn}`; else roll → `slotResult` to all |
+| `foosballJoin` | `roomId`, `team` (0 red / 1 blue) | joined players; a free slot on that team (else `foosballFull`); leaves any other table → `foosballTable` |
+| `foosballLeave` | `roomId` | frees your slot → `foosballTable` |
+| `foosballRods` | `roomId`, `offsets` (`{ rodIndex: z }`, only your rods count; clamped) | ≥ 30 ms apart; the server slides those rods there |
+| `foosballKick` | `roomId` | ≥ 250 ms apart; your rods kick for 0.2 s |
 | `lightsToggle` | `roomId`, `light` (`normal` \| `low` \| `disco`) | flip it for that room → `lightsState` to all |
 | `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, always with `peerId`; ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player; an offer that can't be relayed gets `{refused, peerId}` back (as if from the target) |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
@@ -89,6 +93,10 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `weatherState` | `code` (WMO), `temperature` (°C or null), `cloudCover` (%), `wind` (km/h), `sunrise`/`sunset` (Madrid minutes after midnight), `updatedAt` | `Weather`: sky, street light, precipitation, clocks. Also sent on join |
 | `slotResult` | `roomId`, `userId`, `name`, `reels` (3 symbol ids), `win`, `coins` (the spinner's new total), `bailout` | everyone spins that machine to the result; chat line for the spinner (and the bar on a jackpot) |
 | `slotBusy` / `slotBroke` | `roomId` (+ `retryIn` s) | chat line |
+| `foosballTable` | `roomId`, `slots` (4 × `{userId, name}` or null: red back, red front, blue back, blue front), `phase`, `score` | who plays; the local player enters/leaves play mode |
+| `foosballTables` | `tables: { roomId: { slots, phase, score } }` | join snapshot |
+| `foosballState` | `roomId`, `ball` [x, z, vx, vz], `rods` (8 offsets), `kicks` (8 × 0/1), `score`, `phase`, `timer`, `winner`, `events` (`kick`/`hit`/`goal`/`win`) | 20/s while active: draw the table |
+| `foosballFull` | `roomId`, `team` | chat line |
 | `lightsState` | `roomId`, `state` (`{ normal, low, disco }`) | `LightsSync` → switches + `RoomLighting` |
 | `lightsStates` | `rooms: { roomId: state }` (only rooms someone touched) | join snapshot; unlisted rooms → default (normal on) |
 | `virconSignal` | `roomId`, `fromId`, `signal` | `VirconSpectating`: answer (player) or apply (watcher) |

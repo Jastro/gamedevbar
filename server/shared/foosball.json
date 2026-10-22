@@ -1,0 +1,17 @@
+{
+  "comment": "Futbolín layout in table units (world units at the table's scale), shared by server/features/foosball.js and src/world/Foosball.js. x runs along the table (red defends -x, blue defends +x), z across it (red stands at +z, blue at -z). Rods are listed from the red goal to the blue goal.",
+  "field": { "length": 2.4, "width": 1.3 },
+  "goalWidth": 0.42,
+  "ballRadius": 0.04,
+  "manRadius": 0.05,
+  "rods": [
+    { "team": 0, "role": "goalie", "x": -1.05, "men": 1, "spacing": 0 },
+    { "team": 0, "role": "defense", "x": -0.75, "men": 2, "spacing": 0.46 },
+    { "team": 1, "role": "attack", "x": -0.45, "men": 3, "spacing": 0.36 },
+    { "team": 0, "role": "midfield", "x": -0.15, "men": 5, "spacing": 0.24 },
+    { "team": 1, "role": "midfield", "x": 0.15, "men": 5, "spacing": 0.24 },
+    { "team": 0, "role": "attack", "x": 0.45, "men": 3, "spacing": 0.36 },
+    { "team": 1, "role": "defense", "x": 0.75, "men": 2, "spacing": 0.46 },
+    { "team": 1, "role": "goalie", "x": 1.05, "men": 1, "spacing": 0 }
+  ]
+}

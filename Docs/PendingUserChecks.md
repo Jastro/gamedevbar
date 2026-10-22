@@ -117,6 +117,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Meme slots** (left wall). F pulls the lever: do the reels, sounds and jingles feel like a
       tragaperras? Are the symbols readable and funny enough (or want other memes)? Too stingy or too
       generous (~88%)? A friend nearby sees the same spin.
+- [ ] **Futbolín** (left side of the bar). With a friend, one on each long side, F: the camera view
+      from your side, W/S to slide the rods, Space/click to kick. Is the ball speed, kick strength and rod
+      speed fun (`server/features/foosball.js` top, `INPUT_SPEED` in `FoosballSync.js`)? Does it feel laggy
+      over the internet? Try 2 vs 2 (back/front split), practice alone, a goal and a full match to 5.
 - [ ] **Bar counter and sign.** Jump onto the counter and walk along it. Is the "Gamedev MV" sign on the
       back wall (above the paintings) readable from the entrance?
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a

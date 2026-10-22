@@ -192,6 +192,22 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Coins** live on the connection (a reload starts again at 100). Broke → the owner lends you 50, once a
   minute. Win jingles and a "wah wah" are square-wave tunes (`playTones` in `src/audio/synth.js`).
 
+## Futbolín
+
+- **Table** on the left side of each bar (`src/world/Foosball.js`, room-local (-11, 0, -1.5), along x).
+  Layout (pitch, goals, 8 rods, men, ball) in `server/shared/foosball.json`, read by both sides.
+- **Joining:** F on one long side joins that side's team (🔴 red at +z, 🔵 blue at -z), 2 per team. Alone
+  you move all 4 of your rods; with a partner, the back player has goalie + defense, the front one
+  midfield + attack (`rodsFor`, same on both sides).
+- **The server runs the game** (`server/features/foosball.js`): fixed 60 Hz steps against real time (Windows
+  timers fire every ~15-30 ms), 20 snapshots/s while anyone plays. Players send rod targets (20/s) and
+  kicks; the server slides rods there at rod speed. Phases: `practice` (one team only: no score),
+  `countdown` (3 s), `play`, `goal` (1.5 s, the team that conceded serves), `over` (first to 5, 4 s, then
+  a new match). A kick sweeps the foot 0.16 along the table; a still ball gets nudged after 2.5 s.
+- **Client** (`FoosballSync`): your rods move at once from W/S (↑/↓), others' follow the snapshots, the
+  ball is carried on between snapshots and eased back. While playing the camera looks down from your side
+  and your own avatar is hidden (others see it). Scoreboard sprite above the table; kick/goal sounds.
+
 ## Light switches
 
 - **Switches:** three switches on the inside of each bar's front wall (`LightSwitches.js`): 💡 normal
