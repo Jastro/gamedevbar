@@ -1,10 +1,9 @@
 # Handover
 
 ## Start here
-2026-10-22. Away-mode batch from `Docs/Plans to be done/2026-10-22-bar-games-plan.md`: bar service and
-drunkenness, darts, bathroom graffiti and the karaoke stage (done, pushed), then two-player Pong sync, each
-pushed to `main` on its own. Next: the next unchecked task in that plan; Borja's checks in
-`Docs/PendingUserChecks.md`.
+2026-10-22. Away-mode batch done and pushed (plan `Docs/Plans done/2026-10-22-bar-games-plan.md`): bar
+service and drunkenness, darts, bathroom graffiti, the karaoke stage and two-player Pong. Next: Borja's
+checks in `Docs/PendingUserChecks.md` (new ones for each of these) and the *Decisions to review* below.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
@@ -17,6 +16,18 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Two-player Pong:
+  - **Bug fix:** `WebSocketManager.send` let a `type` inside the data override the message type, so Pong's
+    messages never arrived as sent; `type` now always wins. The old relay (`arcadeState`/`arcadeUpdate`)
+    is gone.
+  - **Rebuilt:** the server owns who plays each room's machine (`server/features/pong.js`); player 1's
+    client runs the game per second and sends 20 snapshots/s, player 2 sends its paddle, watchers draw the
+    snapshots. Countdown, first to 5, angle by hit spot, Esc to leave, names on the screen.
+  - **Verified in-app with two clients:** F → player 1 vs CPU with the play hint; the second client watches
+    the live match (0-1, ball moving), sees "Retar a …", joins → both in a 1 vs 1 countdown; its paddle
+    (up 0.7 s → y 40) reaches the host; scores agree (3-0); the match ends 5-0, both go idle and the play
+    mode is released; Esc mid-match frees it; screenshot of the live screen; no errors.
+  - **Not judged:** smoothness over a real network, difficulty.
 - 2026-10-22 Karaoke stage:
   - **Stage** in front of each projector: low platform, mic stand, stage light that fades in while anyone
     is up (worked out from positions, no server state). F at the mic puts you on stage facing the room.
@@ -58,44 +69,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     the first player's hand bone and the tag, and the camera roll shows in a screenshot; slur samples
     read OK (fixed a swap that moved spaces); no console or server errors.
   - **Not judged:** how the effects feel, the drinks' look in the hand.
-- 2026-10-22 Toilet seated pose and the camera gap:
-  - **Seated pose:** pooping sits you properly, with hips on the seat and feet forward and up (a procedural
-    pose on the foot bones), and everyone sees it.
-  - **Bug fix:** the camera escaped the bathroom over the door, because the lintel wasn't a camera occluder.
-    Verified with a sweep of 4,410 camera positions from 6 spots inside: 0 escapes. With the lintel removed,
-    the same sweep gives 39, so the test can fail.
-  - **Also verified:** the pose locally and on a second client (feet at z 0.36, toes 0.48 forward), and a
-    front screenshot.
-- 2026-10-22 Bathroom and bar tweaks:
-  - **Bathroom:**
-    - the flush is quieter and the latch clicks;
-    - the toilet is centered on its wall and 25% bigger;
-    - the cubicle has a ceiling, and the camera collides with its walls, ceiling and closed door;
-    - the menu says "¿Qué vas a hacer, guarro?" with Mear / Cagar;
-    - the shame tag text is smaller (64 px, was 72);
-    - three paintings over the cubicle were raised to clear the ceiling.
-  - **Bar:**
-    - the counter is a platform you can jump onto;
-    - the "Gamedev MV" sign moved from the counter to the back wall, above the paintings, and got bigger.
-  - **Verified in-app:**
-    - a jump lands on the counter (y 2.3), and walking into it still blocks;
-    - the camera stays inside the cubicle below the ceiling, and stops at the wall from outside;
-    - you sit on the toilet at its new spot (z 7.5, y 1.1);
-    - the latch clicks on each toggle;
-    - the new labels show;
-    - screenshots of the toilet and the sign.
-- 2026-10-22 Bathroom in each bar (plan `Docs/Plans done/2026-10-22-bathroom-plan.md`):
-  - **Features:** door with latch and Libre/Ocupado sign, toilet (pee/poo with sounds and bowl visuals),
-    flush, sink, mirror, air freshener, its own light and switch, the 10-min stink, and dirty-hands shame
-    (lines + tag) until washing.
-  - **Bug fix:** an invisible toilet seat from an old `level.json` group was sitting next to the Vircon32.
-  - **Verified in-app with two clients:**
-    - door and latch sync, and a latched door is refused to the other player;
-    - pee stands you at the bowl with yellow water, poo sits you with a 💩 swirl, haze and flies;
-    - flush empties the bowl; the freshener ends the stink and shows the spray;
-    - shame appears outside and not inside, and washing clears it;
-    - the light syncs and darkens the inside; the mirror reflects, only for whoever is inside.
-  - **Not judged:** sound levels and the look at play distance.
+- 2026-10-22 Bathroom in each bar, then tweaks (quieter flush, latch click, ceiling, camera collision, jumpable
+  counter, sign on the back wall) and the seated toilet pose. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-21 Car + Pokebonk, appearance part 1 (27 accessories, tint, size, name colors), interactions/tables/lights
   (F everywhere, chairs, Shift, standable tables, dormant rooms, switches), controls and movement (Q/E, ❔,
   per-second movement, wall sliding). Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
@@ -130,6 +105,10 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     If wrong: tune `EFFECT_START` in `src/bar/DrinkSync.js`.
   - **Darts board at y 2.1 and 1.3× real size** (plan said y 1.75): avatars are 2.15 tall. The aiming
     view is a close camera 2.4 from the board, not over the shoulder: from the line the board was a dot.
+  - **Pong is run by player 1's client** (not the server): simpler and smooth for player 1; player 2 sees
+    the ball through the relay (~50 ms + latency behind). If that feels laggy, the next step is running the
+    game on the server.
+  - **Anyone leaving a Pong match ends it** (player 2 leaving doesn't fall back to the CPU).
   - **Karaoke volume is a ref distance of 25** with the normal rolloff: not literally constant volume, so
     the far corners are ~0.85. If wrong: tune `STAGE_REF_DISTANCE` in `VoiceChat.js`.
   - **Graffiti has no "clear wall" button**, and the eraser is open to everyone. Memory only (a deploy
@@ -164,5 +143,4 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 - Desarrollo's identity: different decoration, default music?
 
 ## Next
-- Pong sync (message `type` overwritten in `WebSocketManager.send`).
 - Remove duplicated geometry (level.json vs World vs Bar).

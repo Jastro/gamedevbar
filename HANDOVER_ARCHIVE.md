@@ -2,6 +2,46 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-22: bathroom)
+- 2026-10-22 Toilet seated pose and the camera gap:
+  - **Seated pose:** pooping sits you properly, with hips on the seat and feet forward and up (a procedural
+    pose on the foot bones), and everyone sees it.
+  - **Bug fix:** the camera escaped the bathroom over the door, because the lintel wasn't a camera occluder.
+    Verified with a sweep of 4,410 camera positions from 6 spots inside: 0 escapes. With the lintel removed,
+    the same sweep gives 39, so the test can fail.
+  - **Also verified:** the pose locally and on a second client (feet at z 0.36, toes 0.48 forward), and a
+    front screenshot.
+- 2026-10-22 Bathroom and bar tweaks:
+  - **Bathroom:**
+    - the flush is quieter and the latch clicks;
+    - the toilet is centered on its wall and 25% bigger;
+    - the cubicle has a ceiling, and the camera collides with its walls, ceiling and closed door;
+    - the menu says "¿Qué vas a hacer, guarro?" with Mear / Cagar;
+    - the shame tag text is smaller (64 px, was 72);
+    - three paintings over the cubicle were raised to clear the ceiling.
+  - **Bar:**
+    - the counter is a platform you can jump onto;
+    - the "Gamedev MV" sign moved from the counter to the back wall, above the paintings, and got bigger.
+  - **Verified in-app:**
+    - a jump lands on the counter (y 2.3), and walking into it still blocks;
+    - the camera stays inside the cubicle below the ceiling, and stops at the wall from outside;
+    - you sit on the toilet at its new spot (z 7.5, y 1.1);
+    - the latch clicks on each toggle;
+    - the new labels show;
+    - screenshots of the toilet and the sign.
+- 2026-10-22 Bathroom in each bar (plan `Docs/Plans done/2026-10-22-bathroom-plan.md`):
+  - **Features:** door with latch and Libre/Ocupado sign, toilet (pee/poo with sounds and bowl visuals),
+    flush, sink, mirror, air freshener, its own light and switch, the 10-min stink, and dirty-hands shame
+    (lines + tag) until washing.
+  - **Bug fix:** an invisible toilet seat from an old `level.json` group was sitting next to the Vircon32.
+  - **Verified in-app with two clients:**
+    - door and latch sync, and a latched door is refused to the other player;
+    - pee stands you at the bowl with yellow water, poo sits you with a 💩 swirl, haze and flies;
+    - flush empties the bowl; the freshener ends the stink and shows the spray;
+    - shame appears outside and not inside, and washing clears it;
+    - the light syncs and darkens the inside; the mirror reflects, only for whoever is inside.
+  - **Not judged:** sound levels and the look at play distance.
+
 ## Done (2026-10-21: car, appearance, interactions, controls)
 - 2026-10-21 Car, Pokebonk, small fixes (plan `Docs/Plans done/2026-10-21-car-pokebonk-plan.md`):
   - **Chairs:** they faced sideways and now face their table (verified for all 24).

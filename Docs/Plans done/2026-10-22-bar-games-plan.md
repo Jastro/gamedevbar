@@ -39,3 +39,16 @@ builds and has been checked in the browser.
 ## 5. Two-player Pong [LOCKED]
 - Fix the known issue: arcade messages arrive with a different `type`, so the second player and the game
   state never sync. Then make two-player Pong work between two clients.
+
+## Deviations (2026-10-22, all five done and pushed)
+- **Bar:** the tap is at the right end of the counter (x 5), past the last stool, so F picks it; no
+  bottles were added (the back bar already has them). Effects start at level 1.5, not 2.
+- **Darts:** the board is at y 2.1 and 1.3x real size (avatars are 2.15 tall), not y 1.75. Aiming uses
+  a close camera 2.4 from the board, not one behind you: from the line the board was a dot. The darts
+  are 1.8x size.
+- **Graffiti:** colors + eraser + 3 sizes as planned; segments are batched (one message per 100 ms).
+- **Karaoke:** no server state; "on stage" comes from positions. The stage is a platform you jump onto,
+  or F at the mic places you. The stage light is on a floor stand (there's no ceiling to hang it from).
+- **Pong:** fixing the `type` override alone wasn't enough (every client ran its own ball), so Pong was
+  rebuilt: the server owns the players, player 1's client runs the game and sends snapshots, player 2
+  sends its paddle. New `server/features/pong.js`; the old `arcadeState` relay is gone.

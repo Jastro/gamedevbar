@@ -77,7 +77,8 @@ export class WebSocketManager extends EventEmitter {
         if (!this.isConnected) return;
 
         try {
-            const message = { type, ...data };
+            // `type` last: a `type` field inside data can't change the message.
+            const message = { ...data, type };
             this.socket.send(JSON.stringify(message));
         } catch (error) {
             console.error('Error sending message:', error);

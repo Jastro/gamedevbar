@@ -1,569 +1,454 @@
 import * as THREE from 'three';
 
+// The Pong cabinet in each bar (machine id = room id). Who plays is decided
+// by the server (server/features/pong.js): player 1 plays the CPU until a
+// second player joins, then the match restarts as 1 vs 1.
+// Roles on this client:
+//   host    (player 1): runs the game, sends snapshots 20 times a second;
+//   guest   (player 2): moves its own paddle, sends it, draws the snapshots;
+//   watcher (everyone else): draws the snapshots, moving the ball between them.
+// Speeds are per second, so the game runs the same at any frame rate.
+const SIZE = 512;            // canvas px (the game's units)
+const PADDLE_HEIGHT = 80;
+const PADDLE_WIDTH = 20;
+const BALL_RADIUS = 10;
+const BALL_SPEED = 300;      // px/s at the serve
+const BALL_SPEEDUP = 1.1;    // per paddle hit
+const MAX_BALL_SPEED = 900;
+const PADDLE_SPEED = 600;    // px/s
+const AI_SPEED = 300;        // px/s, beatable
+const VICTORY_SCORE = 5;
+const COUNTDOWN = 3;         // s before the serve
+const OVER_TIME = 4;         // s of "game over" before the machine frees up
+const SNAPSHOT_INTERVAL = 50; // ms
+const SOUND_DISTANCE = 8;    // watchers closer than this hear it
+const MAX_DELTA = 0.05;      // s; a stalled tab doesn't teleport the ball
+const PLAY_HINT = 'W/S o ↑/↓: mover la pala · Esc: dejar de jugar';
+
 export class ArcadePong {
-    constructor(scene) {
-        this.scene = scene;
-        this.arcadeGroup = null;
-        this.screen = null;
-        this.game = null;
-        this.canvas = null;
-        this.context = null;
-        this.currentPlayer = null;
-        this.secondPlayer = null;
-        this.isActive = false;
-        this.gameState = 'title'; // title, onePlayer, twoPlayer, gameOver
-        this.VICTORY_SCORE = 5; // Puntuación para ganar
-        this.victoryTimeout = null;
+    constructor(room) {
+        this.room = room;
+        this.machine = { player1: null, player2: null, mode: 'idle' };
         this.keysPressed = {};
         this.sounds = {};
-        this.titleSoundTimeout = null;
+        this.lastFrame = performance.now();
+        this.lastSent = 0;
+        this.pendingEvents = [];
+        this.resetMatch();
         this.setupCanvas();
         this.setupControls();
         this.setupSounds();
     }
 
+    get id() {
+        return this.room.id;
+    }
+
+    get network() {
+        return window.game?.network;
+    }
+
+    get localId() {
+        return window.game?.players.localPlayer?.id;
+    }
+
+    // 'host', 'guest' or 'watcher' for this client.
+    get role() {
+        const id = this.localId;
+        if (id && this.machine.player1?.userId === id) return 'host';
+        if (id && this.machine.player2?.userId === id) return 'guest';
+        return 'watcher';
+    }
+
     create(position = { x: 7, y: 2, z: -8 }) {
-        // Grupo principal del arcade
         this.arcadeGroup = new THREE.Group();
+        const cabinetMaterial = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.2, metalness: 0.8 });
+        const cabinet = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 1.5), cabinetMaterial);
 
-        // Crear el mueble del arcade
-        const cabinetGeometry = new THREE.BoxGeometry(2, 4, 1.5);
-        const cabinetMaterial = new THREE.MeshStandardMaterial({
-            color: 0x2c3e50,
-            roughness: 0.2,
-            metalness: 0.8
-        });
-        const cabinet = new THREE.Mesh(cabinetGeometry, cabinetMaterial);
-
-        // Pantalla del arcade
-        const screenGeometry = new THREE.PlaneGeometry(1.8, 1.8);
         const screenTexture = new THREE.CanvasTexture(this.canvas);
         screenTexture.minFilter = THREE.LinearFilter;
-        const screenMaterial = new THREE.MeshBasicMaterial({
-            map: screenTexture,
-            emissive: 0xffffff,
-            emissiveMap: screenTexture
-        });
-        this.screen = new THREE.Mesh(screenGeometry, screenMaterial);
-        this.screen.position.z = 0.76;
-        this.screen.position.y = 0.5;
+        this.screen = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.8), new THREE.MeshBasicMaterial({ map: screenTexture }));
+        this.screen.position.set(0, 0.5, 0.76);
 
-        // Panel de control
-        const controlPanelGeometry = new THREE.BoxGeometry(1.8, 0.5, 0.8);
-        const controlPanel = new THREE.Mesh(controlPanelGeometry, cabinetMaterial);
-        controlPanel.position.y = -1;
-        controlPanel.position.z = 0.3;
+        const controlPanel = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.5, 0.8), cabinetMaterial);
+        controlPanel.position.set(0, -1, 0.3);
         controlPanel.rotation.x = -Math.PI / 6;
 
-        // Añadir todo al grupo
-        this.arcadeGroup.add(cabinet);
-        this.arcadeGroup.add(this.screen);
-        this.arcadeGroup.add(controlPanel);
-
-        // Posicionar el arcade
+        this.arcadeGroup.add(cabinet, this.screen, controlPanel);
         this.arcadeGroup.position.set(position.x, position.y, position.z);
         this.arcadeGroup.userData = {
-            type: "arcade",
+            type: 'arcade',
             arcade: this,
-            isInteractive: true,
             originalMaterial: cabinetMaterial,
-            highlightMaterial: new THREE.MeshStandardMaterial({
-                color: 0x7fff7f,
-                emissive: 0x2f2f2f,
-            })
+            highlightMaterial: new THREE.MeshStandardMaterial({ color: 0x7fff7f, emissive: 0x2f2f2f })
         };
-
-        if (window.game?.world?.collisionManager) {
-            window.game.world.collisionManager.addCollider(this.arcadeGroup);
-        }
-
-        this.scene.add(this.arcadeGroup);
-        this.initGame();
+        window.game?.world?.collisionManager?.addCollider(this.arcadeGroup);
+        this.room.add(this.arcadeGroup);
         this.animate();
     }
 
     setupCanvas() {
         this.canvas = document.createElement('canvas');
-        this.canvas.width = 512;
-        this.canvas.height = 512;
+        this.canvas.width = SIZE;
+        this.canvas.height = SIZE;
         this.context = this.canvas.getContext('2d');
     }
 
     setupSounds() {
-        const listener = new THREE.AudioListener();
-        if (window.game && window.game.camera) {
-            window.game.camera.getCamera().add(listener);
-        }
         // Its own listener, so the Arcade volume slider is its master gain.
+        const listener = new THREE.AudioListener();
+        window.game?.camera?.getCamera().add(listener);
         const settings = window.game?.audioSettings;
         listener.setMasterVolume(settings?.get('arcade') ?? 1);
         settings?.on('change', ({ category, value }) => {
             if (category === 'arcade') listener.setMasterVolume(value);
         });
-
-        const audioLoader = new THREE.AudioLoader();
-
-
-        // Sonido de golpe
-        this.sounds.hit = new THREE.Audio(listener);
-        audioLoader.load('/assets/sound/arcade/hit.wav', (buffer) => {
-            this.sounds.hit.setBuffer(buffer);
-            this.sounds.hit.setVolume(0.3);
-        });
-
-        // Sonido de punto
-        this.sounds.point = new THREE.Audio(listener);
-        audioLoader.load('/assets/sound/arcade/point.wav', (buffer) => {
-            this.sounds.point.setBuffer(buffer);
-            this.sounds.point.setVolume(0.4);
-        });
-
-        // Sonido de victoria
-        this.sounds.victory = new THREE.Audio(listener);
-        audioLoader.load('/assets/sound/arcade/gameover.mp3', (buffer) => {
-            this.sounds.victory.setBuffer(buffer);
-            this.sounds.victory.setVolume(0.5);
-        });
-
-        // Sonido de derrota
-        this.sounds.gameOver = new THREE.Audio(listener);
-        audioLoader.load('/assets/sound/arcade/gameover.mp3', (buffer) => {
-            this.sounds.gameOver.setBuffer(buffer);
-            this.sounds.gameOver.setVolume(0.5);
-        });
-    }
-
-    isPlayingGame(playerId) {
-        return (this.isActive &&
-            ((this.currentPlayer && this.currentPlayer.id === playerId) ||
-                (this.secondPlayer && this.secondPlayer.id === playerId)));
-    }
-
-    checkVictory() {
-        if (this.game.paddle1.score >= this.VICTORY_SCORE ||
-            this.game.paddle2.score >= this.VICTORY_SCORE) {
-
-            const winner = this.game.paddle1.score >= this.VICTORY_SCORE ?
-                this.currentPlayer : this.secondPlayer;
-
-            this.showVictoryScreen(winner);
-
-            // Reiniciar después de 5 segundos
-            this.victoryTimeout = setTimeout(() => {
-                this.resetGame();
-            }, 5000);
-        }
-    }
-
-    resetGame() {
-        if (this.victoryTimeout) {
-            clearTimeout(this.victoryTimeout);
-            this.victoryTimeout = null;
-        }
-
-        this.initGame();
-        this.gameState = 'title';
-        this.currentPlayer = null;
-        this.secondPlayer = null;
-        this.isActive = false;
-
-        this.syncGameState();
-    }
-
-    showVictoryScreen(winner) {
-        const ctx = this.context;
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        // Efecto de destello
-        const time = Date.now();
-        const hue = (time % 1000) / 1000 * 360;
-        ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-
-        ctx.font = 'bold 48px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('¡FIN DEL JUEGO!', this.canvas.width / 2, this.canvas.height / 2 - 40);
-
-        if (this.sounds.gameOver && !this.sounds.gameOver.isPlaying) {
-            this.sounds.gameOver.play();
-        }
-
-        // En modo un jugador
-        if (this.gameState === 'onePlayer') {
-            ctx.font = '32px Arial';
-            ctx.fillText(
-                this.game.paddle1.score >= this.VICTORY_SCORE ? '¡Has ganado!' : '¡Ha ganado la CPU!',
-                this.canvas.width / 2,
-                this.canvas.height / 2 + 20
-            );
-        }
-
-        this.updateScreenTexture();
-    }
-
-    checkPlayerProximity(playerPosition) {
-        const maxDistance = 3; // Distancia máxima para interactuar
-        // World position: the arcade lives inside a room group.
-        const arcadePosition = this.arcadeGroup.getWorldPosition(new THREE.Vector3());
-
-        const distance = new THREE.Vector3(
-            playerPosition.x - arcadePosition.x,
-            0, // Ignoramos altura
-            playerPosition.z - arcadePosition.z
-        ).length();
-
-        return distance <= maxDistance;
-    }
-
-    initGame() {
-        this.game = {
-            paddle1: { y: 256, score: 0 },
-            paddle2: { y: 256, score: 0 },
-            ball: {
-                x: 256,
-                y: 256,
-                dx: 5,
-                dy: 5,
-                speed: 5
-            },
-            paddleHeight: 80,
-            paddleWidth: 20,
+        const loader = new THREE.AudioLoader();
+        const load = (name, url, volume) => {
+            this.sounds[name] = new THREE.Audio(listener);
+            loader.load(url, (buffer) => {
+                this.sounds[name].setBuffer(buffer);
+                this.sounds[name].setVolume(volume);
+            });
         };
-        this.drawTitleScreen();
-    }
-
-    drawTitleScreen() {
-        const ctx = this.context;
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 48px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('PONG', this.canvas.width / 2, 200);
-
-        ctx.font = '24px Arial';
-        ctx.fillText('Acércate y haz clic para jugar', this.canvas.width / 2, 300);
-        ctx.fillText('Controles: W/S o ↑/↓', this.canvas.width / 2, 350);
-
-        this.updateScreenTexture();
-    }
-
-    updateScreenTexture() {
-        if (this.screen && this.screen.material.map) {
-            this.screen.material.map.needsUpdate = true;
-        }
-    }
-
-    updateTitleScreen() {
-        const ctx = this.context;
-        const currentTime = Date.now();
-
-        // Limpiar pantalla
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        // Color parpadeante para el título
-        const hue = (currentTime % 3000) / 3000 * 360;
-        ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-
-        // Título con efecto de escala
-        const scale = 1 + Math.sin(currentTime / 500) * 0.1;
-        ctx.font = `bold ${48 * scale}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.fillText('PONG', this.canvas.width / 2, 200);
-
-        // Texto de instrucciones parpadeante
-        const alpha = Math.sin(currentTime / 400) * 0.5 + 0.5;
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-        ctx.font = '24px Arial';
-        ctx.fillText('Acércate y haz clic para jugar', this.canvas.width / 2, 300);
-        ctx.fillText('Controles: W/S o ↑/↓', this.canvas.width / 2, 350);
-
-        this.updateScreenTexture();
-    }
-
-
-    animate() {
-        if (this.gameState === 'title') {
-            this.updateTitleScreen();
-        } else if (this.isActive) {
-            this.update();
-        }
-        requestAnimationFrame(() => this.animate());
-    }
-
-    update() {
-        if (this.gameState === 'gameOver') {
-            this.showVictoryScreen(this.game.paddle1.score >= this.VICTORY_SCORE ? this.currentPlayer : this.secondPlayer);
-            return;
-        }
-
-        // Actualizar controles antes de la lógica del juego
-        this.updateControls();
-
-        // Actualizar lógica del juego
-        this.updateGameLogic();
-
-        // Verificar victoria después de actualizar
-        this.checkVictory();
-
-        // Dibujar estado actual
-        this.draw();
-    }
-
-    updateGameLogic() {
-        const game = this.game;
-
-        if (this.gameState === 'gameOver') return;
-
-        // Actualizar posición de la bola
-        game.ball.x += game.ball.dx;
-        game.ball.y += game.ball.dy;
-
-        // Colisiones con paredes superior e inferior
-        if (game.ball.y <= 0 || game.ball.y >= this.canvas.height) {
-            game.ball.dy *= -1;
-        }
-
-        // Colisiones con palas
-        if (this.checkPaddleCollision()) {
-            game.ball.dx *= -1.1;
-            game.ball.speed *= 1.1;
-        }
-
-        // Puntuación
-        if (game.ball.x <= 0) {
-            if (this.sounds.point && !this.sounds.point.isPlaying) {
-                this.sounds.point.play();
-            }
-            game.paddle2.score++;
-            if (game.paddle2.score >= this.VICTORY_SCORE) {
-                this.gameState = 'gameOver';
-            } else {
-                this.resetBall('paddle2');
-            }
-        } else if (game.ball.x >= this.canvas.width) {
-            if (this.sounds.point && !this.sounds.point.isPlaying) {
-                this.sounds.point.play();
-            }
-            game.paddle1.score++;
-            if (game.paddle1.score >= this.VICTORY_SCORE) {
-                this.gameState = 'gameOver';
-            } else {
-                this.resetBall('paddle1');
-            }
-        }
-
-        // IA para modo un jugador
-        if (this.gameState === 'onePlayer') {
-            this.updateAI();
-        }
-    }
-
-    checkPaddleCollision() {
-        const game = this.game;
-        // Colisión con pala izquierda
-        if (game.ball.x <= game.paddleWidth &&
-            game.ball.y >= game.paddle1.y - game.paddleHeight / 2 &&
-            game.ball.y <= game.paddle1.y + game.paddleHeight / 2) {
-            if (this.sounds.hit && !this.sounds.hit.isPlaying) {
-                this.sounds.hit.play();
-            }
-            return true;
-        }
-        // Colisión con pala derecha
-        if (game.ball.x >= this.canvas.width - game.paddleWidth &&
-            game.ball.y >= game.paddle2.y - game.paddleHeight / 2 &&
-            game.ball.y <= game.paddle2.y + game.paddleHeight / 2) {
-            if (this.sounds.hit && !this.sounds.hit.isPlaying) {
-                this.sounds.hit.play();
-            }
-            return true;
-        }
-        return false;
+        load('hit', '/assets/sound/arcade/hit.wav', 0.3);
+        load('point', '/assets/sound/arcade/point.wav', 0.4);
+        load('over', '/assets/sound/arcade/gameover.mp3', 0.5);
     }
 
     setupControls() {
-        // Limpiar listeners anteriores si existen
-        if (this.keyDownHandler) {
-            document.removeEventListener('keydown', this.keyDownHandler);
-            document.removeEventListener('keyup', this.keyUpHandler);
-        }
+        document.addEventListener('keydown', (event) => {
+            this.keysPressed[event.code] = true;
+            if (event.key === 'Escape' && this.role !== 'watcher' && this.machine.mode !== 'idle') this.leave();
+        });
+        document.addEventListener('keyup', (event) => {
+            this.keysPressed[event.code] = false;
+        });
+        window.addEventListener('blur', () => { this.keysPressed = {}; });
+    }
 
-        this.keyDownHandler = (e) => {
-            this.keysPressed[e.code] = true;
+    // Used by LocalPlayer (no walking while playing) via Environment.
+    isPlayingGame(playerId) {
+        if (this.machine.mode === 'idle') return false;
+        return this.machine.player1?.userId === playerId || this.machine.player2?.userId === playerId;
+    }
+
+    checkPlayerProximity(playerPosition) {
+        const arcade = this.arcadeGroup.getWorldPosition(new THREE.Vector3());
+        return Math.hypot(playerPosition.x - arcade.x, playerPosition.z - arcade.z) <= 3;
+    }
+
+    // --- Server state --------------------------------------------------------
+
+    join() {
+        this.network?.send('pongJoin', { machineId: this.id });
+    }
+
+    leave() {
+        this.network?.send('pongLeave', { machineId: this.id });
+    }
+
+    applyMachine(state) {
+        const previous = this.machine;
+        this.machine = {
+            player1: state?.player1 ?? null,
+            player2: state?.player2 ?? null,
+            mode: ['onePlayer', 'twoPlayer'].includes(state?.mode) ? state.mode : 'idle'
         };
+        // A new match (someone started, or player 2 joined): fresh scores.
+        const restarted = this.machine.mode !== previous.mode
+            || this.machine.player1?.userId !== previous.player1?.userId;
+        if (restarted) this.resetMatch();
+        this.updatePlayMode();
+    }
 
-        this.keyUpHandler = (e) => {
-            this.keysPressed[e.code] = false;
+    // Snapshots from the host (guest and watchers).
+    applySnapshot(snapshot) {
+        if (this.role === 'host' || this.machine.mode === 'idle') return;
+        const { ball, p1y, p2y, s1, s2, phase, countdown, winner, events } = snapshot;
+        this.match.ball = { ...ball };
+        this.match.p1y = p1y;
+        if (this.role !== 'guest') this.match.p2y = p2y;
+        Object.assign(this.match, { s1, s2, phase, countdown, winner });
+        if (this.isNear()) (events || []).forEach(event => this.play(event));
+    }
+
+    // Player 2's paddle (host and watchers).
+    applyPaddle(y) {
+        if (this.role !== 'guest') this.match.p2y = y;
+    }
+
+    // While we're one of the players: the hint, and no world keys.
+    updatePlayMode() {
+        const game = window.game;
+        if (!game) return;
+        const playing = this.role !== 'watcher' && this.machine.mode !== 'idle';
+        if (playing && !game.playMode) {
+            this.playMode = { hint: PLAY_HINT };
+            game.playMode = this.playMode;
+        } else if (!playing && this.playMode && game.playMode === this.playMode) {
+            game.playMode = null;
+            this.playMode = null;
+        }
+    }
+
+    // --- The game --------------------------------------------------------------
+
+    resetMatch() {
+        this.match = {
+            p1y: SIZE / 2,
+            p2y: SIZE / 2,
+            s1: 0,
+            s2: 0,
+            ball: { x: SIZE / 2, y: SIZE / 2, dx: 0, dy: 0 },
+            phase: 'countdown',
+            countdown: COUNTDOWN,
+            winner: null,
+            overTime: 0,
+            nextServe: Math.random() < 0.5 ? 1 : -1
         };
-
-        document.addEventListener('keydown', this.keyDownHandler);
-        document.addEventListener('keyup', this.keyUpHandler);
     }
 
-    updateControls() {
-        if (!this.isActive) return;
-
-        const isPlayer1 = this.currentPlayer && this.currentPlayer.id === window.game.players.localPlayer.id;
-        const isPlayer2 = this.secondPlayer && this.secondPlayer.id === window.game.players.localPlayer.id;
-
-        if (!isPlayer1 && !isPlayer2) return;
-
-        const paddle = isPlayer1 ? this.game.paddle1 : this.game.paddle2;
-        const paddleSpeed = 10;
-
-        // Mover la pala basado en las teclas presionadas
-        if (this.keysPressed['KeyW'] || this.keysPressed['ArrowUp']) {
-            paddle.y = Math.max(paddle.y - paddleSpeed, this.game.paddleHeight / 2);
-            this.syncGameState();
-        }
-        if (this.keysPressed['KeyS'] || this.keysPressed['ArrowDown']) {
-            paddle.y = Math.min(paddle.y + paddleSpeed, this.canvas.height - this.game.paddleHeight / 2);
-            this.syncGameState();
-        }
+    serve() {
+        const angle = (Math.random() - 0.5) * Math.PI / 3;
+        const direction = this.match.nextServe;
+        this.match.ball = {
+            x: SIZE / 2,
+            y: SIZE / 2,
+            dx: Math.cos(angle) * BALL_SPEED * direction,
+            dy: Math.sin(angle) * BALL_SPEED
+        };
     }
 
-    // Método para sincronizar el estado del juego
-    syncGameState() {
-        if (window.game?.network) {
-            const state = {
-                type: 'arcadeState',
-                gameState: this.gameState,
-                data: {
-                    paddle1: this.game.paddle1,
-                    paddle2: this.game.paddle2,
-                    ball: this.game.ball,
-                    currentPlayer: this.currentPlayer?.id,
-                    secondPlayer: this.secondPlayer?.id
-                }
-            };
-            window.game.network.send('arcadeState', state);
-        }
+    movePaddle(key, dt) {
+        const up = this.keysPressed.KeyW || this.keysPressed.ArrowUp;
+        const down = this.keysPressed.KeyS || this.keysPressed.ArrowDown;
+        if (window.game?.chatActive || up === down) return;
+        const half = PADDLE_HEIGHT / 2;
+        this.match[key] = Math.min(SIZE - half, Math.max(half, this.match[key] + (down ? 1 : -1) * PADDLE_SPEED * dt));
     }
 
-    // Método para recibir actualizaciones
-    updateGameState(state) {
-        // Actualizar estado del juego
-        if (state.data) {
-            this.gameState = state.gameState;
-            this.game.paddle1 = state.data.paddle1;
-            this.game.paddle2 = state.data.paddle2;
-            this.game.ball = state.data.ball;
+    // Host only: the whole simulation.
+    simulate(dt) {
+        const m = this.match;
+        this.movePaddle('p1y', dt);
+        if (this.machine.mode === 'onePlayer') {
+            const target = m.ball.dx > 0 ? m.ball.y : SIZE / 2;
+            const diff = target - m.p2y;
+            m.p2y += Math.sign(diff) * Math.min(Math.abs(diff), AI_SPEED * dt);
+        }
 
-            // Actualizar referencias de jugadores
-            if (state.data.currentPlayer) {
-                this.currentPlayer = { id: state.data.currentPlayer };
+        if (m.phase === 'countdown') {
+            m.countdown -= dt;
+            if (m.countdown <= 0) {
+                m.phase = 'play';
+                this.serve();
             }
-            if (state.data.secondPlayer) {
-                this.secondPlayer = { id: state.data.secondPlayer };
+            return;
+        }
+        if (m.phase === 'over') {
+            m.overTime += dt;
+            if (m.overTime >= OVER_TIME && !m.overSent) {
+                m.overSent = true;
+                this.network?.send('pongOver', { machineId: this.id });
             }
+            return;
+        }
 
-            // Activar el juego si no estaba activo
-            if (!this.isActive && this.gameState !== 'title') {
-                this.isActive = true;
+        const ball = m.ball;
+        ball.x += ball.dx * dt;
+        ball.y += ball.dy * dt;
+        if (ball.y < BALL_RADIUS && ball.dy < 0) { ball.y = BALL_RADIUS; ball.dy *= -1; }
+        if (ball.y > SIZE - BALL_RADIUS && ball.dy > 0) { ball.y = SIZE - BALL_RADIUS; ball.dy *= -1; }
+
+        // Paddles: the bounce angle depends on where the ball hits.
+        const hitPaddle = (paddleY, side) => {
+            const offset = (ball.y - paddleY) / (PADDLE_HEIGHT / 2);
+            if (Math.abs(offset) > 1.15) return false;
+            const speed = Math.min(MAX_BALL_SPEED, Math.hypot(ball.dx, ball.dy) * BALL_SPEEDUP);
+            const angle = offset * Math.PI / 4;
+            ball.dx = Math.cos(angle) * speed * side;
+            ball.dy = Math.sin(angle) * speed;
+            this.event('hit');
+            return true;
+        };
+        if (ball.dx < 0 && ball.x - BALL_RADIUS <= PADDLE_WIDTH && ball.x > 0) {
+            if (hitPaddle(m.p1y, 1)) ball.x = PADDLE_WIDTH + BALL_RADIUS;
+        } else if (ball.dx > 0 && ball.x + BALL_RADIUS >= SIZE - PADDLE_WIDTH && ball.x < SIZE) {
+            if (hitPaddle(m.p2y, -1)) ball.x = SIZE - PADDLE_WIDTH - BALL_RADIUS;
+        }
+
+        // Points.
+        if (ball.x < -BALL_RADIUS || ball.x > SIZE + BALL_RADIUS) {
+            const scorer = ball.x < 0 ? 2 : 1;
+            if (scorer === 1) m.s1 += 1; else m.s2 += 1;
+            this.event('point');
+            m.nextServe = scorer === 1 ? 1 : -1;
+            m.ball = { x: SIZE / 2, y: SIZE / 2, dx: 0, dy: 0 };
+            if (m.s1 >= VICTORY_SCORE || m.s2 >= VICTORY_SCORE) {
+                m.phase = 'over';
+                m.winner = scorer;
+                m.overTime = 0;
+                this.event('over');
+            } else {
+                m.phase = 'countdown';
+                m.countdown = 1;
             }
         }
     }
 
-    updateAI() {
-        const game = this.game;
-        const targetY = game.ball.y;
-        const currentY = game.paddle2.y;
-        const diff = targetY - currentY;
-        const speed = 5;
+    // Guest and watchers: carry the ball on between snapshots.
+    extrapolate(dt) {
+        const m = this.match;
+        if (m.phase === 'countdown') m.countdown = Math.max(0, m.countdown - dt);
+        if (m.phase !== 'play') return;
+        const ball = m.ball;
+        ball.x += ball.dx * dt;
+        ball.y += ball.dy * dt;
+        if (ball.y < BALL_RADIUS && ball.dy < 0) ball.dy *= -1;
+        if (ball.y > SIZE - BALL_RADIUS && ball.dy > 0) ball.dy *= -1;
+    }
 
-        if (Math.abs(diff) > speed) {
-            game.paddle2.y += diff > 0 ? speed : -speed;
+    event(name) {
+        this.pendingEvents.push(name);
+        this.play(name);
+    }
+
+    play(name) {
+        const sound = this.sounds[name];
+        if (!sound?.buffer) return;
+        if (sound.isPlaying) sound.stop();
+        sound.play();
+    }
+
+    isNear() {
+        if (this.role !== 'watcher') return true;
+        const player = window.game?.players.localPlayer;
+        if (!player || !this.arcadeGroup) return false;
+        const arcade = this.arcadeGroup.getWorldPosition(new THREE.Vector3());
+        return Math.hypot(player.position.x - arcade.x, player.position.z - arcade.z) <= SOUND_DISTANCE;
+    }
+
+    sendSnapshot(now) {
+        if (now - this.lastSent < SNAPSHOT_INTERVAL) return;
+        this.lastSent = now;
+        const m = this.match;
+        this.network?.send('pongState', {
+            machineId: this.id,
+            ball: m.ball, p1y: m.p1y, p2y: m.p2y, s1: m.s1, s2: m.s2,
+            phase: m.phase, countdown: m.countdown, winner: m.winner,
+            events: this.pendingEvents.splice(0)
+        });
+    }
+
+    sendPaddle(now) {
+        if (now - this.lastSent < SNAPSHOT_INTERVAL) return;
+        this.lastSent = now;
+        this.network?.send('pongPaddle', { machineId: this.id, y: this.match.p2y });
+    }
+
+    update(deltaTime) {
+        const now = performance.now();
+        const dt = Math.min(deltaTime, MAX_DELTA);
+        if (this.machine.mode === 'idle') {
+            this.drawTitle(now);
+            return;
         }
+        const role = this.role;
+        if (role === 'host') {
+            this.simulate(dt);
+            this.sendSnapshot(now);
+        } else {
+            if (role === 'guest') {
+                this.movePaddle('p2y', dt);
+                this.sendPaddle(now);
+            }
+            this.extrapolate(dt);
+        }
+        this.draw(now);
     }
 
-    resetBall(scorer) {
-        const game = this.game;
-        game.ball.x = this.canvas.width / 2;
-        game.ball.y = this.canvas.height / 2;
-        game.ball.speed = 5;
-        game.ball.dx = scorer === 'paddle1' ? 5 : -5;
-        game.ball.dy = (Math.random() * 10 - 5);
+    animate() {
+        const now = performance.now();
+        const deltaTime = (now - this.lastFrame) / 1000;
+        this.lastFrame = now;
+        this.update(deltaTime);
+        requestAnimationFrame(() => this.animate());
     }
 
-    draw() {
+    // --- Drawing --------------------------------------------------------------
+
+    drawTitle(now) {
         const ctx = this.context;
-        const game = this.game;
-
-        // Limpiar canvas
         ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.fillRect(0, 0, SIZE, SIZE);
+        const hue = (now % 3000) / 3000 * 360;
+        ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+        const scale = 1 + Math.sin(now / 500) * 0.1;
+        ctx.font = `bold ${48 * scale}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.fillText('PONG', SIZE / 2, 200);
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.sin(now / 400) * 0.5 + 0.5})`;
+        ctx.font = '24px Arial';
+        ctx.fillText('Acércate y pulsa F para jugar', SIZE / 2, 300);
+        ctx.fillText('Controles: W/S o ↑/↓', SIZE / 2, 350);
+        this.refresh();
+    }
 
-        // Dibujar línea central
+    draw(now) {
+        const ctx = this.context;
+        const m = this.match;
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, SIZE, SIZE);
+
         ctx.strokeStyle = 'white';
         ctx.setLineDash([20, 15]);
         ctx.beginPath();
-        ctx.moveTo(this.canvas.width / 2, 0);
-        ctx.lineTo(this.canvas.width / 2, this.canvas.height);
+        ctx.moveTo(SIZE / 2, 0);
+        ctx.lineTo(SIZE / 2, SIZE);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Dibujar puntuación
         ctx.fillStyle = 'white';
-        ctx.font = '48px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(game.paddle1.score.toString(), this.canvas.width / 4, 60);
-        ctx.fillText(game.paddle2.score.toString(), (this.canvas.width * 3) / 4, 60);
+        ctx.font = '48px Arial';
+        ctx.fillText(String(m.s1), SIZE / 4, 60);
+        ctx.fillText(String(m.s2), SIZE * 3 / 4, 60);
+        ctx.font = '18px Arial';
+        const name = (player) => (player?.name ?? '').slice(0, 14);
+        ctx.fillText(name(this.machine.player1), SIZE / 4, 90);
+        ctx.fillText(this.machine.mode === 'twoPlayer' ? name(this.machine.player2) : 'CPU', SIZE * 3 / 4, 90);
 
-        // Dibujar palas
-        ctx.fillRect(0, game.paddle1.y - game.paddleHeight / 2, game.paddleWidth, game.paddleHeight);
-        ctx.fillRect(
-            this.canvas.width - game.paddleWidth,
-            game.paddle2.y - game.paddleHeight / 2,
-            game.paddleWidth,
-            game.paddleHeight
-        );
+        ctx.fillRect(0, m.p1y - PADDLE_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT);
+        ctx.fillRect(SIZE - PADDLE_WIDTH, m.p2y - PADDLE_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT);
 
-        // Dibujar bola
-        ctx.beginPath();
-        ctx.arc(game.ball.x, game.ball.y, 10, 0, Math.PI * 2);
-        ctx.fill();
+        if (m.phase === 'play') {
+            ctx.beginPath();
+            ctx.arc(m.ball.x, m.ball.y, BALL_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (m.phase === 'countdown') {
+            ctx.font = 'bold 72px Arial';
+            ctx.fillText(String(Math.max(1, Math.ceil(m.countdown))), SIZE / 2, SIZE / 2 + 24);
+        } else if (m.phase === 'over') {
+            const winner = m.winner === 1 ? this.machine.player1 : this.machine.player2;
+            const winnerName = m.winner === 2 && this.machine.mode === 'onePlayer' ? 'la CPU' : name(winner);
+            ctx.fillStyle = `hsl(${(now % 1000) / 1000 * 360}, 100%, 50%)`;
+            ctx.font = 'bold 44px Arial';
+            ctx.fillText('¡FIN DEL JUEGO!', SIZE / 2, SIZE / 2 - 20);
+            ctx.font = '28px Arial';
+            ctx.fillText(`Gana ${winnerName}`, SIZE / 2, SIZE / 2 + 30);
+        }
 
-        this.updateScreenTexture();
+        // Watchers: a one-player game can be joined.
+        if (this.machine.mode === 'onePlayer' && this.role === 'watcher' && m.phase !== 'over') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.font = '20px Arial';
+            ctx.fillText(`F: retar a ${name(this.machine.player1)}`, SIZE / 2, SIZE - 24);
+        }
+        this.refresh();
     }
 
-    startOnePlayerGame(player) {
-        // Limpiar el timeout del sonido del título
-        if (this.titleSoundTimeout) {
-            clearTimeout(this.titleSoundTimeout);
-            this.titleSoundTimeout = null;
-        }
-        // Detener el sonido del título si está sonando
-        if (this.sounds.title && this.sounds.title.isPlaying) {
-            this.sounds.title.stop();
-        }
-        this.currentPlayer = player;
-        this.gameState = 'onePlayer';
-        this.isActive = true;
-        this.setupControls();
-        this.initGame();
-        this.syncGameState(); // Sincronizar estado inicial
-    }
-
-    startTwoPlayerGame(player2) {
-        this.secondPlayer = player2;
-        this.gameState = 'twoPlayer';
-        this.setupControls();
-        this.initGame();
-        this.syncGameState(); // Sincronizar estado inicial
-    }
-
-    cleanup() {
-        Object.values(this.sounds).forEach(sound => {
-            if (sound.isPlaying) {
-                sound.stop();
-            }
-        });
-
-        if (this.arcadeGroup && this.arcadeGroup.parent) {
-            this.arcadeGroup.parent.remove(this.arcadeGroup);
-        }
+    refresh() {
+        if (this.screen?.material.map) this.screen.material.map.needsUpdate = true;
     }
 }

@@ -106,6 +106,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       sing: are you loud and clear everywhere inside, and normal again once you step off? Is it too loud
       over the projector's sound? From the street, it should sound like any voice in the bar. Does the
       singer block the lyrics too much?
+- [ ] **Pong for two** (rebuilt 2026-10-22). One of you F at the Pong cabinet (vs the CPU), the other F
+      to challenge: the match restarts 1 vs 1 after 3 s. Is it smooth for both, including player 2 on a
+      slower connection? Speed, bounce angles and the CPU's level OK (top of `src/world/ArcadePong.js`)? A
+      third player only watches; Esc leaves; the end screen frees the machine after 4 s.
 - [ ] **Bar counter and sign.** Jump onto the counter and walk along it. Is the "Gamedev MV" sign on the
       back wall (above the paintings) readable from the entrance?
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a

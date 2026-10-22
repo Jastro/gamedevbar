@@ -1,8 +1,8 @@
 # WebSocket protocol
 
 Last updated 2026-10-20. JSON text frames, one object per message, discriminated by `type`.
-Client sends with `network.send(type, data)` → `{ type, ...data }` (a `type` inside `data` wins; see
-Systems.md known issues). Client listeners: `network.on(type, fn)`.
+Client sends with `network.send(type, data)` → `{ ...data, type }` (the `type` argument always wins; until
+2026-10-22 a `type` inside `data` won, which broke Pong). Client listeners: `network.on(type, fn)`.
 
 Server input handling (`server/hub/Hub.js` + each `server/features/*.js`): frames that are not JSON objects with a string `type` are
 dropped (logged); a throwing handler is logged, never fatal. Strings are trimmed and clamped: `username` to 24
@@ -41,7 +41,11 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `lightsToggle` | `roomId`, `light` (`normal` \| `low` \| `disco`) | flip it for that room → `lightsState` to all |
 | `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, always with `peerId`; ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player; an offer that can't be relayed gets `{refused, peerId}` back (as if from the target) |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
-| `arcadeState` | `gameState`, `data` | re-broadcast (see known issues: Pong sync broken) |
+| `pongJoin` | `machineId` (room id) | first → player 1 vs CPU (`onePlayer`), second → player 2 (`twoPlayer`, match restarts); full → `pongBusy` to sender. Leaves any other machine first → `pongMachine` to all |
+| `pongLeave` | `machineId` | a player leaving ends the match → `pongMachine` (idle) |
+| `pongOver` | `machineId` | player 1 only: the match ended → `pongMachine` (idle) |
+| `pongState` | `machineId`, `ball {x, y, dx, dy}`, `p1y`, `p2y`, `s1`, `s2`, `phase` (`countdown`/`play`/`over`), `countdown`, `winner`, `events` (`hit`/`point`/`over`) | player 1 only, ≥ 30 ms apart; clamped → relayed to others |
+| `pongPaddle` | `machineId`, `y` | player 2 only, ≥ 30 ms apart → relayed to others |
 | `soccerBallUpdate` | `position`, `velocity` | relayed to others |
 | `duelRequest` / `duelAccepted` / `duelRejected` / `duelChoice` | ids, choice | rock-paper-scissors duel; no client UI |
 
@@ -87,5 +91,9 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `virconStates` | `cabinets: { roomId: state }` | join snapshot |
 | `virconBusy` | `roomId`, `state` | "someone is already playing" chat line |
 | `snakeHighScores` | `scores` | all Snake machines |
+| `pongMachine` | `machineId`, `state` (`{ player1, player2, mode }`, players `{userId, name}`, mode `idle`/`onePlayer`/`twoPlayer`) | `ArcadePong.applyMachine`: roles, new match, play mode |
+| `pongMachines` | `machines: { machineId: state }` | join snapshot |
+| `pongState` / `pongPaddle` | as sent | guest/watchers draw the snapshot; host/watchers take player 2's paddle |
+| `pongBusy` | `machineId` | chat line |
 | `startSoccerGame` | `initiatorId` | start soccer for everyone |
 | `soccerBallUpdate` | `position`, `velocity` | ball sync |

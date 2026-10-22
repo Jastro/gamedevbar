@@ -150,6 +150,19 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Lyrics:** the shared projector. Its panel has a "🎤 Buscar karaoke en YouTube" link (a search for
   karaoke videos with lyrics); paste the chosen link into the projector as usual.
 
+## Pong (two players)
+
+- **Who plays** is the server's (`server/features/pong.js`, one machine per room, id = room id): F at the
+  cabinet → `pongJoin`. The first player plays the CPU; a second one joins (hint "Retar a …") and the match
+  restarts 1 vs 1; a third gets "ya hay dos jugando". Esc, disconnecting or the end of a match frees it.
+- **Host-run:** player 1's client runs the game (`ArcadePong.simulate`, per second, so frame rate doesn't
+  change the speed) and sends a snapshot 20 times a second (ball, paddles, score, phase, sound events).
+  Player 2 moves its own paddle locally and sends it (`pongPaddle`). Everyone else draws the snapshots and
+  carries the ball on between them. Sounds play for the players and for watchers within 8 units.
+- **Match:** 3 s countdown, first to 5, the bounce angle depends on where the ball hits the paddle and it
+  speeds up 10% per hit. After "¡FIN DEL JUEGO!" (4 s) the host sends `pongOver` and the machine is free.
+- While you play, `game.playMode` holds the hint (W/S or ↑/↓, Esc) and blocks walking and world keys.
+
 ## Light switches
 
 - **Switches:** three switches on the inside of each bar's front wall (`LightSwitches.js`): 💡 normal
@@ -358,10 +371,9 @@ see [Protocol.md](Protocol.md).
 - ~~Server crash on bad input~~ (fixed 2026-10-20): `Hub` parses frames in a try/catch, runs each handler
   inside a try/catch, and features validate/clamp fields (see Protocol.md).
 - ~~XSS in chat~~ (fixed 2026-10-20): `ChatUI.addMessage` builds DOM nodes with `textContent`.
-- **Pong multiplayer sync is broken**: `WebSocketManager.send(type, data)` builds `{ type, ...data }`, so a
-  `data.type` overrides the message type. `arcadeInteraction.js` sends `arcadeState` with `type: 'startGame'` (server sees
-  `startGame`, unhandled) and `syncGameState` gets re-broadcast as `arcadeState`, which no client listens to.
-  Pong is effectively local-only; each room has its own local Pong and Snake.
+- ~~Pong multiplayer sync was broken~~ (fixed 2026-10-22): `WebSocketManager.send` let a `type` inside the
+  data override the message type, so Pong's messages never arrived as sent. `send` now puts `type` last,
+  and Pong was rebuilt on its own messages (see "Pong (two players)"). Snake is still local.
 - Seat ids are Three.js object ids (client-local), so server seat occupancy is meaningless across clients, and
   no client handles `userSat`/`userStood` (others don't see you sit).
 - Duel messages (`duelRequest`...) exist on the server but there is no client UI for them.
