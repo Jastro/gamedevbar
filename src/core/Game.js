@@ -25,6 +25,7 @@ import { createBarTapInteraction } from '../interactions/barTapInteraction';
 import { DartsSync } from '../bar/DartsSync';
 import { GraffitiSync } from '../world/GraffitiSync';
 import { createDartsInteraction } from '../interactions/dartsInteraction';
+import { createKaraokeInteraction } from '../interactions/karaokeInteraction';
 import { VirconSpectating } from '../vircon/VirconSpectating';
 import { ServerClock } from '../network/ServerClock';
 import { AudioSettings } from '../audio/AudioSettings';
@@ -113,6 +114,7 @@ export class Game {
         this.interactions.register(createCarInteraction(this));
         this.interactions.register(createBarTapInteraction(this));
         this.interactions.register(createDartsInteraction(this));
+        this.interactions.register(createKaraokeInteraction(this));
         createBathroomInteractions(this).forEach(interaction => this.interactions.register(interaction));
 
         this.clock = new THREE.Clock();
@@ -297,6 +299,7 @@ export class Game {
         this.soccerGame.update(deltaTime);
         this.environment.update(deltaTime, playerPosition);
         this.environment.updateDormancy(this.players.players.values());
+        this.environment.updateStages(deltaTime, this.players.players.values());
         this.lighting.update(deltaTime);
         this.bathroomSync.update(deltaTime);
         this.drinkSync.update();

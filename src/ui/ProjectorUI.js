@@ -38,7 +38,18 @@ export class ProjectorUI {
         note.className = 'floating-panel-note';
         note.textContent = 'Todo el bar ve lo mismo. Algunos vídeos no se pueden ver fuera de YouTube.';
 
-        this.panel.body.append(this.form, this.status, actions, note);
+        // Karaoke: find a lyrics video, paste its link here, sing on the stage.
+        const karaoke = document.createElement('div');
+        karaoke.className = 'floating-panel-note';
+        const link = document.createElement('a');
+        link.href = 'https://www.youtube.com/results?search_query=karaoke+con+letra';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = '🎤 Buscar karaoke en YouTube ↗';
+        link.style.color = '#ffb37a';
+        karaoke.append(link, ' — pega el enlace aquí y sube al escenario.');
+
+        this.panel.body.append(this.form, this.status, actions, karaoke, note);
     }
 
     makeButton(label, variant, onClick) {

@@ -138,6 +138,18 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   triple, 25 or bull (50). Everyone sees the dart fly from the thrower's hand (whoosh, then a thunk).
 - **Board size:** about 1.3× a real one to match the avatars (2.15 tall), and the darts 1.8×.
 
+## Karaoke stage
+
+- **Stage** (`src/world/KaraokeStage.js`): a 0.25-high box platform in front of each projector screen
+  (room-local x 11.6..14.7, z -2.6..2.6) with a glowing front edge, a mic stand and a stage light on a
+  stand. Jump onto it, or F at the mic to be placed behind it facing the room.
+- **No server state:** "on stage" (`KaraokeStage.contains`: inside the rectangle, feet on top) is worked out
+  from positions on every client. `Environment.updateStages` fades the stage light in while anyone is up.
+- **Voice:** `VoiceChat.update` gives a singer's voice a ref distance of 25 instead of 4 for listeners in
+  the same bar (about full volume anywhere inside); outside the bar the usual distance and muffling apply.
+- **Lyrics:** the shared projector. Its panel has a "🎤 Buscar karaoke en YouTube" link (a search for
+  karaoke videos with lyrics); paste the chosen link into the projector as usual.
+
 ## Light switches
 
 - **Switches:** three switches on the inside of each bar's front wall (`LightSwitches.js`): 💡 normal

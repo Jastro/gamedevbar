@@ -6,6 +6,7 @@ import { GraffitiWall } from './GraffitiWall';
 import { Bar } from './Bar';
 import { BarTap } from './BarTap';
 import { Dartboard } from './Dartboard';
+import { KaraokeStage } from './KaraokeStage';
 import { Furniture } from './Furniture';
 import { Radio } from './Radio';
 import { Paintings } from './Paintings';
@@ -41,6 +42,7 @@ export class Environment {
                 bar: new Bar(room, room.definition.barSign),
                 barTap: new BarTap(room),
                 dartboard: new Dartboard(room),
+                karaoke: new KaraokeStage(room, this.world.collisionManager),
                 furniture: new Furniture(room, this.world.collisionManager),
                 radio: new Radio(room),
                 paintings: hasPaintings ? new Paintings(room) : null,
@@ -58,6 +60,7 @@ export class Environment {
             contents.bar.create();
             contents.barTap.create();
             contents.dartboard.create();
+            contents.karaoke.create();
             contents.furniture.create();
             contents.radio.create();
             if (contents.paintings) contents.paintings.create();
@@ -148,6 +151,22 @@ export class Environment {
             const level = this.getOcclusionLevel(room, listenerRoom);
             radio.setOcclusion(level);
             radio.updateAudibility(level);
+        });
+    }
+
+    // The room whose karaoke stage a world position is standing on, or null.
+    getStageRoom(worldPosition) {
+        for (const { room, karaoke } of this.rooms.values()) {
+            if (karaoke.contains(worldPosition)) return room;
+        }
+        return null;
+    }
+
+    // Stage lights: on while anyone (local or remote) is up there.
+    updateStages(deltaTime, players) {
+        const positions = [...players].map(player => player.position);
+        this.rooms.forEach(({ karaoke }) => {
+            karaoke.update(deltaTime, positions.some(position => karaoke.contains(position)));
         });
     }
 

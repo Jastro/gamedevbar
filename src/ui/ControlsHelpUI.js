@@ -13,6 +13,7 @@ const SECTIONS = [
             ['Baño (F o clic)', 'Puerta y pestillo, váter, cadena, lavabo, ambientador, luz y pintar en la pared'],
             ['Barra (F o clic en el grifo)', 'Pedir una bebida'],
             ['B', 'Beber'],
+            ['Karaoke (F en el micro o salta al escenario)', 'Tu voz llega a todo el bar; la letra, en el proyector'],
             ['Dardos (F en la línea amarilla)', 'Ratón: apuntar · Clic o Espacio: lanzar · Esc: salir'],
             ['Q / E', 'Girar la cámara'],
             ['Clic derecho + arrastrar', 'Girar la cámara'],

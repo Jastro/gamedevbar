@@ -101,6 +101,11 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       Draw with the mouse (and on a phone with a finger): smooth lines, colors, sizes, the 🧽 eraser. A
       friend sees it on the wall as you draw, and after reloading. Is the wall big enough, is the panel
       comfortable, and do you want a "clear the wall" button (and who could use it)?
+- [ ] **Karaoke.** Projector → "🎤 Buscar karaoke en YouTube", paste a lyrics video. F at the mic (or
+      jump onto the stage): the stage light comes on. With a friend at the far end of the bar, hold V and
+      sing: are you loud and clear everywhere inside, and normal again once you step off? Is it too loud
+      over the projector's sound? From the street, it should sound like any voice in the bar. Does the
+      singer block the lyrics too much?
 - [ ] **Bar counter and sign.** Jump onto the counter and walk along it. Is the "Gamedev MV" sign on the
       back wall (above the paintings) readable from the entrance?
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a

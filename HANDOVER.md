@@ -2,7 +2,7 @@
 
 ## Start here
 2026-10-22. Away-mode batch from `Docs/Plans to be done/2026-10-22-bar-games-plan.md`: bar service and
-drunkenness, darts and bathroom graffiti (done, pushed), then karaoke stage and two-player Pong sync, each
+drunkenness, darts, bathroom graffiti and the karaoke stage (done, pushed), then two-player Pong sync, each
 pushed to `main` on its own. Next: the next unchecked task in that plan; Borja's checks in
 `Docs/PendingUserChecks.md`.
 
@@ -17,6 +17,15 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Karaoke stage:
+  - **Stage** in front of each projector: low platform, mic stand, stage light that fades in while anyone
+    is up (worked out from positions, no server state). F at the mic puts you on stage facing the room.
+  - **Voice:** a singer is heard at about full volume anywhere in that bar (ref distance 25 instead of 4),
+    and normally from outside. The projector panel links to a YouTube karaoke search.
+  - **Verified in-app with two clients:** F at the mic → on stage at y 1.25, light at full; the second
+    client sees the singer on stage and the light on (the other bar's stays off); a stand-in voice entry
+    switches to ref 25 inside the bar and back to 4 from the street; screenshot of the stage; no errors.
+  - **Not judged:** real singing over voice chat (needs two mics), loudness against the projector.
 - 2026-10-22 Bathroom graffiti:
   - **Wall:** the inside of the cubicle's partition facing the bar is drawable. F → a panel showing the
     wall's own canvas (6 colors, 🧽 eraser, 3 sizes, mouse/pen/touch). Shared live, last 3000 segments per
@@ -121,6 +130,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     If wrong: tune `EFFECT_START` in `src/bar/DrinkSync.js`.
   - **Darts board at y 2.1 and 1.3× real size** (plan said y 1.75): avatars are 2.15 tall. The aiming
     view is a close camera 2.4 from the board, not over the shoulder: from the line the board was a dot.
+  - **Karaoke volume is a ref distance of 25** with the normal rolloff: not literally constant volume, so
+    the far corners are ~0.85. If wrong: tune `STAGE_REF_DISTANCE` in `VoiceChat.js`.
   - **Graffiti has no "clear wall" button**, and the eraser is open to everyone. Memory only (a deploy
     wipes it). If wrong: add a clear (who may use it is Borja's call) or persist to disk.
   - **A turn ends by itself** after 3 darts (no "play again" button: F again). If wrong: add a rematch key.

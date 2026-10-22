@@ -12,6 +12,8 @@ const RECONNECT_DELAY = 2000; // ms
 // VOICE_REF_DISTANCE units, about half at twice that.
 const VOICE_REF_DISTANCE = 4;
 const VOICE_ROLLOFF = 1.2;
+// On the karaoke stage: about full volume anywhere in that bar (~0.85 at 30).
+const STAGE_REF_DISTANCE = 25;
 const VOICE_HEIGHT = 0.6; // mouth height relative to the avatar origin
 
 const DEVICE_STORAGE_KEY = 'voiceInputDevice';
@@ -216,6 +218,12 @@ export class VoiceChat extends EventEmitter {
             // Player.loadModel clears the avatar's children, so re-attach.
             if (entry.sound.parent !== player.mesh) player.mesh.add(entry.sound);
             entry.occlusion.setLevel(environment.getOcclusionLevel(world.getRoomAt(player.position), listenerRoom));
+            // A singer on the karaoke stage fills their bar (only inside it).
+            const onStage = Boolean(listenerRoom) && environment.getStageRoom(player.position) === listenerRoom;
+            if (entry.onStage !== onStage) {
+                entry.onStage = onStage;
+                entry.sound.setRefDistance(onStage ? STAGE_REF_DISTANCE : VOICE_REF_DISTANCE);
+            }
         });
     }
 
