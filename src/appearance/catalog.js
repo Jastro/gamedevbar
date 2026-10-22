@@ -40,7 +40,12 @@ export const ITEMS = [
     { id: 'gamepad', slot: 'hand', name: 'Mando', icon: '🎮', build: items.gamepad },
     { id: 'sword', slot: 'hand', name: 'Espada pixel', icon: '🗡️', build: items.pixelSword },
     { id: 'microphone', slot: 'hand', name: 'Micrófono', icon: '🎤', build: items.microphone },
-    { id: 'one-up', slot: 'hand', name: 'Seta 1UP', icon: '🍄', build: items.oneUpMushroom }
+    { id: 'one-up', slot: 'hand', name: 'Seta 1UP', icon: '🍄', build: items.oneUpMushroom },
+    // Also what the bar serves (src/bar/drinks.js).
+    { id: 'shot', slot: 'hand', name: 'Chupito', icon: '🥃', build: items.shotGlass },
+    { id: 'cubata', slot: 'hand', name: 'Cubata', icon: '🍹', build: items.cubata },
+    { id: 'coffee', slot: 'hand', name: 'Café', icon: '☕', build: items.coffeeCup },
+    { id: 'soda', slot: 'hand', name: 'Refresco', icon: '🥤', build: items.sodaCan }
 ];
 
 const ITEMS_BY_ID = new Map(ITEMS.map(item => [item.id, item]));

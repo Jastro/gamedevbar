@@ -121,7 +121,7 @@ export class Player {
             this.modelId = modelId;
             // Rest pose, before the mixer moves anything: measure once.
             prepareAnchors(model, this.mesh, modelId);
-            applyAppearance(model, modelId, this.appearance);
+            applyAppearance(model, modelId, this.wornAppearance());
 
             // Configurar animaciones
             if (this.animations.mixer) {
@@ -272,6 +272,18 @@ export class Player {
         this.nameSprite.renderOrder = 999;
     }
 
+    // A drink from the bar (src/bar/drinks.js) in the hand, over whatever
+    // hand accessory the appearance has. null puts the accessory back.
+    setHeldItem(itemId) {
+        if ((itemId ?? null) === (this.heldItem ?? null)) return;
+        this.heldItem = itemId ?? null;
+        applyAppearance(this.model, this.modelId, this.wornAppearance());
+    }
+
+    wornAppearance() {
+        return this.heldItem ? { ...this.appearance, hand: this.heldItem } : this.appearance;
+    }
+
     setPose(pose) {
         if (pose === this.pose) return;
         this.restoreFeet();
@@ -324,7 +336,7 @@ export class Player {
     setAppearance(appearance) {
         this.appearance = normalizeAppearance(appearance);
         // The model on screen, even while another one loads.
-        applyAppearance(this.model, this.modelId, this.appearance);
+        applyAppearance(this.model, this.modelId, this.wornAppearance());
         if (this.username) this.setUsername(this.username);
     }
 

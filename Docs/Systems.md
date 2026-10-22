@@ -98,6 +98,26 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Leftover removed:** the old empty "Bathroom" group in `level.json` (an invisible seat by the Vircon32)
   is removed when the level loads.
 
+## Bar service and drinks
+
+- **Ordering:** a beer tap on each counter (`src/world/BarTap.js`, room-local (5, 1.3, -3.2), past the last
+  stool so F picks it over a seat). F or click → "🍺 ¿Qué te pongo?" → Caña, Vino, Chupito, Cubata, Café,
+  Refresco (`src/bar/drinks.js`). The drink shows in your right hand through the appearance hand slot
+  (`Player.setHeldItem` overrides `hand` without touching your saved appearance).
+- **Drinking:** B takes a sip (3 per drink, positional `sip` sound for everyone). The last sip empties
+  your hand; ordering again replaces the drink.
+- **Drunk level** 0..6: each sip adds a third of the drink's alcohol (beer/wine 1, shot 1.5, cubata 2,
+  coffee -1.5, soda 0); it drops 1 per 2 min. The server keeps `{level, at}` and clients compute the
+  current value with `drunkLevelAt` (no timers).
+- **Effects** (`src/bar/DrinkSync.js`), scaled from 0 at level 1.5 to full at 6:
+  - the camera rolls and sways (`Camera.drunk`; never on a locked view, so arcade screens stay readable);
+  - walking weaves from side to side (`LocalPlayer.getInputDirection`);
+  - from level 2, chat text gets doubled vowels and swapped letters, and from 4, sometimes a "*hic*"
+    (emoji-menu emotes stay intact);
+  - from level 3, everyone sees a "🍺 Borracho/a" tag over you.
+- **State:** `server/features/drinks.js` (cooldowns: order 2 s, sip 0.8 s). It lives on the connection, so
+  reconnecting sobers you up.
+
 ## Light switches
 
 - **Switches:** three switches on the inside of each bar's front wall (`LightSwitches.js`): 💡 normal

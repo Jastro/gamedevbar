@@ -97,6 +97,8 @@ export class ChatUI {
             isEmote = true;
             message = message.substring(4);
         }
+        // Drunk players type like it (emotes from the menu stay intact).
+        if (!emoji && window.game?.drinkSync) message = window.game.drinkSync.slur(message);
 
         const messageData = {
             type: 'userChat',

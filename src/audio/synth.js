@@ -38,6 +38,13 @@ const RECIPES = {
         filter: { type: 'lowpass', from: 5000, to: 250, q: 0.8 },
         volume: 0.4
     },
+    // A gulp: low, bubbly, short.
+    sip: {
+        duration: 0.45,
+        envelope: (t, d) => fade(t, d, 0.03, 0.15) * (0.6 + 0.4 * Math.sin(t * 70)),
+        filter: { type: 'lowpass', from: 700, to: 300, q: 4 },
+        volume: 0.6
+    },
     // A short metallic click.
     latch: {
         duration: 0.12,

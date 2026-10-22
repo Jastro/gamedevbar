@@ -2,6 +2,83 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-21: car, appearance, interactions, controls)
+- 2026-10-21 Car, Pokebonk, small fixes (plan `Docs/Plans done/2026-10-21-car-pokebonk-plan.md`):
+  - **Chairs:** they faced sideways and now face their table (verified for all 24).
+  - **Jump:** 1.43 high and 0.6 s in the air.
+  - **Chat:** Enter focuses it.
+  - **Cabinets:** the Vircon32 moved to x 12.5, and a Pokebonk cabinet plays the site on its screen
+    (verified: it loads in the frame, and Salir restores everything). The Vircon32 still plays.
+  - **Smoke car** (verified with two clients):
+    - countdown 5→3, then smoke and hiss;
+    - fade at 3 s, and the two passengers land at different spots in Desarrollo;
+    - the seats are freed.
+  - **Not judged:** the look of the smoke and car, the hiss volume, and Pokebonk's playability on the
+    cabinet.
+- 2026-10-21 Appearance, part 1 (plan `Docs/Plans done/2026-10-21-appearance-plan.md`):
+  - **Items:** 27 accessories built in code: 13 hats (cap, top hat, viking helmet, crown, beret, gamer
+    headset, mushroom, ? block, halo, horns, beer helmet, pirate hat, chef hat), 6 face items, and 8 hand
+    items (beer, wine, bottle, tortilla pincho, gamepad, pixel sword, mic, 1UP mushroom).
+  - **Also:** a color tint, a size slider and name colors; the 👤 menu has tabs. Everything is saved and
+    synced.
+  - **Verified in-app:**
+    - items on the bones of pj, pj2, pj3, pj4, pj5 and pj6, checked by eye on screenshots (a mustache and
+      the chicken/Santa hat heights were fixed);
+    - a second client sees crown + monocle + gamepad + tint live;
+    - the appearance comes back after a reload;
+    - the server shape check drops bad ids and colors.
+  - **Not judged:** item fit and feel at play distance.
+  - **Next step:** part 2, more characters (find the asset pack and its license) and per-part colors.
+- 2026-10-21 Interactions, tables, lights (plan `Docs/Plans done/2026-10-21-interactions-tables-lights-plan.md`):
+  - **F everywhere:** F works for everything, and the target is the nearest thing in front of you.
+  - **Chairs:** they're seats now, at chair height, facing the table.
+  - **Running:** Shift (5.5 units/s).
+  - **Tables:** you can stand on them, and all other colliders block at any height.
+  - **Empty rooms:** their radio and projector pause after 30 s and resume live.
+  - **Light switches:** normal / low / disco, shared per room.
+  - **Bug fixes:** stools and chairs never highlighted on hover; jumping onto a table landed you inside
+    it; a jump could carry you over the bar or a fence.
+  - **Verified in-app:**
+    - F hints for chair, stool, radio (when facing it), Pong, Snake, projector, door, Vircon32, the three
+      switches, and nothing in open space;
+    - Shift: 5.1 units in the first second;
+    - you can't walk through a table; jumping onto one stands you at y 2.03, and walking off drops you
+      to the floor;
+    - jumping at the bar doesn't land you on it;
+    - a chair sits you at y 1 facing the table;
+    - the radio goes dormant 30 s after the room empties and comes back live on entry (projector logic
+      checked with a stub player; the in-app browser's YouTube player never became ready);
+    - switches sync between two clients, a late joiner gets the snapshot, and the lighting follows
+      (low: ambient 0.18 warm; disco: three moving colored lights; all off: dark).
+  - **Not judged:** the look and feel.
+- 2026-10-21 Controls and movement (`feature/controls-and-movement`):
+  - **Controls:** Q/E rotate the camera, F interacts (E did before), a right click opens the emojis at the
+    cursor (a right drag still rotates), and a ❔ button lists every control. *Guardar* closes the 👤 menu,
+    and V talks while playing the Vircon32. Each radio shows "📻 station" above it.
+  - **Movement:**
+    - per second instead of per frame, so the speed was frame-rate dependent before;
+    - acceleration and deceleration, smooth turning;
+    - sliding along walls, plus a door-frame assist;
+    - a collision box of 0.8 instead of 1.0;
+    - position sent at most 20/s instead of every frame;
+    - other players smoothed per second, with smooth turning.
+  - **Bug fix:** every collider's box was recomputed on every collision check and every frame. Now
+    1000 checks take 0.8 ms.
+  - **Bug fix:** Space typed in the chat made you jump.
+  - **Verified in-app:**
+    - 1 s of walking = 2.98 / 2.96 / 2.94 units at 30 / 60 / 144 fps;
+    - a diagonal into a wall slides; straight into the door frame 0.2 off-center eases through; head-on
+      into a wall stops;
+    - Q/E rotate and are ignored while typing in the chat;
+    - a right click opens the emojis at the cursor, and a right drag rotates without opening them;
+    - E no longer interacts and F does (hint "F · Cerrar puerta");
+    - the ❔ panel opens and fits at 375 px;
+    - *Guardar* closes the menu;
+    - V inside the emulator starts and stops talking;
+    - the radio label is readable;
+    - a second client sees the moved player converge, rotation included.
+  - **Not judged:** the feel. That's for Borja.
+
 ## Done (2026-10-21: spectating, direct links)
 - 2026-10-21 Vircon32 spectating + 🕹️ Arcade slider (plan `Docs/Plans done/2026-10-21-vircon-spectating-plan.md`):
   - **Who watches:** people within 4.5 of a cabinet see and hear the player's game on its screen (WebRTC

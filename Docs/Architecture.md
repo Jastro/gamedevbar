@@ -30,8 +30,10 @@ entities/      Player, LocalPlayer (input + collisions), RemotePlayer, PlayerMan
 world/         RoomLayout (where rooms are), Room, World (shells, colliders, street), Environment (props per room),
                Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, VirconCabinet +
                Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), Car + CarSync,
-               VirconSync, SoccerGame, CollisionManager
-interactions/  one file per clickable type: seat, radio, arcade, door
+               VirconSync, SoccerGame, CollisionManager, BarTap
+bar/           drinks (menu, alcohol, decay math shared with the server), DrinkSync (order panel, B to sip,
+               held drink, drunk tag and effects)
+interactions/  one file per clickable type: seat, radio, arcade, door, barTap, bathroom fixtures…
 audio/         OcclusionChain (wall/door muffling shared by radios and voices)
 voice/         VoiceChat (mesh, PTT, positional voices), VoicePeer (one RTCPeerConnection)
 ui/            StartScreen, LoadingScreen, ModelSelector, RoomSelector, CustomizeUI (👤 menu),

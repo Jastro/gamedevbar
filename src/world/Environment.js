@@ -3,6 +3,7 @@ import { LightSwitches, DEFAULT_LIGHTS } from './LightSwitches';
 import { Car } from './Car';
 import { Bathroom } from './Bathroom';
 import { Bar } from './Bar';
+import { BarTap } from './BarTap';
 import { Furniture } from './Furniture';
 import { Radio } from './Radio';
 import { Paintings } from './Paintings';
@@ -36,6 +37,7 @@ export class Environment {
             const contents = {
                 room,
                 bar: new Bar(room, room.definition.barSign),
+                barTap: new BarTap(room),
                 furniture: new Furniture(room, this.world.collisionManager),
                 radio: new Radio(room),
                 paintings: hasPaintings ? new Paintings(room) : null,
@@ -51,6 +53,7 @@ export class Environment {
             };
 
             contents.bar.create();
+            contents.barTap.create();
             contents.furniture.create();
             contents.radio.create();
             if (contents.paintings) contents.paintings.create();

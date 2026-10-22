@@ -306,3 +306,39 @@ export function oneUpMushroom() {
     const stem = mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.08, 12), mat(0xfff4dc), 0, 0.08, 0.06);
     return group(capMesh, ...spots, stem);
 }
+
+// --- Drinks from the bar (also wearable as hand items) ---------------------
+
+export function shotGlass() {
+    const glass = new THREE.MeshStandardMaterial({ color: 0xe8f4ff, transparent: true, opacity: 0.4, roughness: 0.1 });
+    const cup = mesh(new THREE.CylinderGeometry(0.045, 0.035, 0.09, 12), glass, 0, 0.06, 0.06);
+    const liquor = mesh(new THREE.CylinderGeometry(0.04, 0.033, 0.06, 12), mat(0xc8862a), 0, 0.05, 0.06);
+    return group(cup, liquor);
+}
+
+export function cubata() {
+    const glass = new THREE.MeshStandardMaterial({ color: 0xe8f4ff, transparent: true, opacity: 0.35, roughness: 0.1 });
+    const tumbler = mesh(new THREE.CylinderGeometry(0.075, 0.065, 0.26, 14), glass, 0, 0.14, 0.06);
+    const drink = mesh(new THREE.CylinderGeometry(0.068, 0.06, 0.2, 14), new THREE.MeshStandardMaterial({ color: 0x3b1a0a, transparent: true, opacity: 0.9 }), 0, 0.11, 0.06);
+    const lime = mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.012, 12, 1, false, 0, Math.PI), mat(0x8bc34a), 0.05, 0.27, 0.06);
+    lime.rotation.z = Math.PI / 2;
+    const straw = mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.32, 6), mat(0xe53935), -0.03, 0.22, 0.06);
+    straw.rotation.z = 0.25;
+    return group(tumbler, drink, lime, straw);
+}
+
+export function coffeeCup() {
+    const cup = mesh(new THREE.CylinderGeometry(0.07, 0.055, 0.09, 14), mat(0xffffff), 0, 0.06, 0.06);
+    const coffee = mesh(new THREE.CircleGeometry(0.065, 14), mat(0x4e2a14), 0, 0.106, 0.06);
+    coffee.rotation.x = -Math.PI / 2;
+    const handle = mesh(new THREE.TorusGeometry(0.03, 0.01, 6, 12, Math.PI), mat(0xffffff), -0.08, 0.06, 0.06);
+    handle.rotation.z = Math.PI / 2;
+    const saucer = mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.012, 16), mat(0xffffff), 0, 0.01, 0.06);
+    return group(cup, coffee, handle, saucer);
+}
+
+export function sodaCan() {
+    const can = mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.2, 14), mat(0x1e88e5, { metalness: 0.7, roughness: 0.3 }), 0, 0.11, 0.06);
+    const top = mesh(new THREE.CylinderGeometry(0.055, 0.06, 0.015, 14), mat(0xcfd8dc, { metalness: 0.8, roughness: 0.3 }), 0, 0.215, 0.06);
+    return group(can, top);
+}

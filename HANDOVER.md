@@ -1,10 +1,10 @@
 # Handover
 
 ## Start here
-2026-10-21. Working toward forum embeds. Direct links, 👤 menu, arcade spectating and the controls/movement
-rework, interactions/tables/lights and appearance part 1 are merged (#18-#21, #23). `feature/car-pokebonk`
-(#22, open; main merged in): chairs face tables, shorter jump, Enter to chat, Pokebonk cabinet, the smoke
-car. Next: Borja's checks in `Docs/PendingUserChecks.md`.
+2026-10-22. Away-mode batch from `Docs/Plans to be done/2026-10-22-bar-games-plan.md`: bar service and
+drunkenness (done, pushed), then darts, bathroom graffiti, karaoke stage and two-player Pong sync, each
+pushed to `main` on its own. Next: the next unchecked task in that plan; Borja's checks in
+`Docs/PendingUserChecks.md`.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
@@ -17,6 +17,17 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Bar service and drunkenness:
+  - **Tap and drinks:** a beer tap at the right end of each counter; F → Caña, Vino, Chupito, Cubata,
+    Café, Refresco. The drink shows in your hand (new hand items: shot glass, cubata, coffee cup, soda
+    can) and B sips it (3 sips, positional sip sound).
+  - **Drunk level** 0..6 on the server, decaying 1 per 2 min; from level 1.5 the camera sways and rolls,
+    walking weaves, from 2 the chat slurs, from 3 a "🍺 Borracho/a" tag shows to everyone. Coffee sobers.
+  - **Verified in-app with two clients:** F at the tap picks it (not the stool) and opens the menu; a
+    cubata + 3 sips → level 1.98 and the hand empties; at level 3.4 the second client sees the wine in
+    the first player's hand bone and the tag, and the camera roll shows in a screenshot; slur samples
+    read OK (fixed a swap that moved spaces); no console or server errors.
+  - **Not judged:** how the effects feel, the drinks' look in the hand.
 - 2026-10-22 Toilet seated pose and the camera gap:
   - **Seated pose:** pooping sits you properly, with hips on the seat and feet forward and up (a procedural
     pose on the foot bones), and everyone sees it.
@@ -55,81 +66,9 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     - shame appears outside and not inside, and washing clears it;
     - the light syncs and darkens the inside; the mirror reflects, only for whoever is inside.
   - **Not judged:** sound levels and the look at play distance.
-- 2026-10-21 Car, Pokebonk, small fixes (plan `Docs/Plans done/2026-10-21-car-pokebonk-plan.md`):
-  - **Chairs:** they faced sideways and now face their table (verified for all 24).
-  - **Jump:** 1.43 high and 0.6 s in the air.
-  - **Chat:** Enter focuses it.
-  - **Cabinets:** the Vircon32 moved to x 12.5, and a Pokebonk cabinet plays the site on its screen
-    (verified: it loads in the frame, and Salir restores everything). The Vircon32 still plays.
-  - **Smoke car** (verified with two clients):
-    - countdown 5→3, then smoke and hiss;
-    - fade at 3 s, and the two passengers land at different spots in Desarrollo;
-    - the seats are freed.
-  - **Not judged:** the look of the smoke and car, the hiss volume, and Pokebonk's playability on the
-    cabinet.
-- 2026-10-21 Appearance, part 1 (plan `Docs/Plans done/2026-10-21-appearance-plan.md`):
-  - **Items:** 27 accessories built in code: 13 hats (cap, top hat, viking helmet, crown, beret, gamer
-    headset, mushroom, ? block, halo, horns, beer helmet, pirate hat, chef hat), 6 face items, and 8 hand
-    items (beer, wine, bottle, tortilla pincho, gamepad, pixel sword, mic, 1UP mushroom).
-  - **Also:** a color tint, a size slider and name colors; the 👤 menu has tabs. Everything is saved and
-    synced.
-  - **Verified in-app:**
-    - items on the bones of pj, pj2, pj3, pj4, pj5 and pj6, checked by eye on screenshots (a mustache and
-      the chicken/Santa hat heights were fixed);
-    - a second client sees crown + monocle + gamepad + tint live;
-    - the appearance comes back after a reload;
-    - the server shape check drops bad ids and colors.
-  - **Not judged:** item fit and feel at play distance.
-  - **Next step:** part 2, more characters (find the asset pack and its license) and per-part colors.
-- 2026-10-21 Interactions, tables, lights (plan `Docs/Plans done/2026-10-21-interactions-tables-lights-plan.md`):
-  - **F everywhere:** F works for everything, and the target is the nearest thing in front of you.
-  - **Chairs:** they're seats now, at chair height, facing the table.
-  - **Running:** Shift (5.5 units/s).
-  - **Tables:** you can stand on them, and all other colliders block at any height.
-  - **Empty rooms:** their radio and projector pause after 30 s and resume live.
-  - **Light switches:** normal / low / disco, shared per room.
-  - **Bug fixes:** stools and chairs never highlighted on hover; jumping onto a table landed you inside
-    it; a jump could carry you over the bar or a fence.
-  - **Verified in-app:**
-    - F hints for chair, stool, radio (when facing it), Pong, Snake, projector, door, Vircon32, the three
-      switches, and nothing in open space;
-    - Shift: 5.1 units in the first second;
-    - you can't walk through a table; jumping onto one stands you at y 2.03, and walking off drops you
-      to the floor;
-    - jumping at the bar doesn't land you on it;
-    - a chair sits you at y 1 facing the table;
-    - the radio goes dormant 30 s after the room empties and comes back live on entry (projector logic
-      checked with a stub player; the in-app browser's YouTube player never became ready);
-    - switches sync between two clients, a late joiner gets the snapshot, and the lighting follows
-      (low: ambient 0.18 warm; disco: three moving colored lights; all off: dark).
-  - **Not judged:** the look and feel.
-- 2026-10-21 Controls and movement (`feature/controls-and-movement`):
-  - **Controls:** Q/E rotate the camera, F interacts (E did before), a right click opens the emojis at the
-    cursor (a right drag still rotates), and a ❔ button lists every control. *Guardar* closes the 👤 menu,
-    and V talks while playing the Vircon32. Each radio shows "📻 station" above it.
-  - **Movement:**
-    - per second instead of per frame, so the speed was frame-rate dependent before;
-    - acceleration and deceleration, smooth turning;
-    - sliding along walls, plus a door-frame assist;
-    - a collision box of 0.8 instead of 1.0;
-    - position sent at most 20/s instead of every frame;
-    - other players smoothed per second, with smooth turning.
-  - **Bug fix:** every collider's box was recomputed on every collision check and every frame. Now
-    1000 checks take 0.8 ms.
-  - **Bug fix:** Space typed in the chat made you jump.
-  - **Verified in-app:**
-    - 1 s of walking = 2.98 / 2.96 / 2.94 units at 30 / 60 / 144 fps;
-    - a diagonal into a wall slides; straight into the door frame 0.2 off-center eases through; head-on
-      into a wall stops;
-    - Q/E rotate and are ignored while typing in the chat;
-    - a right click opens the emojis at the cursor, and a right drag rotates without opening them;
-    - E no longer interacts and F does (hint "F · Cerrar puerta");
-    - the ❔ panel opens and fits at 375 px;
-    - *Guardar* closes the menu;
-    - V inside the emulator starts and stops talking;
-    - the radio label is readable;
-    - a second client sees the moved player converge, rotation included.
-  - **Not judged:** the feel. That's for Borja.
+- 2026-10-21 Car + Pokebonk, appearance part 1 (27 accessories, tint, size, name colors), interactions/tables/lights
+  (F everywhere, chairs, Shift, standable tables, dormant rooms, switches), controls and movement (Q/E, ❔,
+  per-second movement, wall sliding). Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-21 Vircon32 spectating + Arcade slider (#19), and direct links + 👤 menu (#18). Details in
   [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - Earlier 2026-10-21 (details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md)):
@@ -154,6 +93,12 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   - rooms, street, doors and audio occlusion.
 
 ## Decisions to review
+- Bar games batch (away mode, 2026-10-22):
+  - **Drunk state is per connection**, not saved: a reload sobers you up. If wrong: people reload to
+    escape the effects (harmless).
+  - **Effects scale from level 1.5**, so one drink does nothing visible and the 2nd-3rd starts the sway.
+    If wrong: tune `EFFECT_START` in `src/bar/DrinkSync.js`.
+  - **The tap is at x 5**, not the counter's middle, so F in front of it doesn't pick a stool.
 - Spectating (away mode, 2026-10-21):
   - **Losing the connection ends your Vircon32 game**, rather than reclaiming the cabinet, because a
     reconnect respawns the avatar anyway. If wrong: a short network blip kicks you out of the game.

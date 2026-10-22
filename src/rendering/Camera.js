@@ -193,6 +193,14 @@ export class Camera {
         }
         this.camera.position.copy(position);
         this.camera.lookAt(target);
+        // Drunk (0..1, set by DrinkSync): the view drifts and rolls. Never on
+        // a locked view (arcade screens must stay readable).
+        if (this.drunk > 0 && !this.view) {
+            const t = performance.now() / 1000;
+            this.camera.rotateZ(Math.sin(t * 0.9) * 0.07 * this.drunk);
+            this.camera.rotateY(Math.sin(t * 0.55 + 1) * 0.05 * this.drunk);
+            this.camera.rotateX(Math.sin(t * 0.7 + 2) * 0.03 * this.drunk);
+        }
     }
 
     updatePosition(targetPosition) {

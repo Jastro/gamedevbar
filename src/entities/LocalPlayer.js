@@ -159,7 +159,14 @@ export class LocalPlayer extends Player {
         if (keys.s) direction.sub(forward);
         if (keys.a) direction.sub(right);
         if (keys.d) direction.add(right);
-        return direction.lengthSq() > 0 ? direction.normalize() : null;
+        if (direction.lengthSq() === 0) return null;
+        // Drunk: the walk weaves from side to side.
+        const drunk = this.game.drinkSync?.effect ?? 0;
+        if (drunk > 0) {
+            const t = performance.now() / 1000;
+            direction.applyAxisAngle(UP, (Math.sin(t * 1.3) + 0.5 * Math.sin(t * 3.1)) * 0.45 * drunk);
+        }
+        return direction.normalize();
     }
 
     // Tries the whole step, then each axis on its own (sliding along walls),
