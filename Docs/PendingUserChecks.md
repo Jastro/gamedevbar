@@ -22,7 +22,16 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Driving** (four cars on the ring road). F to get in: is it fun to drive (speed, acceleration,
       steering: top of `src/world/DrivingSync.js`)? The engine hum: too quiet / annoying? Crash into a wall,
       a lamp, the fountain; try to drive into a bar (you can't). A friend sees you drive, sitting in it.
-- [ ] **Fountain** (plaza center): looks right? Water sound volume (`WATER_VOLUME` in `Outdoors.js`)?
+- [ ] **Fountain sound** (2026-10-23, redone): a quiet fizz with soft splats instead of the hiss. Soothing
+      now? Volume from the basin and from across the plaza (`WATER_VOLUME`, `createWaterBuffer` in
+      `Outdoors.js`)?
+- [ ] **Uber Suicida driving.** Sit in its first seat (F/click on the empty car): you drive it (W/S/A/D,
+      F or Esc to get out). With a friend in the back, drive around: they ride along in their seat, and
+      after the 5 s countdown the smoke and teleport still happen (also mid-drive). Not green while you
+      drive it.
+- [ ] **Lamps at night.** Every lamp should light the ground (a soft glow; the six nearest you also
+      light people and walls), plus the new row along the outside of the ring road. Glow too strong /
+      weak (`LAMP_GLOW` in `Weather.js`)? Any pop when the real lights move to other lamps as you walk?
 - [ ] **The plaza** (2026-10-23). Walk around: the plaza, the six small roads, the ring road, the wall at
       the edge, the lamps. Desarrollo is now Gamedev's neighbor (slot 1). Is the plaza too big for two bars
       for now? Walls and furniture in Desarrollo (turned 60°) should block exactly like in Gamedev.
@@ -72,7 +81,7 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       `src/vircon/VirconSpectating.js`).
 - [ ] **🕹️ Arcade slider (⚙️).** Changes the Vircon32 sound while you play, a watched game's sound, and
       Snake/Pong sounds; kept after reload.
-- [ ] **Smoke car** (on the plaza, by the road between the two bars). Two players click it: countdown 🚗💨 5…1, smoke fills
+- [ ] **Uber Suicida smoke ride** (on the plaza, by the road between the two bars). Two players click it: countdown 🚗💨 5…1, smoke fills
       the cabin and leaks out, hiss, fade to black, each of you wakes up somewhere different. Does the
       smoke look good from outside too? Is the hiss too loud or too quiet? Timing OK?
 - [ ] **Pokebonk cabinet** (next to the Vircon32). Click it: the game shows on its screen and takes mouse
@@ -124,7 +133,8 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       tragaperras? Are the video-game memes (Leeroy Jenkins, barrel roll, YOU DIED, take this, 1UP, cake,
       press F, GG EZ, WASTED) readable from a step back, and funny enough? Too stingy or too
       generous (~88%)? A friend nearby sees the same spin.
-- [ ] **Futbolín** (left side of the bar). With a friend, one on each long side, F: the camera view
+- [ ] **Futbolín** (left side of the bar, now turned to run front to back, 2026-10-23). Enough room on
+      both sides? With a friend, one on each long side, F: the camera view
       from your side, W/S to slide the rods, Space/click to kick. Is the ball speed, kick strength and rod
       speed fun (`server/features/foosball.js` top, `INPUT_SPEED` in `FoosballSync.js`)? Does it feel laggy
       over the internet? Try 2 vs 2 (back/front split), practice alone, a goal and a full match to 5.
@@ -137,9 +147,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Your clock.** In a normal browser the bar asks for your location once: allow it and the clock
       above the door shows your local time, your weather and "Tu zona"; deny it and it shows Madrid's
       (Las Palmas in the Canaries). Is asking on entry OK, or should it wait for something?
-- [ ] **Light through the door.** At night, from the street, open a bar's door: the inside should look
-      lit (and dark again when the door closes). From inside, the street through the open door should
-      look like night. Too bright or too dim (`DOOR_LIGHT_INTENSITY` in `RoomLighting.js`)?
+- [ ] **Light through the door** (redone 2026-10-23). At night, from the street, open a bar's door: the
+      inside should look exactly as lit as when you walk in (switch it to low/off: it follows). From
+      inside, the street should look like the night (or day) you see when you step out. Same with an
+      open bathroom door. A friend standing in the doorway is lit half and half.
 - [ ] **Bar counter and sign** (moved back 2026-10-23). The shelf and arcades are against the back wall, the
       counter, stools, tap and radio moved back with them, paintings and sign higher. Room in front of the
       counter OK? Jump onto the counter; is the sign readable from the entrance?

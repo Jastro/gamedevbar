@@ -1,4 +1,5 @@
-// The black car on the street: five seats shared by everyone. With two or
+// The Uber Suicida (the black car on the plaza): five seats shared by
+// everyone; seat 0 drives it (driving.js, car 'uber'). With two or
 // more people inside, a 5 s countdown starts (cancelled if they drop below
 // two); then everyone inside gets `carSmoke` (smoke, fade out, each lands
 // somewhere random, all on their clients). Seats are cleared at that moment;

@@ -2,7 +2,8 @@
 // driver per car: the driver's client drives it and sends its pose 20 times
 // a second; the server keeps the last one (so a car stays where it was left)
 // and relays it. Cars nobody has moved yet sit at the client's parking spots.
-const CAR_IDS = ['car1', 'car2', 'car3', 'car4'];
+// 'uber' is the Uber Suicida (the smoke car): its driver's seat drives it.
+const CAR_IDS = ['car1', 'car2', 'car3', 'car4', 'uber'];
 const MIN_UPDATE_MS = 30;
 const WORLD_LIMIT = 200; // |x|, |z|: far past the map's wall
 

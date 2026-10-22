@@ -108,6 +108,10 @@ export class DrivableCar {
         return this.group.localToWorld(new THREE.Vector3(DRIVER_SEAT.x, DRIVER_SEAT.y, DRIVER_SEAT.z));
     }
 
+    get halfWidth() {
+        return CAR_SIZE.width / 2;
+    }
+
     // Points along its length (world xz) for collision checks.
     samplePoints(x, z, yaw) {
         const forward = { x: Math.sin(yaw), z: Math.cos(yaw) };

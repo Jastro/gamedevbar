@@ -46,7 +46,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `playerGesture` | `gesture` (`dance`, `pushups`, `jerk`, `kiss`, `spit`, `cheer`, `toast`, `snort`) | joined players, ≥ 400 ms apart → `playerGesture {userId, gesture}` to others |
 | `playerGestureStop` | – | → `playerGestureStop {userId}` to others |
 | `powderSnort` | `roomId` | 3 s cooldown; line gone → `bathroomRefused {reason: 'empty'}`; else empty it for 45 s → `bathroomEvent snort` + `bathroomState` |
-| `driveStart` | `carId` (`car1`-`car4`), `x`, `z`, `yaw` (its parking spot, used if nobody moved it yet) | joined players, one car each; taken → `driveBusy {name}`; else → `driveState` to all |
+| `driveStart` | `carId` (`car1`-`car4`, `uber`: sent by whoever sits in its seat 0), `x`, `z`, `yaw` (its parking spot, used if nobody moved it yet) | joined players, one car each; taken → `driveBusy {name}`; else → `driveState` to all |
 | `driveUpdate` | `carId`, `x`, `z`, `yaw`, `speed`, `steer` | the driver only, ≥ 30 ms apart, clamped → relayed to others |
 | `driveStop` | – | your car is free (stays where it is) → `driveState` |
 | `lightsToggle` | `roomId`, `light` (`normal` \| `low` \| `disco`) | flip it for that room → `lightsState` to all |

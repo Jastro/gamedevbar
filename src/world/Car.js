@@ -2,16 +2,21 @@ import * as THREE from 'three';
 import { PLAZA_RADIUS } from './RoomLayout';
 import { roadAngle, hubPoint } from './Outdoors';
 
-// The black car parked on the plaza (world coordinates, by the road between
-// bars' doors). Clicking it or F (carInteraction) takes the first free of
-// its five seats; occupancy is server state (CarSync). `playSmoke` fills the cabin with smoke and plays a
-// hiss; everyone around sees and hears it, only the passengers get teleported.
+// The Uber Suicida: the black car parked on the plaza (world coordinates, by
+// the road between Gamedev and Desarrollo). Clicking it or F (carInteraction)
+// takes the first free of its five seats; occupancy is server state
+// (CarSync). Whoever has the driver's seat (slot 0) drives it (DrivingSync,
+// as car 'uber'). `playSmoke` fills the cabin with smoke and plays a hiss;
+// everyone around sees and hears it, only the passengers get teleported.
+// Frames: `group` is placed and turned like the other drivable cars (its
+// local +z forward); everything else sits in `body`, built front at +x.
 
 // Near the mouth of the road between slots 0 and 1 (Gamedev and Desarrollo),
 // along the plaza's edge.
 const CAR_ANGLE = roadAngle(0);
 const CAR_POSITION = hubPoint(CAR_ANGLE, PLAZA_RADIUS - 5);
-const CAR_YAW = CAR_ANGLE; // the car points along its local +x: tangent to the plaza
+// Tangent to the plaza (the body's +x front, turned to the group's +z).
+const CAR_YAW = CAR_ANGLE + Math.PI / 2;
 const BODY = { length: 4.4, width: 1.9, height: 0.7, bottom: 0.35 };
 const CABIN = { length: 2.4, height: 0.75, offsetX: -0.2 };
 // Seat positions in car-local coordinates (front at +x).
@@ -22,6 +27,8 @@ const SEATS = [
 // position.y above the seat origin while sitting (low, inside the cabin).
 const SEAT_SIT_HEIGHT = 0.75;
 const SMOKE_PARTICLES = 160;
+// The driver sits in slot 0 (front left).
+const DRIVER_SLOT = 0;
 const SMOKE_DURATION = 5; // s
 const HISS_DURATION = 3.2; // s
 
@@ -34,11 +41,19 @@ export class Car {
         this.smokeTime = 0;
     }
 
+    get id() {
+        return 'uber';
+    }
+
     create() {
         this.group = new THREE.Group();
-        this.group.name = 'SmokeCar';
+        this.group.name = 'UberSuicida';
         this.group.position.set(CAR_POSITION.x, 0, CAR_POSITION.z);
         this.group.rotation.y = CAR_YAW;
+        // The car itself, front at +x, turned so the front is the group's +z.
+        this.body = new THREE.Group();
+        this.body.rotation.y = -Math.PI / 2;
+        this.group.add(this.body);
 
         const paint = new THREE.MeshStandardMaterial({ color: 0x0b0b0e, roughness: 0.25, metalness: 0.7 });
         const glass = new THREE.MeshStandardMaterial({ color: 0x223344, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.35 });
@@ -52,20 +67,20 @@ export class Car {
         const body = new THREE.Mesh(new THREE.BoxGeometry(BODY.length, BODY.height, BODY.width), paint);
         body.position.y = BODY.bottom + BODY.height / 2;
         body.userData = { originalMaterial: paint, highlightMaterial: highlight };
-        this.group.add(body);
+        this.body.add(body);
 
         // Cabin: glass sides and a black roof.
         const cabinY = BODY.bottom + BODY.height;
         const roof = new THREE.Mesh(new THREE.BoxGeometry(CABIN.length, 0.06, BODY.width - 0.1), paint);
         roof.position.set(CABIN.offsetX, cabinY + CABIN.height, 0);
-        this.group.add(roof);
+        this.body.add(roof);
         const windows = new THREE.Mesh(new THREE.BoxGeometry(CABIN.length, CABIN.height, BODY.width - 0.12), glass);
         windows.position.set(CABIN.offsetX, cabinY + CABIN.height / 2, 0);
-        this.group.add(windows);
+        this.body.add(windows);
         [-1, 1].forEach(side => {
             const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.08, CABIN.height, BODY.width - 0.1), paint);
             pillar.position.set(CABIN.offsetX + side * CABIN.length / 2, cabinY + CABIN.height / 2, 0);
-            this.group.add(pillar);
+            this.body.add(pillar);
         });
 
         // Wheels, lights, bumpers.
@@ -74,27 +89,27 @@ export class Car {
         [[1.35, 1], [1.35, -1], [-1.35, 1], [-1.35, -1]].forEach(([x, side]) => {
             const wheel = new THREE.Mesh(wheelGeometry, rubber);
             wheel.position.set(x, 0.36, side * (BODY.width / 2 - 0.05));
-            this.group.add(wheel);
+            this.body.add(wheel);
         });
         [-0.6, 0.6].forEach(z => {
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.32), lightOn);
             head.position.set(BODY.length / 2 + 0.01, BODY.bottom + 0.45, z);
-            this.group.add(head);
+            this.body.add(head);
             const back = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.3), tail);
             back.position.set(-BODY.length / 2 - 0.01, BODY.bottom + 0.45, z);
-            this.group.add(back);
+            this.body.add(back);
         });
         [-1, 1].forEach(end => {
             const bumper = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, BODY.width), chrome);
             bumper.position.set(end * (BODY.length / 2 + 0.04), BODY.bottom + 0.1, 0);
-            this.group.add(bumper);
+            this.body.add(bumper);
         });
 
         this.createSeats();
         this.group.userData = { type: 'car', car: this };
         this.scene.add(this.group);
         this.group.updateMatrixWorld(true);
-        this.collisionManager?.addCollider(body);
+        // No collider: like the other drivable cars, people walk through it.
     }
 
     // Sitting spots only (the body hides the cushions); LocalPlayer.sitDown
@@ -106,10 +121,10 @@ export class Car {
             seat.userData = {
                 slot,
                 sitHeight: SEAT_SIT_HEIGHT,
-                faceYaw: CAR_YAW + Math.PI / 2, // facing the front (+x)
+                faceYaw: CAR_YAW, // facing the front (DrivingSync keeps it up to date while it moves)
                 seatId: `car:${slot}`
             };
-            this.group.add(seat);
+            this.body.add(seat);
             this.seats.push(seat);
         });
     }
@@ -118,13 +133,50 @@ export class Car {
         return this.seats[slot] ?? null;
     }
 
+    // --- Driving (the same interface as DrivableCar) -------------------------
+
+    get position() {
+        return this.group.position;
+    }
+
+    get yaw() {
+        return this.group.rotation.y;
+    }
+
+    get driverSlot() {
+        return DRIVER_SLOT;
+    }
+
+    // Where someone in `slot` sits (world).
+    seatPosition(slot) {
+        const seat = this.seats[slot];
+        return seat.localToWorld(new THREE.Vector3(0, SEAT_SIT_HEIGHT, 0));
+    }
+
+    driverSeat() {
+        return this.seatPosition(DRIVER_SLOT);
+    }
+
+    // Points along its length (world xz) for collision checks.
+    samplePoints(x, z, yaw) {
+        const forward = { x: Math.sin(yaw), z: Math.cos(yaw) };
+        const reach = BODY.length / 2 - BODY.width / 2;
+        return [-reach, 0, reach].map(d => new THREE.Vector3(x + forward.x * d, 1, z + forward.z * d));
+    }
+
+    get halfWidth() {
+        return BODY.width / 2;
+    }
+
+    animate() {}
+
     distanceTo(worldPosition) {
         const center = this.group.getWorldPosition(new THREE.Vector3());
         return Math.hypot(worldPosition.x - center.x, worldPosition.z - center.z);
     }
 
     getCenter() {
-        return this.group.localToWorld(new THREE.Vector3(CABIN.offsetX, BODY.bottom + BODY.height, 0));
+        return this.body.localToWorld(new THREE.Vector3(CABIN.offsetX, BODY.bottom + BODY.height, 0));
     }
 
     // --- Smoke -----------------------------------------------------------
@@ -155,7 +207,7 @@ export class Car {
         this.smoke = new THREE.Points(geometry, material);
         this.smoke.position.x = CABIN.offsetX;
         this.smoke.frustumCulled = false;
-        this.group.add(this.smoke);
+        this.body.add(this.smoke);
         this.smokeTime = 0;
         this.playHiss(listener);
     }
@@ -218,7 +270,7 @@ export class Car {
             filter.Q.value = 0.7;
             this.sound.setFilter(filter);
             this.sound.position.set(CABIN.offsetX, BODY.bottom + BODY.height, 0);
-            this.group.add(this.sound);
+            this.body.add(this.sound);
         }
         if (this.sound.isPlaying) this.sound.stop();
         this.sound.setBuffer(buffer);

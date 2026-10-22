@@ -2,6 +2,26 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-23: the hub, drivable cars)
+- 2026-10-23 Drivable cars and the fountain: four open-top cars on the ring road (F to drive, W/S/A/D,
+  F or Esc to get out), a quiet engine hum, crashes against walls/lamps/fountain/edge, never into a
+  bar, no collision with people; the driver's client runs it, the server keeps where it was left.
+  A tall, slim fountain in the plaza center with falling water and a water loop. **Verified with two
+  clients:** F next to the red car → driving (seated, hint, engine on), 23 units in under 3 s; the other
+  client sees the car and the driver seated at the same spot; driving at Desarrollo's open door stops
+  at the doorway line (never inside); stops against the fountain (4.4 from its center); drives
+  through the other player; F gets out 2 away on a free spot, engine off, pose cleared on both; a
+  late joiner sees the car where it was left; screenshots of the fountain and of driving.
+- 2026-10-23 The hub: the street is replaced by a round plaza with 6 bar slots around it, a small road
+  between each pair out to a ring road, grass and a wall at the map's edge, all computed from the room
+  size (plaza radius 31.2 today, ~40 when rooms grow a third). Gamedev keeps slot 0 at the origin,
+  Desarrollo moved to slot 1. Colliders are now tested in their own frame (rooms at 60° would have got
+  huge world-aligned boxes). Rain/snow follow the camera and skip the bars; lamps by each road; the car
+  on the plaza. **Verified:** collisions in Desarrollo (60°) match Gamedev's at all 3,504 grid points
+  (782 blocked), platform heights match (counter 1.3, stage 0.25, tables 1.03); walking out of
+  Desarrollo stops at its closed door and reaches the plaza with it open; roads free, the edge wall
+  blocks; no rain inside bars (966 drops visible, 0 inside); top and plaza-level screenshots.
+
 ## Done (2026-10-23: rounds of fixes)
 - 2026-10-23 Second round of fixes:
   - **Gesture hands** are aimed by finger/thumb direction from the rig's finger bones (they hung

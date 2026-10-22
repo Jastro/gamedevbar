@@ -4,7 +4,8 @@
 2026-10-22 (night). Done and pushed: light through open doors, Spain weather outside with each player's
 local clock, and the right-click radial menu with seven gestures (plan in `Docs/Plans done/`). Before
 that: futbolín, the tragaperras, Madrid time/weather and the bar games batch. 2026-10-23: a round of
-fixes (seated pose everywhere, gesture hands, bar layout against the back wall, meme tragaperras). Next: Borja's checks in
+fixes (seated pose everywhere, gesture hands, bar layout against the back wall, meme tragaperras), the
+hub plaza, drivable cars (and the Uber Suicida), light per space through open doors. Next: Borja's checks in
 `Docs/PendingUserChecks.md`; the forum embed waits for the Mediavida add-on admin.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
@@ -18,24 +19,20 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
-- 2026-10-23 Drivable cars and the fountain: four open-top cars on the ring road (F to drive, W/S/A/D,
-  F or Esc to get out), a quiet engine hum, crashes against walls/lamps/fountain/edge, never into a
-  bar, no collision with people; the driver's client runs it, the server keeps where it was left.
-  A tall, slim fountain in the plaza center with falling water and a water loop. **Verified with two
-  clients:** F next to the red car → driving (seated, hint, engine on), 23 units in under 3 s; the other
-  client sees the car and the driver seated at the same spot; driving at Desarrollo's open door stops
-  at the doorway line (never inside); stops against the fountain (4.4 from its center); drives
-  through the other player; F gets out 2 away on a free spot, engine off, pose cleared on both; a
-  late joiner sees the car where it was left; screenshots of the fountain and of driving.
-- 2026-10-23 The hub: the street is replaced by a round plaza with 6 bar slots around it, a small road
-  between each pair out to a ring road, grass and a wall at the map's edge, all computed from the room
-  size (plaza radius 31.2 today, ~40 when rooms grow a third). Gamedev keeps slot 0 at the origin,
-  Desarrollo moved to slot 1. Colliders are now tested in their own frame (rooms at 60° would have got
-  huge world-aligned boxes). Rain/snow follow the camera and skip the bars; lamps by each road; the car
-  on the plaza. **Verified:** collisions in Desarrollo (60°) match Gamedev's at all 3,504 grid points
-  (782 blocked), platform heights match (counter 1.3, stage 0.25, tables 1.03); walking out of
-  Desarrollo stops at its closed door and reaches the plaza with it open; roads free, the edge wall
-  blocks; no rain inside bars (966 drops visible, 0 inside); top and plaza-level screenshots.
+- 2026-10-23 Uber Suicida, light per space, lamps: the black car is the Uber Suicida and drives from its
+  first seat (car `'uber'` in driving; passengers ride along; smoke ride unchanged); every lit material
+  takes the light of the space each pixel is in (`RegionLights.js`), replacing the door lights and the
+  outdoor dimming; every lamp glows on the ground, 6 real lights follow you, 18 new lamps along the ring
+  road; quieter fizz/splat fountain loop; no hover highlight while playing, driving or seated; futbolín
+  at x -9.5, turned 90°. **Bug fixed in existing code:** a car overlapping something (a door shut on
+  it) could never move again; it now hops to the nearest free spot. **Verified in the browser:**
+  shader uniforms equal the scene lights in your own space; from the street at night the open bar looks
+  lit and goes dark with its switch; from inside, the street looks like night, and by (faked) day
+  bright through a dark bar; two clients: driver in seat 0 drives the Uber, the passenger stays on its
+  seat (0 off) through 6 s of circling and the smoke, both teleported, wheel released; car1 not green
+  while driven; futbolín stand spots free; lamp row screenshot; fountain buffer peaks 0.24.
+- 2026-10-23 The hub (round plaza, 6 bar slots, roads, ring road, colliders in their own frame), then
+  four drivable cars and the fountain. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Two rounds of fixes: seated pose on every seat, gesture hands aimed by finger direction,
   bar against the back wall, the meme tragaperras (Leeroy), powder table, futbolín score on the table,
   👤 panel on the right. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
@@ -74,6 +71,13 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   - rooms, street, doors and audio occlusion.
 
 ## Decisions to review
+- **Uber Suicida:** seat 0 drives; it lost its collider (walk through it, like the other cars). If it
+  should still block people: a collider moved with it.
+- **Light per space is per pixel** (world position + a nudge along the normal), only for ambient and
+  directional light; point lights (disco, lamps, bathroom lamp) still reach through walls as before.
+- **Lamps:** 6 real lights moved to the nearest lamps + a ground glow on all 24, instead of 24 lights
+  (cost on every material). If lights popping is visible: fade them, or more lights.
+- **Fountain volume 0.15** (about 20 dB under the old hiss), a different sound (fizz + splats + plips).
 - Hub (2026-10-23):
   - **Desarrollo is Gamedev's neighbor (slot 1)**, not across the plaza (slot 3): a 10 s walk door to door
     instead of 20. If wrong: change its `slot` in `RoomLayout.js`.

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { DrivableCar, WHEELBASE, CAR_SIZE } from './DrivableCar';
+import { DrivableCar, WHEELBASE } from './DrivableCar';
 import { RING_ROAD } from './RoomLayout';
 import { roadAngle, hubPoint } from './Outdoors';
 import { playSynth } from '../audio/synth';
@@ -10,6 +10,8 @@ import { lerpAngle } from '../entities/Player';
 // The driver's client runs the car (simple bicycle model) and sends its pose;
 // everyone else eases toward it. Cars crash into walls, lamp posts, the
 // fountain and the map's edge, can't go into a bar, and pass through people.
+// The Uber Suicida (Car.js, id 'uber') is driven from its driver's seat:
+// sitting there (CarSync) takes the wheel, and its passengers ride along.
 const CARS = [
     { id: 'car1', color: 0xd32f2f, road: 0 },
     { id: 'car2', color: 0x1e63d6, road: 2 },
@@ -27,6 +29,7 @@ const CRASH_BOUNCE = 0.25;
 const SEND_INTERVAL = 50; // ms
 const FOLLOW_RATE = 12;   // 1/s for other people's cars
 const CAMERA_FOLLOW = 2;  // 1/s: the camera swings behind a moving car
+const UNSTICK_REACH = 3;  // how far a stuck car may hop to get free
 const HINT = 'W/S: acelerar / frenar · A/D: girar · F o Esc: bajar';
 
 // Parked along the ring road, just past road k's junction, pointing along it.
@@ -66,6 +69,13 @@ export class DrivingSync {
             car.create(spot.position, spot.yaw);
             this.cars.set(id, { car, driver: null, name: null, speed: 0, steer: 0, target: null });
         });
+        this.uber = this.game.environment.car;
+        this.cars.set(this.uber.id, { car: this.uber, driver: null, name: null, speed: 0, steer: 0, target: null });
+    }
+
+    // The Uber's driver's seat, where sitting takes the wheel.
+    get uberDriverSeat() {
+        return this.uber.getSeat(this.uber.driverSlot);
     }
 
     bind() {
@@ -129,7 +139,8 @@ export class DrivingSync {
             this.game.network.send('driveStop', {});
             return;
         }
-        if (player.isSitting) player.standUp();
+        // In the Uber you stay in its driver's seat.
+        if (player.isSitting && player.seat !== this.uberDriverSeat) player.standUp();
         this.game.gestureSync?.stop();
         player.stopMoving?.();
         player.keysPressed = {};
@@ -148,7 +159,13 @@ export class DrivingSync {
         if (entry) entry.speed = 0;
         if (player) {
             player.driving = false;
-            if (entry) player.position.copy(this.exitSpot(entry.car));
+            if (entry?.car === this.uber) {
+                // Out of the driver's seat (which frees it); not if the
+                // ride already stood us up somewhere else.
+                if (player.seat === this.uberDriverSeat) player.standUp(this.exitSpot(entry.car));
+            } else if (entry) {
+                player.position.copy(this.exitSpot(entry.car));
+            }
         }
         if (this.game.playMode === this.playMode) this.game.playMode = null;
         this.playMode = null;
@@ -175,7 +192,26 @@ export class DrivingSync {
     blocked(car, x, z, yaw) {
         const collisions = this.game.world.collisionManager;
         return car.samplePoints(x, z, yaw).some(point =>
-            collisions.checkCollision(point, CAR_SIZE.width / 2) || this.game.world.getRoomAt(point));
+            collisions.checkCollision(point, car.halfWidth) || this.game.world.getRoomAt(point));
+    }
+
+    // A car already touching something (a door shut on it) could never move
+    // again: it hops to the nearest free spot around it.
+    unstick(car) {
+        const { x, z } = car.position;
+        const yaw = car.yaw;
+        if (!this.blocked(car, x, z, yaw)) return;
+        for (let distance = 0.25; distance <= UNSTICK_REACH; distance += 0.25) {
+            for (let k = 0; k < 16; k++) {
+                const angle = (k / 16) * Math.PI * 2;
+                const nextX = x + Math.sin(angle) * distance;
+                const nextZ = z + Math.cos(angle) * distance;
+                if (!this.blocked(car, nextX, nextZ, yaw)) {
+                    car.group.position.set(nextX, 0, nextZ);
+                    return;
+                }
+            }
+        }
     }
 
     drive(entry, dt) {
@@ -194,6 +230,7 @@ export class DrivingSync {
         const steerTarget = left === right ? 0 : (left ? 1 : -1);
         entry.steer += (steerTarget - entry.steer) * Math.min(1, STEER_RATE * dt);
 
+        this.unstick(car);
         // Small steps, so nothing is skipped at speed.
         const steps = Math.max(1, Math.ceil(Math.abs(speed * dt) / 0.25));
         const step = dt / steps;
@@ -283,14 +320,56 @@ export class DrivingSync {
         }
     }
 
+    // Sitting in the Uber's driver's seat takes the wheel; losing that seat
+    // (the smoke ride stood us up) hands it back.
+    updateUberDriver() {
+        const player = this.game.players.localPlayer;
+        if (!player) return;
+        const atWheel = player.seat === this.uberDriverSeat;
+        if (atWheel && !this.driving && !this.uberAsked) {
+            this.uberAsked = true;
+            this.request(this.uber);
+        } else if (!atWheel) {
+            this.uberAsked = false;
+            if (this.driving === this.uber.id) this.leave();
+        }
+    }
+
+    // Everyone in the Uber stays in their seat as it moves.
+    updateUberSeats() {
+        const players = this.game.players.players;
+        const yaw = this.uber.yaw;
+        this.game.carSync.seatedSlots.forEach((id, slot) => {
+            const player = id ? players.get(id) : null;
+            if (!player) return;
+            const local = player === this.game.players.localPlayer;
+            // Ours only while seated (not mid-teleport).
+            if (local && player.seat !== this.uber.getSeat(slot)) return;
+            const seat = this.uber.seatPosition(slot);
+            player.position.copy(seat);
+            player.rotation = yaw;
+            player.mesh.position.copy(seat);
+            player.mesh.rotation.y = yaw;
+            if (!local) {
+                player.targetPosition?.copy(seat);
+                player.targetRotation = yaw;
+            }
+        });
+    }
+
     update(deltaTime) {
         const dt = Math.min(deltaTime, 0.1);
         const players = this.game.players.players;
+        this.updateUberDriver();
         this.cars.forEach((entry, id) => {
             if (id === this.driving) this.drive(entry, dt);
             else if (entry.driver) this.follow(entry, dt);
             entry.car.animate(dt, entry.speed, entry.steer);
             this.updateEngine(entry);
+            if (entry.car === this.uber) {
+                this.updateUberSeats();
+                return;
+            }
 
             // The driver sits in the seat, seated, facing the road.
             const player = entry.driver ? players.get(entry.driver) : null;

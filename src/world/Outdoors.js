@@ -15,7 +15,10 @@ const DASH = { length: 2, width: 0.2, gap: 2 };
 const FOUNTAIN = { basinRadius: 2.4, basinHeight: 0.7, waterY: 0.55, columnTop: 3.6 };
 const BOWLS = [{ y: 1.9, radius: 1.3 }, { y: 3.0, radius: 0.75 }]; // rim height, rim radius
 const DROPS = 360;
-const WATER_VOLUME = 0.22;
+// Quiet and close: you hear it at the basin, barely across the plaza.
+const WATER_VOLUME = 0.15; // about 20 dB under the old hiss
+const WATER_LOOP_SECONDS = 4;
+const RING_LAMPS = 18;
 
 // Where the small roads leave the plaza: between slot k and slot k + 1.
 export function roadAngle(index) {
@@ -212,25 +215,23 @@ export class Outdoors {
         this.updateWaterSound();
     }
 
-    // A soft loop of running water, from the fountain (once audio exists).
+    // A soothing loop from the fountain (once audio exists): a faint fizz,
+    // with soft splats and plips of the drops landing in the water.
     updateWaterSound() {
         const listener = window.game?.environment.audioListener;
         if (this.waterSound || !listener) return;
         const context = listener.context;
-        const length = context.sampleRate * 2;
-        const buffer = context.createBuffer(1, length, context.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (0.75 + 0.25 * Math.sin(i / 900));
         this.waterSound = new THREE.PositionalAudio(listener);
-        this.waterSound.setBuffer(buffer);
+        this.waterSound.setBuffer(createWaterBuffer(context));
         this.waterSound.setLoop(true);
-        this.waterSound.setRefDistance(3);
-        this.waterSound.setRolloffFactor(1.6);
+        this.waterSound.setRefDistance(2);
+        this.waterSound.setRolloffFactor(2);
         this.waterSound.setVolume(WATER_VOLUME);
+        // Rounds off the top, so the fizz never gets sharp.
         const filter = context.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.value = 1300;
-        filter.Q.value = 0.6;
+        filter.type = 'lowpass';
+        filter.frequency.value = 4200;
+        filter.Q.value = 0.5;
         this.waterSound.setFilter(filter);
         this.waterSound.position.y = 1.5;
         this.fountain.add(this.waterSound);
@@ -242,6 +243,53 @@ export class Outdoors {
 
     // Lamp posts: one beside each small road, a bit out from the plaza.
     getLampSpots() {
-        return Array.from({ length: SLOT_COUNT }, (_, i) => hubPoint(roadAngle(i), PLAZA_RADIUS + 8, RADIAL_ROAD_WIDTH / 2 + 1));
+        const byRoads = Array.from({ length: SLOT_COUNT }, (_, i) => hubPoint(roadAngle(i), PLAZA_RADIUS + 8, RADIAL_ROAD_WIDTH / 2 + 1));
+        // Along the ring road's outer edge, evenly spaced.
+        const ring = Array.from({ length: RING_LAMPS }, (_, i) => hubPoint(((i + 0.5) * 2 * Math.PI) / RING_LAMPS, RING_ROAD.outer + 1.2));
+        return [...byRoads, ...ring];
     }
+}
+
+// The fountain's loop (WATER_LOOP_SECONDS, seamless): a faint fizz of tiny
+// crackles over a soft hiss, soft splats, and now and then a "plip".
+function createWaterBuffer(context) {
+    const rate = context.sampleRate;
+    const length = Math.floor(rate * WATER_LOOP_SECONDS);
+    const buffer = context.createBuffer(1, length, rate);
+    const data = buffer.getChannelData(0);
+    // Events wrap around the end, so the loop has no seam.
+    const addAt = (start, samples, sample) => {
+        for (let j = 0; j < samples; j++) data[(start + j) % length] += sample(j / rate);
+    };
+    // Hiss, breathing slowly (a whole number of swells per loop).
+    for (let i = 0; i < length; i++) {
+        const swell = 0.6 + 0.4 * Math.sin((2 * Math.PI * 3 * i) / length);
+        data[i] = (Math.random() * 2 - 1) * 0.05 * swell;
+    }
+    // Fizz: many tiny, quick-fading crackles.
+    for (let n = 0; n < 140 * WATER_LOOP_SECONDS; n++) {
+        const amplitude = 0.05 + Math.random() * 0.12;
+        addAt(Math.floor(Math.random() * length), Math.floor(rate * 0.004), (time) => (Math.random() * 2 - 1) * amplitude * Math.exp(-time / 0.0012));
+    }
+    // Splats: short, muffled noise bursts (smoothed noise).
+    for (let n = 0; n < 3 * WATER_LOOP_SECONDS; n++) {
+        const amplitude = 0.15 + Math.random() * 0.2;
+        const decay = 0.02 + Math.random() * 0.03;
+        let smooth = 0;
+        addAt(Math.floor(Math.random() * length), Math.floor(rate * decay * 5), (time) => {
+            smooth += ((Math.random() * 2 - 1) - smooth) * 0.25;
+            return smooth * amplitude * Math.exp(-time / decay);
+        });
+    }
+    // Plips: a drop's bubble, a quick sine sweeping up.
+    for (let n = 0; n < 1.5 * WATER_LOOP_SECONDS; n++) {
+        const amplitude = 0.08 + Math.random() * 0.1;
+        const pitch = 500 + Math.random() * 700;
+        let phase = 0;
+        addAt(Math.floor(Math.random() * length), Math.floor(rate * 0.08), (time) => {
+            phase += (2 * Math.PI * pitch * (1 + time * 12)) / rate;
+            return Math.sin(phase) * amplitude * Math.exp(-time / 0.018);
+        });
+    }
+    return buffer;
 }

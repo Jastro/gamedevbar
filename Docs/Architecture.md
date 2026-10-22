@@ -22,7 +22,8 @@ Dev: Vite on 5148, server on 3000. Media for voice goes peer to peer (WebRTC); t
 ```
 core/          Game (composition root + main loop), InteractionSystem (hover/click/F), EventEmitter, Config,
                PlayerProfile (remembered nick/character/popup flag; all identity storage goes through it)
-rendering/     Scene (level.json template), Renderer, Camera, RoomLighting (light switches → scene lights)
+rendering/     Scene (level.json template), Renderer, Camera, RoomLighting (light switches → scene lights),
+               RegionLights (per-space light patched into every lit material)
 appearance/    catalog (slots, items, tints, name colors; one entry per accessory), items (builders),
                Accessories (bone anchors, tint, size)
 network/       WebSocketManager: transport only (JSON in → emit(type), send(type, data))

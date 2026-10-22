@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { DEFAULT_LIGHTS } from '../world/LightSwitches';
+import { ROOM_HALF_WIDTH, ROOM_HALF_DEPTH } from '../world/RoomLayout';
+import { BATHROOM_BOUNDS } from '../world/Bathroom';
+import { regionUniforms, installRegionLights, REGION_MAX } from './RegionLights';
 
 // Turns each bar's light switches into lighting. The scene has one ambient
 // and one directional light (from level.json), shared by both bars, so they
@@ -7,10 +10,10 @@ import { DEFAULT_LIGHTS } from '../world/LightSwitches';
 // the default). Disco is three colored point lights circling that bar's
 // ceiling. They always exist (intensity 0 when off), so flipping a switch
 // never changes the light count, which would recompile every material.
-// Because those two lights follow where you are, the other spaces need help
-// to look right through an open door: a bar you're not in gets two door
-// lights inside (its switches, only while its door is open), and while
-// you're inside, the plaza's and roads' own materials are dimmed to the sky's light.
+// Because those two lights follow where you are, every lit material also
+// gets each space's own ambient and directional light (RegionLights): through
+// an open door, a bar looks lit by its switches and the outside by the sky,
+// from wherever you look.
 
 const LEVELS = {
     // Base light when only normal is on, or normal and low together.
@@ -27,10 +30,13 @@ const DISCO_RADIUS = { x: 8, z: 5 }; // room-local ellipse they circle
 const DISCO_SPEED = 0.8; // rad/s
 const DISCO_INTENSITY = 14;
 const DISCO_DISTANCE = 22;
-// Each bar's light seen from outside (room-local spots, intensity by switch).
-const DOOR_LIGHTS = [{ x: 0, y: 5.5, z: 4 }, { x: 0, y: 5.5, z: -4 }];
-const DOOR_LIGHT_INTENSITY = { normal: 9, low: 3, off: 0 };
-const DOOR_LIGHT_DISTANCE = 18;
+// A bathroom as a region: its box, room-local.
+const BATHROOM_REGION = {
+    x: (BATHROOM_BOUNDS.minX + BATHROOM_BOUNDS.maxX) / 2,
+    z: (BATHROOM_BOUNDS.minZ + BATHROOM_BOUNDS.maxZ) / 2,
+    halfX: (BATHROOM_BOUNDS.maxX - BATHROOM_BOUNDS.minX) / 2,
+    halfZ: (BATHROOM_BOUNDS.maxZ - BATHROOM_BOUNDS.minZ) / 2
+};
 const LEVEL_COLORS = Object.fromEntries(Object.entries(LEVELS).map(([name, level]) => [name, new THREE.Color(level.ambientColor)]));
 const scratch = new THREE.Vector3();
 
@@ -42,9 +48,9 @@ export class RoomLighting {
         this.time = 0;
         this.disco = [];
         this.discoLevel = 0;
-        this.doorLights = new Map(); // roomId -> PointLight[]
-        this.outdoorMaterials = [];
-        this.outdoorDim = 1;
+        this.regionLights = new Map(); // region key -> { ambient, directional } (faded)
+        // Before the first frame: every lit material compiles with it.
+        installRegionLights(game.renderer.renderer);
     }
 
     // After the level has loaded (its lights are in the scene).
@@ -57,51 +63,86 @@ export class RoomLighting {
         this.base = {
             ambient: this.ambient?.intensity ?? 0,
             ambientColor: this.ambient?.color.clone() ?? new THREE.Color(0xffffff),
-            directional: this.directional?.intensity ?? 0
+            directional: this.directional?.intensity ?? 0,
+            directionalColor: this.directional?.color.clone() ?? new THREE.Color(0xffffff)
         };
         for (let i = 0; i < DISCO_LIGHTS; i++) {
             const light = new THREE.PointLight(0xffffff, 0, DISCO_DISTANCE, 1);
             scene.add(light);
             this.disco.push(light);
         }
-        this.game.environment.rooms.forEach(({ room }) => {
-            this.doorLights.set(room.id, DOOR_LIGHTS.map(({ x, y, z }) => {
-                const light = new THREE.PointLight(0xfff0d8, 0, DOOR_LIGHT_DISTANCE, 1);
-                light.position.set(x, y, z);
-                room.add(light);
-                return light;
-            }));
-        });
-        this.collectOutdoorMaterials();
     }
 
-    // Lit materials that only exist outside (plaza, roads, car, lamp posts). Room walls
-    // are shared by both faces, so they stay as they are.
-    collectOutdoorMaterials() {
-        const groups = [this.game.world.outdoors?.group, this.game.environment.car?.group, this.game.weather?.lampGroup];
-        const materials = new Set();
-        groups.filter(Boolean).forEach(group => group.traverse(object => {
-            if (!object.isMesh) return;
-            [object.material, object.userData.originalMaterial].flat().forEach(material => {
-                if (material?.color && !material.isMeshBasicMaterial) materials.add(material);
-            });
-        }));
-        this.outdoorMaterials = [...materials].map(material => ({ material, base: material.color.clone() }));
+    // A level's light (absolute, as the shader's light uniforms hold it).
+    levelLight(level, ambientColor) {
+        return {
+            ambient: ambientColor.clone().multiplyScalar(this.base.ambient * level.ambient),
+            directional: this.base.directionalColor.clone().multiplyScalar(this.base.directional * level.directional)
+        };
     }
 
-    // A bar you're not in, seen through its open door: lit by its switches
-    // (a little less by day, when it's bright outside anyway).
-    updateDoorLights(currentRoom, t) {
+    switchLight(state) {
+        const levelName = state.normal ? 'normal' : state.low ? 'low' : 'off';
+        const color = levelName === 'normal' ? this.base.ambientColor : LEVEL_COLORS[levelName];
+        return this.levelLight(LEVELS[levelName], color);
+    }
+
+    // Eases a region's light toward its target (t: this frame's fade).
+    fadeRegion(key, target, t) {
+        let light = this.regionLights.get(key);
+        if (!light) {
+            light = { ambient: target.ambient.clone(), directional: target.directional.clone() };
+            this.regionLights.set(key, light);
+        }
+        light.ambient.lerp(target.ambient, t);
+        light.directional.lerp(target.directional, t);
+        return light;
+    }
+
+    // Every space's light into the shader uniforms: bathrooms first (they
+    // sit inside their bar), then the bars, and the outside.
+    updateRegions(t, tOutdoor) {
         const { environment } = this.game;
-        const daylight = this.game.weather?.daylight() ?? 1;
-        this.doorLights.forEach((lights, roomId) => {
-            const contents = environment.rooms.get(roomId);
-            const state = environment.getLights(roomId);
-            const levelName = state.normal ? 'normal' : state.low ? 'low' : 'off';
-            const on = contents.room !== currentRoom && contents.door.isOpen;
-            const target = on ? DOOR_LIGHT_INTENSITY[levelName] * (1 - 0.6 * daylight) : 0;
-            lights.forEach(light => { light.intensity += (target - light.intensity) * t; });
+        const regions = [];
+        environment.rooms.forEach(({ room, bathroom }) => {
+            if (bathroom) {
+                regions.push({
+                    key: `${room.id}:bathroom`,
+                    center: room.toWorld(BATHROOM_REGION.x, 0, BATHROOM_REGION.z),
+                    yaw: room.root.rotation.y,
+                    halfX: BATHROOM_REGION.halfX,
+                    halfZ: BATHROOM_REGION.halfZ,
+                    light: this.switchLight({ normal: bathroom.state.lightOn, low: false })
+                });
+            }
         });
+        environment.rooms.forEach(({ room }) => {
+            regions.push({
+                key: room.id,
+                center: room.root.position,
+                yaw: room.root.rotation.y,
+                halfX: ROOM_HALF_WIDTH,
+                halfZ: ROOM_HALF_DEPTH,
+                light: this.switchLight(environment.getLights(room.id))
+            });
+        });
+        const count = Math.min(regions.length, REGION_MAX);
+        regionUniforms.regionCount.value = count;
+        for (let i = 0; i < count; i++) {
+            const region = regions[i];
+            const light = this.fadeRegion(region.key, region.light, t);
+            regionUniforms.regionBoxes.value[i].set(region.center.x, region.center.z, Math.cos(region.yaw), Math.sin(region.yaw));
+            regionUniforms.regionHalf.value[i].set(region.halfX, region.halfZ);
+            regionUniforms.regionAmbient.value[i].copy(light.ambient);
+            regionUniforms.regionDirectional.value[i].copy(light.directional);
+        }
+        const sky = this.game.weather?.outdoorLight();
+        const outdoorTarget = sky
+            ? this.levelLight(sky, sky.color)
+            : this.levelLight(LEVELS.normal, this.base.ambientColor);
+        const outdoor = this.fadeRegion('outdoor', outdoorTarget, tOutdoor);
+        regionUniforms.outdoorAmbient.value.copy(outdoor.ambient);
+        regionUniforms.outdoorDirectional.value.copy(outdoor.directional);
     }
 
     update(deltaTime) {
@@ -138,15 +179,8 @@ export class RoomLighting {
             this.directional.intensity += (this.base.directional * level.directional - this.directional.intensity) * t;
         }
 
-        this.updateDoorLights(room, t);
-        // Inside: the outside (seen through the door) gets the sky's light, not the bar's.
-        const sky = room ? this.game.weather?.outdoorLight() : null;
-        const dim = sky ? THREE.MathUtils.clamp(sky.ambient / Math.max(0.05, level.ambient), 0.15, 1.3) : 1;
-        this.outdoorDim += (dim - this.outdoorDim) * t;
-        if (Math.abs(this.outdoorDim - (this.appliedDim ?? -1)) > 0.01) {
-            this.appliedDim = this.outdoorDim;
-            this.outdoorMaterials.forEach(({ material, base }) => material.color.copy(base).multiplyScalar(this.outdoorDim));
-        }
+        const fade = 1 - Math.exp(-FADE_RATE * dt);
+        this.updateRegions(fade, this.game.weather?.flash > 0 ? 1 : fade);
 
         this.discoLevel += ((room && state.disco ? 1 : 0) - this.discoLevel) * t;
         this.disco.forEach((light, i) => {

@@ -68,25 +68,35 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
   0.25 pieces; three points along its length are checked against the colliders (walls, lamp posts,
   the fountain, the edge wall) and against the bars' footprints, so it never gets into a bar. A crash
   bounces it back at a quarter speed. Cars don't collide with people (they drive through them) or
-  with each other.
+  with each other. A car that already overlaps something (a door shut on it) hops to the nearest
+  free spot within 3 (`DrivingSync.unstick`), or it could never move again.
 - **Sync** (`server/features/driving.js`): one driver per car; the pose goes out 20 times a second,
   the server keeps the last one (a car stays where it was left, also for late joiners) and relays it;
   other clients carry it along its heading and ease to it. Everyone puts the driver's avatar in the
   seat with the seated pose; the camera swings in behind a moving car.
+- **Uber Suicida** (below) is the fifth car, `'uber'`: its driver's seat drives it.
 
-## Plaza car
+## Uber Suicida (the smoke car)
 
 A black car parked on the plaza by the road between Gamedev and Desarrollo (`src/world/Car.js`,
-`hubPoint(roadAngle(0), PLAZA_RADIUS - 5)`, tangent to the plaza, collider on the body).
+`hubPoint(roadAngle(0), PLAZA_RADIUS - 5)`, tangent to the plaza). No collider: people walk through it,
+like the other cars.
 - **Getting in:** click it or press F next to it to take the first free of its 5 seats. The server
   (`server/features/car.js`) owns who sits where, and `CarSync` sits you down once `carState` lists you.
   WASD gets you out (`carLeave`).
+- **Driving:** seat 0 (front left) is the driver's: sitting there sends `driveStart` for car `'uber'`
+  (`DrivingSync.updateUberDriver`) and you drive it like the other cars, still seated; F or Esc stands
+  you up beside it and frees the seat. Everyone in it stays in their seat as it moves
+  (`updateUberSeats`). Frames: `Car.group` is placed and turned like the other cars (+z forward), the
+  car itself sits in `Car.body`, built with its front at +x.
 - **The ride:** with 2+ inside, a 5 s countdown starts, shown to the passengers as "🚗💨 N". It's
   cancelled if they drop below 2. Then `carSmoke`:
   - everyone sees smoke particles fill the cabin and spill out, and hears a synthesized positional hiss;
   - passengers fade to black after 3 s, each lands at a random free spot (either bar in front of the
     counter, or anywhere on the plaza), and fades back in;
-  - the server clears the seats when the smoke starts and keeps the car closed (`riding`) for 6 s.
+  - the server clears the seats when the smoke starts and keeps the car closed (`riding`) for 6 s;
+    the clients keep everyone in their seat until the teleport (`CarSync.seatedSlots`), since the
+    car may still be moving. A driver loses the wheel when the teleport stands them up.
 
 ## Bathroom
 
@@ -202,11 +212,13 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Sky** (`src/world/Weather.js`, the scene background, seen from everywhere since there are no roofs):
   night navy → twilight orange → blue, greyer with clouds, white during lightning.
 - **Outside only:** `RoomLighting` lights the outdoors from the sky (`Weather.outdoorLight`: dim blue at
-  night, dimmer with clouds/rain, a flash for lightning). Two lamp posts light up at night. Rain and
+  night, dimmer with clouds/rain, a flash for lightning). The lamp posts light up at night. Rain and
   drizzle (streaks, slanted by wind), snow (soft flakes) and storms (lightning + synthesized thunder) fall
   only outside the bars: drops fill a 48×48 box around the camera that wraps as it moves, and any drop
   inside a bar is hidden (`Weather.insideBar`); fog only while you're outside. Lamp posts stand beside
-  each road a little out from the plaza (every other one has a light, to keep the light count down). Rain has a looping hiss, quieter inside.
+  each road a little out from the plaza and along the ring road's outer edge (18). Every lamp casts a
+  soft additive glow on the ground; six real lights (a fixed count, so nothing recompiles) move to the
+  lamps nearest you every 0.5 s (`Weather.placeLampLights`). Rain has a looping hiss, quieter inside.
 - **Clock:** above the door inside each bar (`WallClock.js`): *your* local time (browser) and *your*
   weather (`LocalWeather.js`): the browser asks once for your location, rounded to ~10 km, kept a day,
   and fetched from Open-Meteo straight from your browser ("Tu zona"). Denied: the Canary timezone gets
@@ -232,7 +244,8 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 
 ## Futbolín
 
-- **Table** on the left side of each bar (`src/world/Foosball.js`, room-local (-11, 0, -1.5), along x).
+- **Table** on the left side of each bar (`src/world/Foosball.js`, room-local (-9.5, 0, -1.5), turned 90°:
+  it runs front to back, players stand left and right of it). Table space has its own frame (below).
   Layout (pitch, goals, 8 rods, men, ball) in `server/shared/foosball.json`, read by both sides.
 - **Joining:** F on one long side joins that side's team (🔴 red at +z, 🔵 blue at -z), 2 per team. Alone
   you move all 4 of your rods; with a partner, the back player has goalie + defense, the front one
@@ -277,18 +290,20 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Shared per room**, like doors: `lightsToggle` → `lightsState`, snapshot `lightsStates`
   (`server/features/lights.js`, `LightsSync.js`). Default: normal on.
 - **Rendering** (`src/rendering/RoomLighting.js`): the scene's single ambient + directional light
-  (from level.json) follow the bar the local player is in; outside follows the sky.
+  (from level.json) follow the space the local player is in; outside follows the sky.
   - normal (with or without low) = full light;
   - low alone = warm and dim;
   - all off = almost dark;
   - disco = three colored point lights circling that bar's ceiling. They always exist (intensity 0
     when off), so the light count never changes and no material recompiles.
-- **Through open doors:** the ambient + directional light follow where you are, so other spaces get help:
-  - a bar you're not in has two door lights inside (room-local (0, 5.5, ±4)), following its switches,
-    on only while its front door is open (weaker by day), so from the plaza you see it lit;
-  - while you're in a bar, the outdoors' own materials (plaza, roads, grass, wall, lamp posts, car) are
-    dimmed to the sky's light (`RoomLighting.outdoorDim`), so the night outside looks dark through the
-    door. Room walls are shared by both faces and aren't touched.
+- **Through open doors** (`src/rendering/RegionLights.js`): every lit material is patched at compile
+  time (`Material.prototype.onBeforeCompile`, only for the main renderer). Each pixel finds its space from
+  its world position: the bathrooms, then the bars (rotated boxes, room-local x ±15, z ±10), else
+  outside, and uses that space's ambient and directional light instead of the scene's. A point 0.05 in
+  front of the surface decides, so a wall's inner face takes the bar's light and its outer face the
+  sky's. `RoomLighting.updateRegions` fills the uniforms each frame (each space fades on its own, the
+  outside snaps for lightning). Up to 12 spaces (`REGION_MAX`). Point lights (disco, lamps, the
+  bathroom lamp) are not split by space.
 
 ## Empty rooms
 
@@ -345,8 +360,9 @@ of slots to a ring road (`RING_ROAD_WIDTH` 8, dashed middle line), and a low wal
 
 `Outdoors` (`src/world/Outdoors.js`) builds the grass, the paved plaza (curb and a ring in the middle), the
 roads, the edge wall and the fountain in the middle (basin radius 2.4, a column with two bowls up to
-~4.4, water falling from each bowl, a soft positional water loop; the basin is a round platform you
-can hop onto, the column blocks); `getLampSpots()` puts a lamp beside each road. The soccer stadium lives at
+~4.4, water falling from each bowl, a quiet positional loop: a faint fizz with soft splats and
+plips, made in code (`createWaterBuffer`); the basin is a round platform you
+can hop onto, the column blocks); `getLampSpots()` puts a lamp beside each road and 18 along the ring road's outer edge. The soccer stadium lives at
 (0, 0, -50) behind Gamedev and is only shown during `/furbo`.
 
 How a room is built (`World.create` → `Environment.create`):

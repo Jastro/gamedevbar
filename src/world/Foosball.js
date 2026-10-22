@@ -6,7 +6,8 @@ import LAYOUT from '../../server/shared/foosball.json';
 // (server/features/foosball.js). Table space: x along the table (red defends
 // -x), z across (red players stand at +z, blue at -z), y up from the floor.
 export { LAYOUT };
-const POSITION = { x: -11, z: -1.5 };
+// Turned so the table runs front to back (players stand left and right of it).
+const POSITION = { x: -9.5, z: -1.5, rotationY: Math.PI / 2 };
 export const FIELD_Y = 1.05;
 const ROD_Y = FIELD_Y + 0.2;
 const WALL_HEIGHT = 0.22;
@@ -53,6 +54,7 @@ export class Foosball {
         const { length, width } = LAYOUT.field;
         const group = new THREE.Group();
         group.position.set(POSITION.x, 0, POSITION.z);
+        group.rotation.y = POSITION.rotationY;
         const wood = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.7 });
         const black = new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 0.6 });
         const metal = new THREE.MeshStandardMaterial({ color: 0xd0d4d8, metalness: 0.9, roughness: 0.25 });

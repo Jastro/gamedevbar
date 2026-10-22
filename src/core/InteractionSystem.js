@@ -65,7 +65,7 @@ export class InteractionSystem {
     }
 
     updateHover() {
-        if (this.game.chatActive || this.game.playMode) return;
+        if (this.game.chatActive || this.game.playMode || this.game.players.localPlayer?.isSitting) return;
         const object = this.pickInteractable();
         if (object === this.highlightedObject) return;
         this.setHighlight(this.highlightedObject, false);
@@ -148,6 +148,12 @@ export class InteractionSystem {
     }
 
     update() {
+        // Playing, driving or seated (clicks do nothing then): no hover
+        // highlight (a driven car kept it).
+        if (this.highlightedObject && (this.game.playMode || this.game.players.localPlayer?.isSitting)) {
+            this.setHighlight(this.highlightedObject, false);
+            this.highlightedObject = null;
+        }
         let text = '';
         if (this.game.playMode) {
             text = this.game.playMode.hint;

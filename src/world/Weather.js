@@ -22,8 +22,11 @@ const PRECIPITATION_TOP = 14;
 // Rain and snow fill a box this big (half width) around the camera, wrapping
 // as it moves, so the whole map can have weather with a few thousand drops.
 const PRECIPITATION_HALF = 24;
-// Light count is costly (every material), so only every other lamp has one.
-const LAMP_LIGHT_EVERY = 2;
+// Light count is costly (every material), so a few real lights move to the
+// lamps nearest the player; every lamp also casts a glow on the ground.
+const LAMP_LIGHTS = 6;
+const LAMP_REASSIGN = 0.5; // s
+const LAMP_GLOW = { radius: 6, opacity: 0.45 };
 const LAMP_HEIGHT = 5;
 const LAMP_INTENSITY = 14;
 const LAMP_DISTANCE = 26;
@@ -128,10 +131,15 @@ export class Weather {
     createLamps(scene) {
         const pole = new THREE.MeshStandardMaterial({ color: 0x2f3337, metalness: 0.6, roughness: 0.5 });
         this.bulbMaterial = new THREE.MeshStandardMaterial({ color: 0x555555, emissive: 0xffd590, emissiveIntensity: 0 });
-        this.lampGroup = new THREE.Group(); // RoomLighting dims it with the outdoors
+        this.lampGroup = new THREE.Group();
         scene.add(this.lampGroup);
-        this.lampLights = [];
-        this.game.world.outdoors.getLampSpots().forEach(({ x, z }, index) => {
+        this.lampSpots = this.game.world.outdoors.getLampSpots();
+        this.glowMaterial = new THREE.MeshBasicMaterial({
+            map: getGlowTexture(), color: 0xffd590, transparent: true, opacity: 0,
+            blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2
+        });
+        const glowGeometry = new THREE.CircleGeometry(LAMP_GLOW.radius, 32).rotateX(-Math.PI / 2);
+        this.lampSpots.forEach(({ x, z }) => {
             const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, LAMP_HEIGHT, 10), pole);
             post.position.set(x, LAMP_HEIGHT / 2, z);
             const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 10), this.bulbMaterial);
@@ -139,12 +147,28 @@ export class Weather {
             this.lampGroup.add(post, head);
             post.updateMatrixWorld(true);
             this.game.world.collisionManager.addCollider(post);
-            if (index % LAMP_LIGHT_EVERY !== 0) return;
-            const light = new THREE.PointLight(0xffd590, 0, LAMP_DISTANCE, 1);
-            light.position.set(x, LAMP_HEIGHT, z);
-            scene.add(light);
-            this.lampLights.push(light);
+            const glow = new THREE.Mesh(glowGeometry, this.glowMaterial);
+            glow.position.set(x, 0.05, z);
+            glow.raycast = () => {};
+            this.lampGroup.add(glow);
         });
+        this.lampLights = Array.from({ length: LAMP_LIGHTS }, () => {
+            const light = new THREE.PointLight(0xffd590, 0, LAMP_DISTANCE, 1);
+            scene.add(light);
+            return light;
+        });
+        this.lampReassign = 0;
+    }
+
+    // The real lights go to the lamps nearest the player.
+    placeLampLights(dt) {
+        this.lampReassign -= dt;
+        if (this.lampReassign > 0) return;
+        this.lampReassign = LAMP_REASSIGN;
+        const from = this.game.players.localPlayer?.position ?? this.game.camera.getCamera().position;
+        const nearest = [...this.lampSpots]
+            .sort((a, b) => Math.hypot(a.x - from.x, a.z - from.z) - Math.hypot(b.x - from.x, b.z - from.z));
+        this.lampLights.forEach((light, i) => light.position.set(nearest[i].x, LAMP_HEIGHT, nearest[i].z));
     }
 
     createRain(scene) {
@@ -252,8 +276,11 @@ export class Weather {
 
         // Lamps.
         const night = 1 - day;
+        this.placeLampLights(dt);
         this.lampLights.forEach(light => { light.intensity = LAMP_INTENSITY * night; });
         this.bulbMaterial.emissiveIntensity = 1.5 * night;
+        this.glowMaterial.opacity = LAMP_GLOW.opacity * night;
+        this.glowMaterial.visible = night > 0.02;
 
         // Rain and snow.
         const raining = kind === 'rain' || kind === 'drizzle' || kind === 'storm';
@@ -327,4 +354,23 @@ export class Weather {
         });
         this.snow.geometry.attributes.position.needsUpdate = true;
     }
+}
+
+// A soft round pool of light (white center fading out), for the lamps' glow.
+let glowTexture = null;
+function getGlowTexture() {
+    if (glowTexture) return glowTexture;
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gradient.addColorStop(0, 'rgba(255,255,255,1)');
+    gradient.addColorStop(0.4, 'rgba(255,255,255,0.45)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 128, 128);
+    glowTexture = new THREE.CanvasTexture(canvas);
+    glowTexture.colorSpace = THREE.SRGBColorSpace;
+    return glowTexture;
 }

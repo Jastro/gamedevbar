@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PLAZA_CENTER, PLAZA_RADIUS } from './RoomLayout';
 
-// The plaza car's shared seats (server: server/features/car.js).
+// The Uber Suicida's shared seats (server: server/features/car.js).
 // - `carSit {slot}` asks for a seat; `carState` says who sits where, any
 //   countdown, and whether a ride is on (we sit down once it lists us).
 // - `carSmoke {occupants}`: smoke and hiss for everyone; passengers fade to
@@ -51,7 +51,7 @@ export class CarSync {
         network.on('carDenied', (data) => {
             const message = {
                 riding: '🚗 Ahora no, que ya van de viaje.',
-                full: '🚗 El coche está lleno.'
+                full: '🚗 El Uber Suicida está lleno.'
             }[data.reason] ?? '🚗 Ese sitio ya está ocupado.';
             this.game.ui.chat?.addMessage({ type: 'system', message });
         });
@@ -84,7 +84,7 @@ export class CarSync {
         if (this.slots.includes(player.id)) return;
         const slot = this.slots.findIndex(id => !id);
         if (slot === -1) {
-            this.game.ui.chat?.addMessage({ type: 'system', message: '🚗 El coche está lleno.' });
+            this.game.ui.chat?.addMessage({ type: 'system', message: '🚗 El Uber Suicida está lleno.' });
             return;
         }
         this.leaving = false;
@@ -147,10 +147,20 @@ export class CarSync {
         this.countdownTimer = setInterval(tick, 200);
     }
 
+    // Who sits where: the server frees the seats as the ride starts, but
+    // everyone stays in the car (it may be moving) until the teleport.
+    get seatedSlots() {
+        return this.rideSlots ?? this.slots;
+    }
+
     startRide(occupants) {
         clearInterval(this.countdownTimer);
         this.countdown.classList.add('hidden');
         this.car.playSmoke(this.game.environment.audioListener);
+        // carSmoke comes before the carState that empties the seats.
+        this.rideSlots = this.slots.slice();
+        clearTimeout(this.rideSlotsTimer);
+        this.rideSlotsTimer = setTimeout(() => { this.rideSlots = null; }, SMOKE_TO_FADE + FADE_TO_TELEPORT);
 
         const player = this.game.players.localPlayer;
         if (!player || !occupants.includes(player.id)) return;
