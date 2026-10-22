@@ -118,6 +118,21 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **State:** `server/features/drinks.js` (cooldowns: order 2 s, sip 0.8 s). It lives on the connection, so
   reconnecting sobers you up.
 
+## Darts
+
+- **Where:** each bar's right wall, past the projector screen (`src/world/Dartboard.js`): the board at
+  room-local (14.8, 2.1, 8), a yellow throw line 4.4 in front, and a chalkboard at z 6.2 with the current
+  thrower's darts, the last 6 turns and the day's best (Madrid date).
+- **Playing:** F or click at the line asks the server for the board (one thrower per board, and one board
+  per player). Once you're the thrower (`DartsSync`): you stand at the line, the camera locks on a close
+  aiming view (`Camera.setView`), the mouse aims and a crosshair sways around the aim (more when drunk:
+  `SWAY` + `DRUNK_SWAY` × the drink effect). Click or Space throws, Esc leaves. Three darts per turn; the
+  turn ends 2.5 s after the third, or after 30 s without throwing.
+- **Scoring** is only on the server (`scoreAt` in `server/features/darts.js`): the client sends where the
+  dart hit in board units (1 = outer edge of the double ring), the server answers with sector, double,
+  triple, 25 or bull (50). Everyone sees the dart fly from the thrower's hand (whoosh, then a thunk).
+- **Board size:** about 1.3× a real one to match the avatars (2.15 tall), and the darts 1.8×.
+
 ## Light switches
 
 - **Switches:** three switches on the inside of each bar's front wall (`LightSwitches.js`): 💡 normal

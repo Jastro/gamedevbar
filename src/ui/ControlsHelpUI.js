@@ -13,6 +13,7 @@ const SECTIONS = [
             ['Baño (F o clic)', 'Puerta y pestillo, váter, cadena, lavabo, ambientador y luz'],
             ['Barra (F o clic en el grifo)', 'Pedir una bebida'],
             ['B', 'Beber'],
+            ['Dardos (F en la línea amarilla)', 'Ratón: apuntar · Clic o Espacio: lanzar · Esc: salir'],
             ['Q / E', 'Girar la cámara'],
             ['Clic derecho + arrastrar', 'Girar la cámara'],
             ['Rueda', 'Acercar / alejar'],

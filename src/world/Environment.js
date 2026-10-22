@@ -4,6 +4,7 @@ import { Car } from './Car';
 import { Bathroom } from './Bathroom';
 import { Bar } from './Bar';
 import { BarTap } from './BarTap';
+import { Dartboard } from './Dartboard';
 import { Furniture } from './Furniture';
 import { Radio } from './Radio';
 import { Paintings } from './Paintings';
@@ -38,6 +39,7 @@ export class Environment {
                 room,
                 bar: new Bar(room, room.definition.barSign),
                 barTap: new BarTap(room),
+                dartboard: new Dartboard(room),
                 furniture: new Furniture(room, this.world.collisionManager),
                 radio: new Radio(room),
                 paintings: hasPaintings ? new Paintings(room) : null,
@@ -54,6 +56,7 @@ export class Environment {
 
             contents.bar.create();
             contents.barTap.create();
+            contents.dartboard.create();
             contents.furniture.create();
             contents.radio.create();
             if (contents.paintings) contents.paintings.create();

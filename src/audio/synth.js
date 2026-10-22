@@ -52,6 +52,20 @@ const RECIPES = {
         filter: { type: 'highpass', from: 3000, to: 2500, q: 1.5 },
         volume: 0.7
     },
+    // A dart hitting the board: a dull thunk.
+    dart: {
+        duration: 0.15,
+        envelope: (t) => Math.exp(-t * 45),
+        filter: { type: 'lowpass', from: 1800, to: 400, q: 2 },
+        volume: 0.9
+    },
+    // A dart leaving the hand.
+    whoosh: {
+        duration: 0.3,
+        envelope: (t, d) => Math.sin(Math.PI * t / d),
+        filter: { type: 'bandpass', from: 900, to: 2600, q: 1.2 },
+        volume: 0.35
+    },
     wash: {
         duration: 2.4,
         envelope: (t, d) => fade(t, d, 0.15, 0.5) * (0.85 + 0.15 * Math.sin(t * 23)),

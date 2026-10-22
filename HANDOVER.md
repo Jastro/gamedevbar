@@ -2,7 +2,7 @@
 
 ## Start here
 2026-10-22. Away-mode batch from `Docs/Plans to be done/2026-10-22-bar-games-plan.md`: bar service and
-drunkenness (done, pushed), then darts, bathroom graffiti, karaoke stage and two-player Pong sync, each
+drunkenness and darts (done, pushed), then bathroom graffiti, karaoke stage and two-player Pong sync, each
 pushed to `main` on its own. Next: the next unchecked task in that plan; Borja's checks in
 `Docs/PendingUserChecks.md`.
 
@@ -17,6 +17,17 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Darts:
+  - **Board** on each bar's right wall past the projector, a yellow throw line and a chalkboard (thrower's
+    darts, last 6 turns, day's best). F at the line takes the board; a close aiming view, the mouse aims
+    a swaying crosshair (wider when drunk), click/Space throws 3 darts, Esc leaves.
+  - **Scoring on the server only** (sectors, doubles, triples, 25, bull 50).
+  - **Verified:** scoring asserts for bull, 25, T20, D6, 11, 3 and the 5/1 sector edges, plus a wrong
+    expectation that fails; in-app with two clients: F at the line enters (hint "Jugar a los dardos"), 3
+    throws score 5, 5, 12 = 22 into history and best, the turn ends after 2.5 s and the camera comes back;
+    the second client sees the darts stuck, gets "Está tirando…" and can't take the board; Esc mid-turn
+    frees it; screenshots of the aiming view and the corner; no errors.
+  - **Not judged:** the difficulty, the darts' look in flight, the sounds.
 - 2026-10-22 Bar service and drunkenness:
   - **Tap and drinks:** a beer tap at the right end of each counter; F → Caña, Vino, Chupito, Cubata,
     Café, Refresco. The drink shows in your hand (new hand items: shot glass, cubata, coffee cup, soda
@@ -98,6 +109,9 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     escape the effects (harmless).
   - **Effects scale from level 1.5**, so one drink does nothing visible and the 2nd-3rd starts the sway.
     If wrong: tune `EFFECT_START` in `src/bar/DrinkSync.js`.
+  - **Darts board at y 2.1 and 1.3× real size** (plan said y 1.75): avatars are 2.15 tall. The aiming
+    view is a close camera 2.4 from the board, not over the shoulder: from the line the board was a dot.
+  - **A turn ends by itself** after 3 darts (no "play again" button: F again). If wrong: add a rematch key.
   - **The tap is at x 5**, not the counter's middle, so F in front of it doesn't pick a stool.
 - Spectating (away mode, 2026-10-21):
   - **Losing the connection ends your Vircon32 game**, rather than reclaiming the cabinet, because a

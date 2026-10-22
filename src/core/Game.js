@@ -22,6 +22,8 @@ import { BathroomSync } from '../world/BathroomSync';
 import { createBathroomInteractions } from '../interactions/bathroomInteraction';
 import { DrinkSync } from '../bar/DrinkSync';
 import { createBarTapInteraction } from '../interactions/barTapInteraction';
+import { DartsSync } from '../bar/DartsSync';
+import { createDartsInteraction } from '../interactions/dartsInteraction';
 import { VirconSpectating } from '../vircon/VirconSpectating';
 import { ServerClock } from '../network/ServerClock';
 import { AudioSettings } from '../audio/AudioSettings';
@@ -85,6 +87,7 @@ export class Game {
         this.carSync = new CarSync(this);
         this.bathroomSync = new BathroomSync(this);
         this.drinkSync = new DrinkSync(this);
+        this.dartsSync = new DartsSync(this);
         this.lighting = new RoomLighting(this);
         this.virconSpectating = new VirconSpectating(this);
         // Set while the local player is at an arcade screen ({ hint }): movement
@@ -107,6 +110,7 @@ export class Game {
         this.interactions.register(createWebGameInteraction(this));
         this.interactions.register(createCarInteraction(this));
         this.interactions.register(createBarTapInteraction(this));
+        this.interactions.register(createDartsInteraction(this));
         createBathroomInteractions(this).forEach(interaction => this.interactions.register(interaction));
 
         this.clock = new THREE.Clock();
@@ -203,6 +207,7 @@ export class Game {
         this.carSync.bind();
         this.bathroomSync.bind();
         this.drinkSync.bind();
+        this.dartsSync.bind();
         this.virconSpectating.bind();
         bindArcadeNetwork(this);
 
@@ -292,6 +297,7 @@ export class Game {
         this.lighting.update(deltaTime);
         this.bathroomSync.update(deltaTime);
         this.drinkSync.update();
+        this.dartsSync.update(deltaTime);
         this.voice.update(playerPosition);
         this.ui.vircon.update();
         this.virconSpectating.update(playerPosition);

@@ -92,6 +92,11 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       weave feel funny rather than sickening (tune in `Camera.placeCamera` and
       `LocalPlayer.getInputDirection`)? Is the chat slur readable? A friend sees your drink and the
       "🍺 Borracho/a" tag. A coffee sobers you up a bit; the effects fade within ~2 min per level.
+- [ ] **Darts** (right wall, next to the projector). F at the yellow line: the close aiming view, the
+      crosshair sway (sober and drunk), click or Space to throw. Do the darts read well on the board and in
+      flight? Is it too easy or too hard (`SWAY`, `DRUNK_SWAY`, `RELEASE_JITTER` in
+      `src/bar/DartsSync.js`)? The thunk and whoosh sounds. A friend can't take the board while you throw,
+      sees your darts fly and land, and the chalkboard shows both of your turns.
 - [ ] **Bar counter and sign.** Jump onto the counter and walk along it. Is the "Gamedev MV" sign on the
       back wall (above the paintings) readable from the entrance?
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a

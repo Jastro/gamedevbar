@@ -34,6 +34,9 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `toiletLeave` / `toiletFlush` / `washHands` / `airFreshener` | `roomId` | free the toilet / empty the bowl (`bathroomEvent flush`) / clean hands (`wash`) / end the stink (`spray`) |
 | `drinkOrder` | `drink` (`beer` \| `wine` \| `shot` \| `cubata` \| `coffee` \| `soda`) | 2 s cooldown; hand the sender that drink with 3 sips → `drinkState` to all |
 | `drinkSip` | – | 0.8 s cooldown; needs a drink; adds alcohol/3 to the level (0..6, decayed first) → `drinkSipped` + `drinkState` to all |
+| `dartsStart` | `roomId` | take that room's board (ends your turn at any other board) → `dartsState` to all; taken by someone connected → `dartsBusy` to sender |
+| `dartsThrow` | `roomId`, `x`, `y` (board units, clamped to ±2) | thrower only, 3 per turn, 0.6 s cooldown; scored on the server → `dartsThrow` to all; after the 3rd: history + day's best, `dartsState`, and 2.5 s later the turn ends (`dartsState` with no thrower). 30 s idle also ends it |
+| `dartsLeave` | `roomId` | the thrower gives up the board → `dartsState` |
 | `lightsToggle` | `roomId`, `light` (`normal` \| `low` \| `disco`) | flip it for that room → `lightsState` to all |
 | `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, always with `peerId`; ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player; an offer that can't be relayed gets `{refused, peerId}` back (as if from the target) |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
@@ -71,6 +74,10 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `drinkState` | `userId`, `drink` (id or `null`), `sips`, `drunk` (level at `at`), `at` (server ms) | `DrinkSync`: held item, tag, local effects; the level now is `drunk - (now - at) / 120000` |
 | `drinkStates` | `states` (array of `drinkState` bodies: users holding a drink or still drunk) | join snapshot |
 | `drinkSipped` | `userId` | sip sound at that player |
+| `dartsState` | `roomId`, `state` (`{ thrower: {userId, name} \| null, darts: [{x, y, score, label}], history: [{name, total, labels}], best: {name, total, day} \| null }`) | `DartsSync`: stuck darts, chalkboard; enter/leave throwing for the local player |
+| `dartsStates` | `rooms: { roomId: state }` | join snapshot |
+| `dartsThrow` | `roomId`, `userId`, `index` (0-2), `x`, `y`, `score`, `label` (`20`, `T20`, `D20`, `25`, `Diana`, `Fuera`) | the dart flies from that player's hand and sticks; the thrower gets a chat line |
+| `dartsBusy` | `roomId`, `thrower` | chat line |
 | `lightsState` | `roomId`, `state` (`{ normal, low, disco }`) | `LightsSync` → switches + `RoomLighting` |
 | `lightsStates` | `rooms: { roomId: state }` (only rooms someone touched) | join snapshot; unlisted rooms → default (normal on) |
 | `virconSignal` | `roomId`, `fromId`, `signal` | `VirconSpectating`: answer (player) or apply (watcher) |
