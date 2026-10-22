@@ -17,6 +17,12 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Spain weather outside, local clock: the street shows Spain in general (8 cities, rain if 3+
+  have it); the clocks show each player's local time and weather (browser location, rounded, cached a
+  day; fallback Madrid / Las Palmas). **Verified:** combine asserts (dry with 2 wet cities, rain with 3,
+  storm wins, fog, overcast, Madrid sun times, average temperature; plus a wrong one that fails); live
+  8-city fetch (partly cloudy, 16.3 °C); in-app: location denied → Madrid local weather on the clock;
+  stubbed location (Barcelona) → rounded 41.4 / 2.2, cached, "☁️ 18°C · Tu zona".
 - 2026-10-22 Light through open doors (plan `Docs/Plans to be done/2026-10-22-doors-light-local-weather-gestures-plan.md`):
   a bar you're not in is lit by two door lights while its door is open; from inside, the street's
   materials are dimmed to the sky's light. **Verified** at night: from the street the open doorway shows
@@ -87,8 +93,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 
 ## Decisions to review
 - Futbolín / slots / weather (2026-10-22):
-  - **Weather is Madrid's** (one city for everyone). If wrong: change the coordinates in
-    `server/features/weather.js`.
+  - **The location prompt shows on entry** (for the clock). If wrong: ask only when someone looks at
+    the clock, or drop local weather and keep local time.
   - **Meme symbols are emoji + captions** drawn in code, not downloaded meme images (copyright, and
     downloading needs your OK each time). Easy to swap for real images if you provide them.
   - **Slot coins aren't saved** (a reload gives you 100 again) and can't buy anything.

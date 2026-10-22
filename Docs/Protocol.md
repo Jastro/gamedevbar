@@ -90,7 +90,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `dartsBusy` | `roomId`, `thrower` | chat line |
 | `graffitiDraw` | `roomId`, `segments` | draw them on that bathroom's wall |
 | `graffitiStates` | `rooms: { roomId: segments }` | join snapshot |
-| `weatherState` | `code` (WMO), `temperature` (°C or null), `cloudCover` (%), `wind` (km/h), `sunrise`/`sunset` (Madrid minutes after midnight), `updatedAt` | `Weather`: sky, street light, precipitation, clocks. Also sent on join |
+| `weatherState` | Spain in general: `code` (WMO, combined from 8 cities), `temperature` (average °C or null), `cloudCover` (average %), `wind` (km/h), `sunrise`/`sunset` (Madrid minutes after midnight), `wetCities`, `updatedAt` | `Weather`: sky, street light, precipitation, clocks. Also sent on join |
 | `slotResult` | `roomId`, `userId`, `name`, `reels` (3 symbol ids), `win`, `coins` (the spinner's new total), `bailout` | everyone spins that machine to the result; chat line for the spinner (and the bar on a jackpot) |
 | `slotBusy` / `slotBroke` | `roomId` (+ `retryIn` s) | chat line |
 | `foosballTable` | `roomId`, `slots` (4 × `{userId, name}` or null: red back, red front, blue back, blue front), `phase`, `score` | who plays; the local player enters/leaves play mode |

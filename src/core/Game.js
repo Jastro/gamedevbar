@@ -25,6 +25,7 @@ import { createBarTapInteraction } from '../interactions/barTapInteraction';
 import { DartsSync } from '../bar/DartsSync';
 import { GraffitiSync } from '../world/GraffitiSync';
 import { Weather } from '../world/Weather';
+import { LocalWeather } from '../world/LocalWeather';
 import { SlotSync } from '../bar/SlotSync';
 import { createSlotInteraction } from '../interactions/slotInteraction';
 import { FoosballSync } from '../world/FoosballSync';
@@ -97,6 +98,7 @@ export class Game {
         this.dartsSync = new DartsSync(this);
         this.graffitiSync = new GraffitiSync(this);
         this.weather = new Weather(this);
+        this.localWeather = new LocalWeather();
         this.slotSync = new SlotSync(this);
         this.foosballSync = new FoosballSync(this);
         this.lighting = new RoomLighting(this);
@@ -195,6 +197,8 @@ export class Game {
         if (this.voice.mode === 'open') await this.voice.setMode('open');
         this.ui.voice.updateButton();
         this.ui.voice.showIntro();
+        // Asks for the location once (for the clocks' local weather).
+        this.localWeather.start();
     }
 
     async init() {
@@ -322,7 +326,7 @@ export class Game {
         this.weather.update(deltaTime);
         this.slotSync.update(deltaTime);
         this.foosballSync.update(deltaTime);
-        const clockLabel = this.weather.label();
+        const clockLabel = this.localWeather.label(this.weather);
         this.environment.rooms.forEach(({ clock }) => clock.update(clockLabel));
         this.voice.update(playerPosition);
         this.ui.vircon.update();

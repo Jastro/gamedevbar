@@ -163,11 +163,13 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   speeds up 10% per hit. After "¡FIN DEL JUEGO!" (4 s) the host sends `pongOver` and the machine is free.
 - While you play, `game.playMode` holds the hint (W/S or ↑/↓, Esc) and blocks walking and world keys.
 
-## Real time and weather (Madrid)
+## Real time and weather (Spain outside, yours on the clock)
 
-- **Source:** `server/features/weather.js` asks Open-Meteo (free, no key) for Madrid every 10 min:
-  weather code, temperature, cloud cover, wind, today's sunrise/sunset → `weatherState` to all and on
-  join. A failed request keeps the last state (clear sky before the first answer).
+- **Outside: Spain in general.** `server/features/weather.js` asks Open-Meteo (free, no key) every 10 min
+  for 8 cities in one request (Madrid, Barcelona, Sevilla, Valencia, Bilbao, A Coruña, Zaragoza, Málaga).
+  Rain/drizzle/snow/storm if at least 3 of 8 have one (the most common; storms win ties), fog if 3 have
+  fog, otherwise clouds from the average cover. Sunrise/sunset are Madrid's → `weatherState` to all and
+  on join. A failed request keeps the last state (clear sky before the first answer).
 - **Time** is Madrid's, from the server clock (`Weather.madridTime`). `daylight()` goes 0 → 1 through a
   45-min twilight around sunrise/sunset.
 - **Sky** (`src/world/Weather.js`, the scene background, seen from everywhere since there are no roofs):
@@ -176,7 +178,11 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   night, dimmer with clouds/rain, a flash for lightning). Two lamp posts light up at night. Rain and
   drizzle (streaks, slanted by wind), snow (soft flakes) and storms (lightning + synthesized thunder) fall
   only over the street rectangle; fog only while you're outside. Rain has a looping hiss, quieter inside.
-- **Clock:** above the door inside each bar (`WallClock.js`): "21:43 · 🌧️ 14°C · Madrid".
+- **Clock:** above the door inside each bar (`WallClock.js`): *your* local time (browser) and *your*
+  weather (`LocalWeather.js`): the browser asks once for your location, rounded to ~10 km, kept a day,
+  and fetched from Open-Meteo straight from your browser ("Tu zona"). Denied: the Canary timezone gets
+  Las Palmas, anything else Madrid; until any answer, Spain's. A forum embed will need
+  `allow="geolocation"` on its iframe.
 - Inside the bars nothing changes: their lights follow their switches.
 
 ## Slot machine (meme slots)

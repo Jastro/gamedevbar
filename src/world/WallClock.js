@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 
-// A sign above the door inside each bar: Madrid time and the weather outside
-// ("21:43 · 🌧️ 14°C · Madrid"), redrawn when the text changes. Room-local.
+// A sign above the door inside each bar: your local time and weather
+// ("21:43 · 🌧️ 14°C · Tu zona", see LocalWeather), redrawn when the text
+// changes. Room-local.
 const POSITION = { x: 0, y: 4.2, z: 9.86 }; // inner face of the front wall, above the door
 const SIZE = { width: 3.4, height: 0.85 };
 
@@ -27,9 +28,9 @@ export class WallClock {
         this.room.add(sign);
     }
 
-    // label: { time, weather } from Weather.label().
+    // label: { time, weather, place } from LocalWeather.label().
     update(label) {
-        const text = `${label.time}|${label.weather}`;
+        const text = `${label.time}|${label.weather}|${label.place}`;
         if (text === this.text) return;
         this.text = text;
         const ctx = this.canvas.getContext('2d');
@@ -50,7 +51,7 @@ export class WallClock {
         ctx.fillText(label.weather, width - 24, 54);
         ctx.font = '20px "Segoe UI", sans-serif';
         ctx.fillStyle = '#b0a090';
-        ctx.fillText('Madrid', width - 24, 96);
+        ctx.fillText(label.place, width - 24, 96);
         this.texture.needsUpdate = true;
     }
 }
