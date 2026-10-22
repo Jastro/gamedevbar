@@ -2,6 +2,37 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-23: rounds of fixes)
+- 2026-10-23 Second round of fixes:
+  - **Gesture hands** are aimed by finger/thumb direction from the rig's finger bones (they hung
+    fingers-down when raised): cheer and dance palms forward, push-ups flat on the floor (lifted, they
+    were sinking), kiss at the lips, paja thumb-up grip, toast grip with the glass kept upright and tipped
+    to drink. **Verified:** measured finger directions match each target, the raised glass points up
+    (0.99) and tips toward the face to drink; screenshots of cheer, toast (raised and sip), push-ups.
+  - **Futbolín:** no floating scoreboard; the score is printed on both long sides (screenshot).
+  - **Tragaperras:** 🐔 LEEROY JENKINS replaces "All your base".
+  - **👤 panel** on the right (from 800 px wide; measured 24 px from the right edge).
+  - **Bathroom:** a small table in the corner with a powder line, "Esnifar" (sniff + power-up for
+    everyone, a lean-in gesture, the line gone 45 s for everyone); the toilet roll was floating, now on a
+    wall holder. **Verified with two clients:** hint "Esnifar", line gone on both, the other gets "No queda
+    nada" and the "(no queda nada)" hint; screenshots of the corner.
+- 2026-10-23 Borja's round of fixes:
+  - **Seated pose on every seat** (stools, chairs, car), shown to everyone (`userSat` carries the pose).
+  - **Gestures:** hands rotate (kiss: fingers to the lips then palm out; toast: glass tipped into the
+    mouth; paja: sideways fist), the paja ends with droplets and a squelch, spitting is a short "ptuh".
+  - **Karaoke:** the singer stands 1.0 behind the mic (they overlapped). **Darts** harder (wider, faster
+    sway, shakier release).
+  - **Layout:** the back shelf and the four arcades are against the back wall; counter, stools, tap,
+    radio and glasses moved back 2.65 with the shelf (same gap); paintings up 1, sign up to y 7. The
+    counter existed three times (level.json, World, Bar): now only World's, Bar keeps the decoration.
+  - **Tragaperras:** renamed, video-game memes on loud tiles with Impact captions, WASTED / COMBO /
+    YOU DIED / GG EZ jackpot results (server ids changed, payouts the same, ~88%).
+  - **Verified in-app:** overview of the new back wall (screenshot); stools at z -4.15, sitting on a stool
+    and a chair shows the pose, the other client gets `seatPose: 'sit'`; kiss/toast/paja frozen at key
+    moments (screenshots: rotated hand at the lips, tipped glass, sideways fist); the finish spawns 9
+    droplets and ends; singer at 13.4 vs grille 12.6 (screenshot); the tragaperras screen (screenshot);
+    payout return recomputed (8.79 per 10).
+
 ## Done (2026-10-22 night: gestures, local clock)
 - 2026-10-22 Right-click radial menu and gestures: Emojis / Animaciones; 💃 dance, 💪 push-ups, ✊ paja,
   😘 kiss, 💦 spit, 🙌 cheer, 🍻 toast, procedural on the bones in avatar space, synced to everyone.
