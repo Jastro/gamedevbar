@@ -83,6 +83,8 @@ export class InteractionSystem {
 
     handleClick(event) {
         if (this.game.chatActive || this.game.playMode || !this.highlightedObject) return;
+        // Like F: seated, you get up first (WASD).
+        if (this.game.players.localPlayer?.isSitting) return;
         const clicked = document.elementFromPoint(event.clientX, event.clientY);
         const onUi = UI_ELEMENT_IDS.some(id => document.getElementById(id)?.contains(clicked));
         if (onUi) return;

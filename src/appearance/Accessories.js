@@ -75,7 +75,7 @@ export function disposeTree(root) {
         const materials = Array.isArray(node.material) ? node.material : [node.material];
         materials.forEach(material => {
             if (!material || material.userData.shared) return;
-            material.map?.dispose();
+            if (!material.map?.userData.shared) material.map?.dispose();
             material.dispose();
         });
     });

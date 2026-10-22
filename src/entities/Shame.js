@@ -30,6 +30,7 @@ function getLineTexture() {
     ctx.stroke();
     lineTexture = new THREE.CanvasTexture(canvas);
     lineTexture.colorSpace = THREE.SRGBColorSpace;
+    lineTexture.userData.shared = true; // never disposed (see disposeTree)
     return lineTexture;
 }
 
@@ -51,6 +52,7 @@ function getTagTexture() {
     ctx.fillText(TAG_TEXT, 512, 84);
     tagTexture = new THREE.CanvasTexture(canvas);
     tagTexture.colorSpace = THREE.SRGBColorSpace;
+    tagTexture.userData.shared = true;
     return tagTexture;
 }
 
@@ -90,6 +92,7 @@ export class Shame {
         });
     }
 
+    // The textures are shared by every Shame: only the materials go.
     dispose() {
         this.group.removeFromParent();
         this.group.traverse(child => child.material?.dispose());

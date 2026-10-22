@@ -80,7 +80,7 @@ export class Bathroom {
         this.doorAngle = 0;
         this.flushTime = null;
         this.sprayTime = null;
-        this.mirrorVisible = false;
+        this.localInside = false;
     }
 
     create() {
@@ -139,15 +139,17 @@ export class Bathroom {
         const panelMaterial = new THREE.MeshStandardMaterial({ color: 0x6d8fa3, roughness: 0.5 });
         const panel = box(width - 0.04, DOOR.height - 0.04, 0.06, panelMaterial, width / 2, DOOR.height / 2, 0);
         const handle = box(0.05, 0.05, 0.14, chrome, width - 0.15, 1.05, 0);
-        const door = hoverable(new THREE.Group());
+        const door = new THREE.Group();
         door.add(panel, handle);
+        hoverable(door);
         door.userData = { type: 'bathroomDoor', bathroom: this };
         this.doorPivot.add(door);
 
-        // Latch knob on the inner face (inside is +z).
-        this.latchKnob = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 0.05), new THREE.MeshStandardMaterial({ color: 0x2e7d32 }));
-        this.latchKnob.position.set(width - 0.15, 1.3, 0.06);
+        // Latch knob on the inner face (inside is +z). Its group sits at the
+        // knob, so F can tell it from the door (whose group is at the hinge).
         const latch = new THREE.Group();
+        latch.position.set(width - 0.15, 1.3, 0.06);
+        this.latchKnob = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 0.05), new THREE.MeshStandardMaterial({ color: 0x2e7d32 }));
         latch.add(this.latchKnob);
         latch.userData = { type: 'bathroomLatch', bathroom: this };
         this.doorPivot.add(latch);
@@ -260,6 +262,7 @@ export class Bathroom {
         this.switchRocker = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.13, 0.03), new THREE.MeshBasicMaterial({ color: 0x7fff7f }));
         this.switchRocker.position.z = 0.025;
         plate.add(this.switchRocker);
+        hoverable(plate);
         plate.userData = { type: 'bathroomLight', bathroom: this };
         this.group.add(plate);
 
@@ -311,9 +314,9 @@ export class Bathroom {
         const latched = Boolean(this.state.latchedBy);
         this.sign.draw(latched ? '🔴 OCUPADO' : '🟢 LIBRE', latched ? '#FF6B6B' : '#7CFC9A');
         this.latchKnob.material.color.setHex(latched ? 0xc62828 : 0x2e7d32);
-        this.latchKnob.position.x = (DOOR.maxX - DOOR.minX) - (latched ? 0.05 : 0.15);
+        this.latchKnob.position.x = latched ? 0.1 : 0;
         this.switchRocker.material.color.setHex(this.state.lightOn ? 0x7fff7f : 0x553333);
-        this.light.intensity = this.state.lightOn ? LAMP_INTENSITY : 0;
+        this.updateLamp();
         this.lampMaterial.emissiveIntensity = this.state.lightOn ? 1 : 0;
         // A flush animation empties the bowl itself.
         if (this.flushTime === null || this.state.mess) {
@@ -337,10 +340,27 @@ export class Bathroom {
         return this.room.toWorld(x, y, z);
     }
 
-    setMirrorVisible(visible) {
-        if (visible === this.mirrorVisible) return;
-        this.mirrorVisible = visible;
-        this.mirror.visible = visible;
+    // Whether the local player is in here: the mirror (an extra render of the
+    // scene) and the lamp (it would light the bar through the partition)
+    // only matter then. The lamp's intensity changes, never its visibility,
+    // so the scene's light count stays the same.
+    setLocalInside(inside) {
+        if (inside === this.localInside) return;
+        this.localInside = inside;
+        this.mirror.visible = inside;
+        this.updateLamp();
+    }
+
+    updateLamp() {
+        this.light.intensity = this.state.lightOn && this.localInside ? LAMP_INTENSITY : 0;
+    }
+
+    // In the door gap (where a closing door's blocker would be), with the
+    // player's radius as margin.
+    inDoorway(worldPosition, margin = 0.45) {
+        const local = this.room.toLocal(worldPosition);
+        return local.x > DOOR.minX - margin && local.x < DOOR.maxX + margin
+            && Math.abs(local.z - BATHROOM_BOUNDS.minZ) < WALL_THICKNESS / 2 + margin;
     }
 
     // --- Effects -------------------------------------------------------

@@ -36,7 +36,11 @@ export class BathroomSync {
             button.textContent = label;
             button.addEventListener('click', () => {
                 this.panel.close();
-                if (this.panelBathroom) this.send('toiletUse', this.panelBathroom, { kind });
+                const bathroom = this.panelBathroom;
+                const player = this.game.players.localPlayer;
+                // Still inside and standing (the panel may have been left open).
+                if (!bathroom || !player || player.isSitting || !bathroom.containsPoint(player.position)) return;
+                this.send('toiletUse', bathroom, { kind });
             });
             actions.appendChild(button);
         });
@@ -67,7 +71,9 @@ export class BathroomSync {
         // Getting up from the toilet (WASD) frees it.
         this.bathrooms.forEach(bathroom => {
             [bathroom.sitSpot, bathroom.standSpot].forEach(spot => {
-                spot.userData.onStand = () => this.send('toiletLeave', bathroom);
+                spot.userData.onStand = () => {
+                    if (!this.reseating) this.send('toiletLeave', bathroom);
+                };
             });
         });
     }
@@ -78,12 +84,34 @@ export class BathroomSync {
 
     // --- Actions (from the interactions) --------------------------------
 
+    isInside(bathroom) {
+        const player = this.game.players.localPlayer;
+        return Boolean(player && bathroom.containsPoint(player.position));
+    }
+
+    // Closing (or latching) on someone in the doorway would leave them inside
+    // the blocker, free to walk through it.
+    doorwayBlocked(bathroom) {
+        for (const player of this.game.players.players.values()) {
+            if (bathroom.inDoorway(player.position)) return true;
+        }
+        return false;
+    }
+
     toggleDoor(bathroom) {
-        this.send('bathroomDoor', bathroom);
+        if (bathroom.state.doorOpen && this.doorwayBlocked(bathroom)) {
+            this.game.ui.chat?.addMessage({ type: 'system', message: '🚪 Hay alguien en la puerta.' });
+            return;
+        }
+        this.send('bathroomDoor', bathroom, { inside: this.isInside(bathroom) });
     }
 
     toggleLatch(bathroom) {
-        this.send('bathroomLatch', bathroom);
+        if (!bathroom.state.latchedBy && bathroom.state.doorOpen && this.doorwayBlocked(bathroom)) {
+            this.game.ui.chat?.addMessage({ type: 'system', message: '🚪 Hay alguien en la puerta.' });
+            return;
+        }
+        this.send('bathroomLatch', bathroom, { inside: this.isInside(bathroom) });
     }
 
     toggleLight(bathroom) {
@@ -121,10 +149,15 @@ export class BathroomSync {
         bathroom.playEvent(kind, this.game.environment.audioListener);
         const player = this.game.players.localPlayer;
         if (userId !== this.localId || !player) return;
-        // Our own toilet visit: sit down (poo) or stand facing the bowl (pee).
-        if (kind === 'pee' || kind === 'poo') {
+        // Our own toilet visit: sit down (poo) or stand facing the bowl (pee),
+        // only if we're still in there.
+        if ((kind === 'pee' || kind === 'poo') && bathroom.containsPoint(player.position)) {
             const spot = kind === 'poo' ? bathroom.sitSpot : bathroom.standSpot;
+            if (player.seat === spot) return;
+            // Moving between the toilet's own spots keeps us its occupant.
+            this.reseating = true;
             if (player.isSitting) player.standUp();
+            this.reseating = false;
             player.sitDown(spot);
         }
     }
@@ -136,8 +169,10 @@ export class BathroomSync {
         const local = players.localPlayer;
         this.bathrooms.forEach(bathroom => {
             bathroom.update(deltaTime, serverClock);
-            bathroom.setMirrorVisible(Boolean(local && bathroom.containsPoint(local.position)));
+            bathroom.setLocalInside(Boolean(local && bathroom.containsPoint(local.position)));
         });
+        // Walked out with the toilet panel open: it no longer applies.
+        if (this.panel.isOpen && this.panelBathroom && !this.isInside(this.panelBathroom)) this.panel.close();
 
         // Shame: dirty hands, outside any bathroom.
         players.players.forEach((player, id) => {

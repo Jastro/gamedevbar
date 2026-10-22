@@ -188,6 +188,8 @@ export class CarSync {
                 if (Math.hypot(spot.x - carCenter.x, spot.z - carCenter.z) < CAR_CLEARANCE) continue;
             }
             if (world.getRoomAt(spot) !== room) continue;
+            // Not inside a bathroom (it may be latched).
+            if (this.game.environment.getBathroomAt(spot)) continue;
             if (world.checkCollision(spot, PLAYER_RADIUS)) continue;
             return spot;
         }

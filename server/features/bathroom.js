@@ -8,6 +8,8 @@ const DIRTY_HANDS_MS = 10 * 60 * 1000;
 // A toilet user who never sends toiletLeave (crash, closed tab mid-poo) is
 // forgotten after this.
 const OCCUPANT_TIMEOUT_MS = 2 * 60 * 1000;
+// Per user and action, so mashing a button can't pile up sounds for everyone.
+const COOLDOWN_MS = { door: 300, latch: 300, light: 300, toilet: 5000, flush: 2500, wash: 2000, spray: 2000 };
 
 function freshState() {
     return { doorOpen: false, latchedBy: null, lightOn: true, mess: null, stinkUntil: 0, occupant: null, occupiedAt: 0 };
@@ -46,14 +48,25 @@ function registerBathroom(hub) {
         hub.broadcastAll({ type: 'hygiene', userId: user.id, dirty });
     };
 
+    // false while that user's last use of `action` is too recent.
+    const ready = (user, action) => {
+        if (!user.bathroomCooldowns) user.bathroomCooldowns = {};
+        const now = Date.now();
+        if (now - (user.bathroomCooldowns[action] ?? 0) < COOLDOWN_MS[action]) return false;
+        user.bathroomCooldowns[action] = now;
+        return true;
+    };
+
     const occupantGone = (state) => !state.occupant
         || !hub.findUser(state.occupant)
         || Date.now() - state.occupiedAt > OCCUPANT_TIMEOUT_MS;
 
-    hub.on('bathroomDoor', ({ ws, user }, { roomId }) => {
-        if (!validRoom(roomId)) return;
+    // `inside`: the sender is in the cubicle (client-side check). From
+    // inside, anyone can open or unlatch, so nobody gets locked in.
+    hub.on('bathroomDoor', ({ ws, user }, { roomId, inside }) => {
+        if (!validRoom(roomId) || !ready(user, 'door')) return;
         const state = stateOf(roomId);
-        if (state.latchedBy && state.latchedBy !== user.id && hub.findUser(state.latchedBy)) {
+        if (!inside && state.latchedBy && state.latchedBy !== user.id && hub.findUser(state.latchedBy)) {
             hub.send(ws, { type: 'bathroomRefused', roomId, reason: 'latched' });
             return;
         }
@@ -63,11 +76,10 @@ function registerBathroom(hub) {
         publish(roomId);
     });
 
-    // From inside only (the client checks; the latch knob is on the inner face).
-    hub.on('bathroomLatch', ({ ws, user }, { roomId }) => {
-        if (!validRoom(roomId)) return;
+    // From inside only (the latch knob is on the inner face).
+    hub.on('bathroomLatch', ({ user }, { roomId, inside }) => {
+        if (!validRoom(roomId) || !inside || !ready(user, 'latch')) return;
         const state = stateOf(roomId);
-        if (state.latchedBy && state.latchedBy !== user.id && hub.findUser(state.latchedBy)) return;
         if (state.latchedBy) {
             state.latchedBy = null;
         } else {
@@ -77,8 +89,8 @@ function registerBathroom(hub) {
         publish(roomId);
     });
 
-    hub.on('bathroomLight', (ctx, { roomId }) => {
-        if (!validRoom(roomId)) return;
+    hub.on('bathroomLight', ({ user }, { roomId }) => {
+        if (!validRoom(roomId) || !ready(user, 'light')) return;
         const state = stateOf(roomId);
         state.lightOn = !state.lightOn;
         publish(roomId);
@@ -86,6 +98,7 @@ function registerBathroom(hub) {
 
     hub.on('toiletUse', ({ ws, user }, { roomId, kind }) => {
         if (!validRoom(roomId) || (kind !== 'pee' && kind !== 'poo')) return;
+        if (!ready(user, 'toilet')) return;
         const state = stateOf(roomId);
         if (state.occupant !== user.id && !occupantGone(state)) {
             hub.send(ws, { type: 'bathroomRefused', roomId, reason: 'occupied' });
@@ -110,20 +123,20 @@ function registerBathroom(hub) {
     });
 
     hub.on('toiletFlush', ({ user }, { roomId }) => {
-        if (!validRoom(roomId)) return;
+        if (!validRoom(roomId) || !ready(user, 'flush')) return;
         stateOf(roomId).mess = null;
         event(roomId, 'flush', user.id);
         publish(roomId);
     });
 
     hub.on('washHands', ({ user }, { roomId }) => {
-        if (!validRoom(roomId)) return;
+        if (!validRoom(roomId) || !ready(user, 'wash')) return;
         event(roomId, 'wash', user.id);
         if (user.dirtyHands) setDirty(user, false);
     });
 
     hub.on('airFreshener', ({ user }, { roomId }) => {
-        if (!validRoom(roomId)) return;
+        if (!validRoom(roomId) || !ready(user, 'spray')) return;
         stateOf(roomId).stinkUntil = 0;
         event(roomId, 'spray', user.id);
         publish(roomId);

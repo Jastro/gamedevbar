@@ -71,10 +71,18 @@ export function playSynth(listener, parent, position, name, refDistance = 3) {
     parent.add(sound);
     sound.play();
     setTimeout(() => {
-        if (sound.isPlaying) sound.stop();
-        sound.disconnect();
-        sound.removeFromParent();
+        release(sound);
+        filter.disconnect();
     }, recipe.duration * 1000 + 300);
+}
+
+// Stops a one-shot and unhooks every node it created.
+function release(sound) {
+    if (sound.isPlaying) sound.stop();
+    sound.disconnect();
+    sound.panner.disconnect();
+    sound.gain.disconnect();
+    sound.removeFromParent();
 }
 
 // Plays a loaded sound file at `position` (e.g. the fart samples).
@@ -90,10 +98,6 @@ export function playFile(listener, parent, position, url, volume = 0.8, refDista
         sound.position.copy(position);
         parent.add(sound);
         sound.play();
-        setTimeout(() => {
-            if (sound.isPlaying) sound.stop();
-            sound.disconnect();
-            sound.removeFromParent();
-        }, buffer.duration * 1000 + 300);
+        setTimeout(() => release(sound), buffer.duration * 1000 + 300);
     }).catch(() => {});
 }
