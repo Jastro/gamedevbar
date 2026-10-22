@@ -1,13 +1,13 @@
 import * as THREE from 'three';
-import { STREET } from './RoomLayout';
+import { ROOMS, ROOM_HALF_WIDTH, ROOM_HALF_DEPTH } from './RoomLayout';
 import { playSynth } from '../audio/synth';
 
 // Real time and weather in Madrid (server: server/features/weather.js).
 // The sky follows the real sun (sunrise/sunset from the forecast, with a
-// twilight blend) and the clouds; outside, the street's light follows the
-// sky and two lamp posts come on at night. Rain, snow, fog and storms only
-// happen over the street (the bars have no roof, but nobody wants rain on
-// the counter), and fog only while you're outside.
+// twilight blend) and the clouds; outside, the light follows the
+// sky and the lamp posts by the roads come on at night. Rain, snow, fog and
+// storms only happen outside the bars (they have no roof, but nobody wants
+// rain on the counter), and fog only while you're outside.
 const TWILIGHT = 45; // minutes on each side of sunrise/sunset
 const SKY = {
     night: new THREE.Color(0x0b1026),
@@ -19,9 +19,14 @@ const SKY = {
 const RAIN_DROPS = 1400;
 const SNOW_FLAKES = 900;
 const PRECIPITATION_TOP = 14;
-const LAMPS = [{ x: -12, z: STREET.minZ + 0.6 }, { x: 12, z: STREET.maxZ - 0.6 }];
+// Rain and snow fill a box this big (half width) around the camera, wrapping
+// as it moves, so the whole map can have weather with a few thousand drops.
+const PRECIPITATION_HALF = 24;
+// Light count is costly (every material), so only every other lamp has one.
+const LAMP_LIGHT_EVERY = 2;
 const LAMP_HEIGHT = 5;
-const LAMP_INTENSITY = 12;
+const LAMP_INTENSITY = 14;
+const LAMP_DISTANCE = 26;
 const RAIN_VOLUME = { outside: 0.35, inside: 0.06 };
 
 // WMO weather codes → what we draw.
@@ -52,7 +57,7 @@ export class Weather {
         this.outside = false;
     }
 
-    // After the world exists (the street is in the scene).
+    // After the world exists (the outdoors are in the scene).
     create() {
         const scene = this.game.scene.getScene();
         scene.background = this.sky;
@@ -105,7 +110,7 @@ export class Weather {
         return { time: text, weather: `${icon}${temperature}` };
     }
 
-    // What RoomLighting applies on the street: factors of the level's lights.
+    // What RoomLighting applies outside: factors of the level's lights.
     outdoorLight() {
         const day = this.daylight();
         const clouds = THREE.MathUtils.clamp(this.state.cloudCover / 100, 0, 1);
@@ -123,20 +128,22 @@ export class Weather {
     createLamps(scene) {
         const pole = new THREE.MeshStandardMaterial({ color: 0x2f3337, metalness: 0.6, roughness: 0.5 });
         this.bulbMaterial = new THREE.MeshStandardMaterial({ color: 0x555555, emissive: 0xffd590, emissiveIntensity: 0 });
-        this.lampGroup = new THREE.Group(); // RoomLighting dims it with the street
+        this.lampGroup = new THREE.Group(); // RoomLighting dims it with the outdoors
         scene.add(this.lampGroup);
-        this.lampLights = LAMPS.map(({ x, z }) => {
+        this.lampLights = [];
+        this.game.world.outdoors.getLampSpots().forEach(({ x, z }, index) => {
             const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, LAMP_HEIGHT, 10), pole);
             post.position.set(x, LAMP_HEIGHT / 2, z);
             const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 10), this.bulbMaterial);
             head.position.set(x, LAMP_HEIGHT + 0.1, z);
-            const light = new THREE.PointLight(0xffd590, 0, 18, 1);
-            light.position.set(x, LAMP_HEIGHT, z);
             this.lampGroup.add(post, head);
-            scene.add(light);
             post.updateMatrixWorld(true);
             this.game.world.collisionManager.addCollider(post);
-            return light;
+            if (index % LAMP_LIGHT_EVERY !== 0) return;
+            const light = new THREE.PointLight(0xffd590, 0, LAMP_DISTANCE, 1);
+            light.position.set(x, LAMP_HEIGHT, z);
+            scene.add(light);
+            this.lampLights.push(light);
         });
     }
 
@@ -145,9 +152,9 @@ export class Weather {
         this.rainDrops = [];
         for (let i = 0; i < RAIN_DROPS; i++) {
             this.rainDrops.push({
-                x: THREE.MathUtils.randFloat(STREET.minX, STREET.maxX),
+                x: THREE.MathUtils.randFloat(-PRECIPITATION_HALF, PRECIPITATION_HALF),
                 y: Math.random() * PRECIPITATION_TOP,
-                z: THREE.MathUtils.randFloat(STREET.minZ, STREET.maxZ),
+                z: THREE.MathUtils.randFloat(-PRECIPITATION_HALF, PRECIPITATION_HALF),
                 speed: THREE.MathUtils.randFloat(11, 15)
             });
         }
@@ -165,9 +172,9 @@ export class Weather {
         this.flakes = [];
         for (let i = 0; i < SNOW_FLAKES; i++) {
             this.flakes.push({
-                x: THREE.MathUtils.randFloat(STREET.minX, STREET.maxX),
+                x: THREE.MathUtils.randFloat(-PRECIPITATION_HALF, PRECIPITATION_HALF),
                 y: Math.random() * PRECIPITATION_TOP,
-                z: THREE.MathUtils.randFloat(STREET.minZ, STREET.maxZ),
+                z: THREE.MathUtils.randFloat(-PRECIPITATION_HALF, PRECIPITATION_HALF),
                 phase: Math.random() * Math.PI * 2
             });
         }
@@ -265,22 +272,42 @@ export class Weather {
         }
     }
 
+    // A drop's world x/z: its own spot, wrapped into the box around the camera.
+    wrapAround(value, center) {
+        const size = PRECIPITATION_HALF * 2;
+        return center + ((((value - center + PRECIPITATION_HALF) % size) + size) % size) - PRECIPITATION_HALF;
+    }
+
+    // Inside any bar (plus a little, for the walls)? Rooms never move, so
+    // their transforms come straight from the layout.
+    insideBar(x, z) {
+        this.roomFrames ??= ROOMS.map(room => ({ ...room.origin, cos: Math.cos(room.rotationY), sin: Math.sin(room.rotationY) }));
+        return this.roomFrames.some(({ x: ox, z: oz, cos, sin }) => {
+            const dx = x - ox;
+            const dz = z - oz;
+            return Math.abs(dx * cos - dz * sin) < ROOM_HALF_WIDTH + 0.3 && Math.abs(dx * sin + dz * cos) < ROOM_HALF_DEPTH + 0.3;
+        });
+    }
+
     updateRain(dt, density) {
         const positions = this.rain.geometry.attributes.position.array;
         const count = Math.floor(RAIN_DROPS * density);
         const slant = this.state.wind * 0.02;
+        const center = this.game.camera.getCamera().position;
         for (let i = 0; i < RAIN_DROPS; i++) {
             const drop = this.rainDrops[i];
             drop.y -= drop.speed * dt;
             if (drop.y < 0) drop.y += PRECIPITATION_TOP;
-            const visible = i < count;
+            const x = this.wrapAround(drop.x, center.x);
+            const z = this.wrapAround(drop.z, center.z);
+            const visible = i < count && !this.insideBar(x, z);
             const o = i * 6;
-            positions[o] = drop.x;
+            positions[o] = x;
             positions[o + 1] = visible ? drop.y : -100;
-            positions[o + 2] = drop.z;
-            positions[o + 3] = drop.x + slant;
+            positions[o + 2] = z;
+            positions[o + 3] = x + slant;
             positions[o + 4] = visible ? drop.y + 0.45 : -100;
-            positions[o + 5] = drop.z;
+            positions[o + 5] = z;
         }
         this.rain.geometry.attributes.position.needsUpdate = true;
     }
@@ -288,12 +315,15 @@ export class Weather {
     updateSnow(dt) {
         const positions = this.snow.geometry.attributes.position.array;
         const time = performance.now() / 1000;
+        const center = this.game.camera.getCamera().position;
         this.flakes.forEach((flake, i) => {
             flake.y -= 1.3 * dt;
             if (flake.y < 0) flake.y += PRECIPITATION_TOP;
-            positions[i * 3] = flake.x + Math.sin(time * 0.8 + flake.phase) * 0.4;
-            positions[i * 3 + 1] = flake.y;
-            positions[i * 3 + 2] = flake.z + Math.cos(time * 0.6 + flake.phase) * 0.3;
+            const x = this.wrapAround(flake.x, center.x) + Math.sin(time * 0.8 + flake.phase) * 0.4;
+            const z = this.wrapAround(flake.z, center.z) + Math.cos(time * 0.6 + flake.phase) * 0.3;
+            positions[i * 3] = x;
+            positions[i * 3 + 1] = this.insideBar(x, z) ? -100 : flake.y;
+            positions[i * 3 + 2] = z;
         });
         this.snow.geometry.attributes.position.needsUpdate = true;
     }

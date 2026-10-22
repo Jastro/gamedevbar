@@ -39,8 +39,11 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
     fully blocked, a sideways nudge of up to 0.45 eases you round door frames.
   - The player's collision box is 0.8 wide (it was 1.0).
 - **Colliders** (`CollisionManager`):
-  - blockers (walls, bar, fences, cabinets, door) block at any height, so a jump can't land you inside
+  - each box is tested in its own frame (the player's position goes into the collider's local space),
+    so rooms can turn by any angle around the plaza; heights use the world box (only y rotations);
+  - blockers (walls, bar, cabinets, door) block at any height, so a jump can't land you inside
     one;
+  - the map is a disc: `setBoundary` keeps everyone inside the wall at its edge;
   - tables are round platforms: they block walking, but you can jump onto one, stand on it
     (`getGroundHeight`) and fall off it. The bar counter is a box platform (`addBoxPlatform`, top at 1.3)
     and works the same way;
@@ -54,10 +57,10 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
 - **Colliders** are static and measured once (`CollisionManager`). Before, every collider's box was
   recomputed on every check and every frame.
 
-## Street car
+## Plaza car
 
-A black car parked on the street (`src/world/Car.js`, world coordinates x -10, z 17, collider on the
-body).
+A black car parked on the plaza by the road between Gamedev and Desarrollo (`src/world/Car.js`,
+`hubPoint(roadAngle(0), PLAZA_RADIUS - 5)`, tangent to the plaza, collider on the body).
 - **Getting in:** click it or press F next to it to take the first free of its 5 seats. The server
   (`server/features/car.js`) owns who sits where, and `CarSync` sits you down once `carState` lists you.
   WASD gets you out (`carLeave`).
@@ -65,7 +68,7 @@ body).
   cancelled if they drop below 2. Then `carSmoke`:
   - everyone sees smoke particles fill the cabin and spill out, and hears a synthesized positional hiss;
   - passengers fade to black after 3 s, each lands at a random free spot (either bar in front of the
-    counter, or the street away from the car), and fades back in;
+    counter, or anywhere on the plaza), and fades back in;
   - the server clears the seats when the smoke starts and keeps the car closed (`riding`) for 6 s.
 
 ## Bathroom
@@ -181,10 +184,12 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   45-min twilight around sunrise/sunset.
 - **Sky** (`src/world/Weather.js`, the scene background, seen from everywhere since there are no roofs):
   night navy → twilight orange → blue, greyer with clouds, white during lightning.
-- **Outside only:** `RoomLighting` lights the street from the sky (`Weather.outdoorLight`: dim blue at
+- **Outside only:** `RoomLighting` lights the outdoors from the sky (`Weather.outdoorLight`: dim blue at
   night, dimmer with clouds/rain, a flash for lightning). Two lamp posts light up at night. Rain and
   drizzle (streaks, slanted by wind), snow (soft flakes) and storms (lightning + synthesized thunder) fall
-  only over the street rectangle; fog only while you're outside. Rain has a looping hiss, quieter inside.
+  only outside the bars: drops fill a 48×48 box around the camera that wraps as it moves, and any drop
+  inside a bar is hidden (`Weather.insideBar`); fog only while you're outside. Lamp posts stand beside
+  each road a little out from the plaza (every other one has a light, to keep the light count down). Rain has a looping hiss, quieter inside.
 - **Clock:** above the door inside each bar (`WallClock.js`): *your* local time (browser) and *your*
   weather (`LocalWeather.js`): the browser asks once for your location, rounded to ~10 km, kept a day,
   and fetched from Open-Meteo straight from your browser ("Tu zona"). Denied: the Canary timezone gets
@@ -255,7 +260,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Shared per room**, like doors: `lightsToggle` → `lightsState`, snapshot `lightsStates`
   (`server/features/lights.js`, `LightsSync.js`). Default: normal on.
 - **Rendering** (`src/rendering/RoomLighting.js`): the scene's single ambient + directional light
-  (from level.json) follow the bar the local player is in; the street keeps the default.
+  (from level.json) follow the bar the local player is in; outside follows the sky.
   - normal (with or without low) = full light;
   - low alone = warm and dim;
   - all off = almost dark;
@@ -263,9 +268,9 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
     when off), so the light count never changes and no material recompiles.
 - **Through open doors:** the ambient + directional light follow where you are, so other spaces get help:
   - a bar you're not in has two door lights inside (room-local (0, 5.5, ±4)), following its switches,
-    on only while its front door is open (weaker by day), so from the street you see it lit;
-  - while you're in a bar, the street's own materials (ground, sidewalks, fences, lamp posts, car) are
-    dimmed to the sky's light (`RoomLighting.outdoorDim`), so the night street looks dark through the
+    on only while its front door is open (weaker by day), so from the plaza you see it lit;
+  - while you're in a bar, the outdoors' own materials (plaza, roads, grass, wall, lamp posts, car) are
+    dimmed to the sky's light (`RoomLighting.outdoorDim`), so the night outside looks dark through the
     door. Room walls are shared by both faces and aren't touched.
 
 ## Empty rooms
@@ -304,18 +309,30 @@ back wall (z -9.05), paintings at y 5 (5.6 over the bathroom), the sign at y 7, 
 (x = 0) and the "who's here" board beside it (x = 7).
 `src/world/RoomLayout.js` is the single source of truth for placing rooms:
 
-| Room | Origin (x, z) | Rotation Y | Front door (world) |
-|---|---|---|---|
-| Gamedev | (0, 0) | 0 | (0, 10) |
-| Desarrollo | (0, 34) | π | (0, 24) |
+**The hub** (2026-10-23): a round plaza with `SLOT_COUNT` (6) bar slots around it. Each bar faces the
+middle with its door on the plaza's edge; a small road (`RADIAL_ROAD_WIDTH` 6) runs out between each pair
+of slots to a ring road (`RING_ROAD_WIDTH` 8, dashed middle line), and a low wall closes the map
+(`WORLD_RADIUS`). All of it is computed from the room size, so bigger rooms push it out by themselves:
+- `PLAZA_RADIUS = (2·ROOM_HALF_WIDTH + RADIAL_ROAD_WIDTH) / (2·tan(π/6))`: the bars' front walls form a
+  hexagon that leaves exactly a road's width between neighbors (31.2 today; ~40 with rooms a third
+  bigger);
+- the ring road starts 3 past the bars' back corners (56.3–64.3 today); the wall is 5 past it (69.3);
+- slot k is at angle k·60° (`slotAngle`), its bar centered `PLAZA_RADIUS + ROOM_HALF_DEPTH` out along
+  `bearing(angle)` and turned by that angle so its front faces the middle;
+- `PLAZA_CENTER` is (0, `ROOM_HALF_DEPTH + PLAZA_RADIUS`) so Gamedev (slot 0) stays at the origin.
 
-The rooms sit straight across from each other, entrances facing. Street (world): x ∈ [-25, 25], z ∈ [10, 24]. `Street` adds ground, sidewalks, a center line and low fences
-on every street edge not covered by a facade, so players can't leave the play area. The soccer stadium lives
-at (0, 0, -50) behind Gamedev and is only shown during `/furbo`.
+| Room | Slot | Origin (x, z) | Rotation Y | Front door (world) |
+|---|---|---|---|---|
+| Gamedev | 0 | (0, 0) | 0 | (0, 10) |
+| Desarrollo | 1 | (-35.7, 20.6) | 60° | (-27.0, 25.6) |
+
+`Outdoors` (`src/world/Outdoors.js`) builds the grass, the paved plaza (curb and a ring in the middle), the
+roads and the edge wall; `getLampSpots()` puts a lamp beside each road. The soccer stadium lives at
+(0, 0, -50) behind Gamedev and is only shown during `/furbo`.
 
 How a room is built (`World.create` → `Environment.create`):
 1. `Room` creates a `THREE.Group` at the origin/rotation and resolves its world matrix **before** children are
-   added (colliders are `Box3.setFromObject` of world-space geometry).
+   added (colliders measure themselves in their own frame from it).
 2. A clone of `level.json`'s "Taberna" group (lights and `FrontWall` stripped by `Scene`; lights are global).
 3. `World`: floor, walls (front wall split around the door), bar counter colliders.
 4. `Environment`: Bar (sign text per room), PresenceBoard, Furniture, Radio, Paintings (only if the room's
@@ -325,8 +342,8 @@ How a room is built (`World.create` → `Environment.create`):
 Anything that compares positions must go through world space: `Room.toWorld/toLocal/containsPoint`,
 `World.getRoomAt(pos)`, `World.getRoomForObject(obj)`, `getWorldPosition()` for arcades.
 
-To add a room: add an entry to `ROOMS` (non-overlapping footprint; rotations of 0 or π keep facades on the
-street edges that `Street` expects) and extend `STREET` if needed. The selector lists it automatically.
+To add a room: add an entry to `ROOMS` with a free `slot` (0-5) and its id to `ROOM_IDS` in
+`server/config.js`. The selector lists it automatically.
 
 ## Doors
 

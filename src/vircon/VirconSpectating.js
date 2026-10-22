@@ -55,7 +55,7 @@ export class VirconSpectating {
         return this.game.environment.rooms.get(roomId)?.vircon;
     }
 
-    // Horizontal distance from a cabinet, or Infinity from another room/the street.
+    // Horizontal distance from a cabinet, or Infinity from another room/outside.
     distanceFrom(roomId, position) {
         const contents = this.game.environment.rooms.get(roomId);
         if (!contents || !position) return Infinity;

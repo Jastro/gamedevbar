@@ -91,7 +91,7 @@ export class Environment {
             this.doors.set(contents.door.id, contents.door);
         });
 
-        // The street's car (world coordinates, not part of a room).
+        // The plaza's car (world coordinates, not part of a room).
         this.car = new Car(this.world.scene, this.world.collisionManager);
         this.car.create();
 
@@ -145,7 +145,7 @@ export class Environment {
         this.rooms.forEach(({ projector }) => projector.update(listenerPosition, this, this.world));
     }
 
-    // Occlusion between two spaces (a Room, or null for the street): clear in
+    // Occlusion between two spaces (a Room, or null for outside): clear in
     // the same space, else muffled unless every door in between is open.
     getOcclusionLevel(sourceRoom, listenerRoom) {
         if (sourceRoom === listenerRoom) return 'none';

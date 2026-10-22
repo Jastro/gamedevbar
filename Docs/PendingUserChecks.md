@@ -3,7 +3,7 @@
 Things only a human can judge. Run `npm run dev`, open http://localhost:5148 (two browser windows for
 multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOVER.md.
 
-- [ ] **Muffled music from outside.** Enter Gamedev, wait for El Fary, walk out (door open) into the street,
+- [ ] **Muffled music from outside.** Enter Gamedev, wait for El Fary, walk out (door open) onto the plaza,
       then close the door (`F`) and walk across to Desarrollo's door. Expected: clear inside; slightly dull
       with the door open; clearly muffled (bassy, quieter) with it closed; smooth transitions, no clicks.
       Tune `OCCLUSION_LEVELS` in `src/world/Radio.js` if it feels off.
@@ -19,7 +19,9 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **"Who's here" board** (front wall, right of the door). Shows everyone inside that bar, 🎙️ while
       they talk, and counts for the other bar / street; updates within ~0.5 s as people walk in and out.
       Readable from the bar?
-- [ ] **Street look.** Exterior is plain (dark ground, fences, neon name signs, no roof). Good enough for now?
+- [ ] **The plaza** (2026-10-23). Walk around: the plaza, the six small roads, the ring road, the wall at
+      the edge, the lamps. Desarrollo is now Gamedev's neighbor (slot 1). Is the plaza too big for two bars
+      for now? Walls and furniture in Desarrollo (turned 60°) should block exactly like in Gamedev.
 - [ ] **Voice with a real mic.** Two machines (or two browsers with headphones). Hold `V`: first press asks
       for the mic; the other player hears you from your avatar's position and sees 🎙️ over your head.
       Check: latency, volume vs. the radio (`VOICE_REF_DISTANCE`/`VOICE_ROLLOFF` in `VoiceChat.js`),
@@ -66,7 +68,7 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       `src/vircon/VirconSpectating.js`).
 - [ ] **🕹️ Arcade slider (⚙️).** Changes the Vircon32 sound while you play, a watched game's sound, and
       Snake/Pong sounds; kept after reload.
-- [ ] **Smoke car** (street, between the doors). Two players click it: countdown 🚗💨 5…1, smoke fills
+- [ ] **Smoke car** (on the plaza, by the road between the two bars). Two players click it: countdown 🚗💨 5…1, smoke fills
       the cabin and leaks out, hiss, fade to black, each of you wakes up somewhere different. Does the
       smoke look good from outside too? Is the hiss too loud or too quiet? Timing OK?
 - [ ] **Pokebonk cabinet** (next to the Vircon32). Click it: the game shows on its screen and takes mouse

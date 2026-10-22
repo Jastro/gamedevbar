@@ -18,6 +18,15 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 The hub: the street is replaced by a round plaza with 6 bar slots around it, a small road
+  between each pair out to a ring road, grass and a wall at the map's edge, all computed from the room
+  size (plaza radius 31.2 today, ~40 when rooms grow a third). Gamedev keeps slot 0 at the origin,
+  Desarrollo moved to slot 1. Colliders are now tested in their own frame (rooms at 60° would have got
+  huge world-aligned boxes). Rain/snow follow the camera and skip the bars; lamps by each road; the car
+  on the plaza. **Verified:** collisions in Desarrollo (60°) match Gamedev's at all 3,504 grid points
+  (782 blocked), platform heights match (counter 1.3, stage 0.25, tables 1.03); walking out of
+  Desarrollo stops at its closed door and reaches the plaza with it open; roads free, the edge wall
+  blocks; no rain inside bars (966 drops visible, 0 inside); top and plaza-level screenshots.
 - 2026-10-23 Second round of fixes:
   - **Gesture hands** are aimed by finger/thumb direction from the rig's finger bones (they hung
     fingers-down when raised): cheer and dance palms forward, push-ups flat on the floor (lifted, they
@@ -47,20 +56,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     moments (screenshots: rotated hand at the lips, tipped glass, sideways fist); the finish spawns 9
     droplets and ends; singer at 13.4 vs grille 12.6 (screenshot); the tragaperras screen (screenshot);
     payout return recomputed (8.79 per 10).
-- 2026-10-22 Right-click radial menu and gestures: Emojis / Animaciones; 💃 dance, 💪 push-ups, ✊ paja,
-  😘 kiss, 💦 spit, 🙌 cheer, 🍻 toast, procedural on the bones in avatar space, synced to everyone.
-  **Verified in-app with two clients:** both rings (7 gestures + back); dance and cheer move the
-  hands/body (screenshots); push-ups lay the body face down just above the floor (lowest point 0.09,
-  screenshot); the toast lends a beer (screenshot); spit spawns 6 droplets and kiss hearts, all cleaned
-  up; ✊ hand at its target; the other client plays them (time advancing, model tipped for push-ups);
-  walking stops it on both and the model returns to rest; Emojis still opens and closes the panel.
-  **Not judged:** how each one looks and reads on every character.
-- 2026-10-22 Spain weather outside, local clock: the street shows Spain in general (8 cities, rain if 3+
-  have it); the clocks show each player's local time and weather (browser location, rounded, cached a
-  day; fallback Madrid / Las Palmas). **Verified:** combine asserts (dry with 2 wet cities, rain with 3,
-  storm wins, fog, overcast, Madrid sun times, average temperature; plus a wrong one that fails); live
-  8-city fetch (partly cloudy, 16.3 °C); in-app: location denied → Madrid local weather on the clock;
-  stubbed location (Barcelona) → rounded 41.4 / 2.2, cached, "☁️ 18°C · Tu zona".
+- 2026-10-22 (night) Right-click radial menu with gestures, Spain weather outside with each player's
+  local clock. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-22 (evening) Light through open doors, the futbolín, the meme slot machine, Madrid time and
   weather, small fixes (mic, stools). Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-22 Bar games batch: drinks and drunkenness, darts, bathroom graffiti, karaoke stage, two-player Pong,
@@ -94,6 +91,11 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   - rooms, street, doors and audio occlusion.
 
 ## Decisions to review
+- Hub (2026-10-23):
+  - **Desarrollo is Gamedev's neighbor (slot 1)**, not across the plaza (slot 3): a 10 s walk door to door
+    instead of 20. If wrong: change its `slot` in `RoomLayout.js`.
+  - **The plaza radius is computed from the room size**, with exactly a road (6) between neighbors' front
+    corners. Bigger rooms move everything out by themselves; nothing else to change.
 - Futbolín / slots / weather (2026-10-22):
   - **Gestures aren't replayed for late joiners**, and loops stop after 10 s.
   - **The location prompt shows on entry** (for the clock). If wrong: ask only when someone looks at

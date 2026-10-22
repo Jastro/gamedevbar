@@ -1,6 +1,7 @@
 import * as THREE from 'three';
+import { PLAZA_CENTER, PLAZA_RADIUS } from './RoomLayout';
 
-// The street car's shared seats (server: server/features/car.js).
+// The plaza car's shared seats (server: server/features/car.js).
 // - `carSit {slot}` asks for a seat; `carState` says who sits where, any
 //   countdown, and whether a ride is on (we sit down once it lists us).
 // - `carSmoke {occupants}`: smoke and hiss for everyone; passengers fade to
@@ -10,9 +11,9 @@ const FADE_TO_TELEPORT = 1000; // ms (the fade's CSS transition is 0.9 s)
 const TELEPORT_TO_FADE_IN = 300;
 const SPOT_TRIES = 60;
 // Room-local area where a passenger may land inside a bar (in front of the
-// bar counter, away from the walls), and the street's (world).
+// bar counter, away from the walls), and outside: anywhere on the plaza.
 const ROOM_AREA = { minX: -12, maxX: 12, minZ: -0.5, maxZ: 8.5 };
-const STREET_AREA = { minX: -22, maxX: 22, minZ: 11.2, maxZ: 22.8 };
+const PLAZA_LANDING_RADIUS = PLAZA_RADIUS - 2;
 const CAR_CLEARANCE = 3.5;
 const PLAYER_RADIUS = 0.4;
 
@@ -172,7 +173,7 @@ export class CarSync {
         }, SMOKE_TO_FADE + FADE_TO_TELEPORT);
     }
 
-    // A random free spot inside one of the bars or on the street.
+    // A random free spot inside one of the bars or on the plaza.
     findRandomSpot() {
         const { world } = this.game;
         const rooms = [...world.rooms.values()];
@@ -184,7 +185,10 @@ export class CarSync {
             if (room) {
                 spot = room.toWorld(randomIn(ROOM_AREA.minX, ROOM_AREA.maxX), 1, randomIn(ROOM_AREA.minZ, ROOM_AREA.maxZ));
             } else {
-                spot = new THREE.Vector3(randomIn(STREET_AREA.minX, STREET_AREA.maxX), 1, randomIn(STREET_AREA.minZ, STREET_AREA.maxZ));
+                // Uniform over the plaza's disc.
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.sqrt(Math.random()) * PLAZA_LANDING_RADIUS;
+            spot = new THREE.Vector3(PLAZA_CENTER.x + Math.sin(angle) * distance, 1, PLAZA_CENTER.z + Math.cos(angle) * distance);
                 if (Math.hypot(spot.x - carCenter.x, spot.z - carCenter.z) < CAR_CLEARANCE) continue;
             }
             if (world.getRoomAt(spot) !== room) continue;

@@ -2,6 +2,22 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-22 night: gestures, local clock)
+- 2026-10-22 Right-click radial menu and gestures: Emojis / Animaciones; 💃 dance, 💪 push-ups, ✊ paja,
+  😘 kiss, 💦 spit, 🙌 cheer, 🍻 toast, procedural on the bones in avatar space, synced to everyone.
+  **Verified in-app with two clients:** both rings (7 gestures + back); dance and cheer move the
+  hands/body (screenshots); push-ups lay the body face down just above the floor (lowest point 0.09,
+  screenshot); the toast lends a beer (screenshot); spit spawns 6 droplets and kiss hearts, all cleaned
+  up; ✊ hand at its target; the other client plays them (time advancing, model tipped for push-ups);
+  walking stops it on both and the model returns to rest; Emojis still opens and closes the panel.
+  **Not judged:** how each one looks and reads on every character.
+- 2026-10-22 Spain weather outside, local clock: the street shows Spain in general (8 cities, rain if 3+
+  have it); the clocks show each player's local time and weather (browser location, rounded, cached a
+  day; fallback Madrid / Las Palmas). **Verified:** combine asserts (dry with 2 wet cities, rain with 3,
+  storm wins, fog, overcast, Madrid sun times, average temperature; plus a wrong one that fails); live
+  8-city fetch (partly cloudy, 16.3 °C); in-app: location denied → Madrid local weather on the clock;
+  stubbed location (Barcelona) → rounded 41.4 / 2.2, cached, "☁️ 18°C · Tu zona".
+
 ## Done (2026-10-22 evening: doors light, futbolín, slots, weather)
 - 2026-10-22 Light through open doors (plan `Docs/Plans to be done/2026-10-22-doors-light-local-weather-gestures-plan.md`):
   a bar you're not in is lit by two door lights while its door is open; from inside, the street's

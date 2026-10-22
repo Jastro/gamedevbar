@@ -1,12 +1,17 @@
 import * as THREE from 'three';
+import { PLAZA_RADIUS } from './RoomLayout';
+import { roadAngle, hubPoint } from './Outdoors';
 
-// The black car parked on the street (world coordinates, between the two
+// The black car parked on the plaza (world coordinates, by the road between
 // bars' doors). Clicking it or F (carInteraction) takes the first free of
 // its five seats; occupancy is server state (CarSync). `playSmoke` fills the cabin with smoke and plays a
 // hiss; everyone around sees and hears it, only the passengers get teleported.
 
-const CAR_POSITION = { x: -10, z: 17 };
-const CAR_YAW = 0; // the car points along +x
+// Near the mouth of the road between slots 0 and 1 (Gamedev and Desarrollo),
+// along the plaza's edge.
+const CAR_ANGLE = roadAngle(0);
+const CAR_POSITION = hubPoint(CAR_ANGLE, PLAZA_RADIUS - 5);
+const CAR_YAW = CAR_ANGLE; // the car points along its local +x: tangent to the plaza
 const BODY = { length: 4.4, width: 1.9, height: 0.7, bottom: 0.35 };
 const CABIN = { length: 2.4, height: 0.75, offsetX: -0.2 };
 // Seat positions in car-local coordinates (front at +x).

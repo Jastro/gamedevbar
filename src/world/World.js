@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CollisionManager } from './CollisionManager';
 import { Room } from './Room';
-import { Street } from './Street';
+import { Outdoors } from './Outdoors';
 import {
     ROOMS,
     ROOM_HALF_WIDTH,
@@ -37,8 +37,9 @@ export class World {
             this.createBarArea(room);
         });
 
-        this.street = new Street(this.scene, this.collisionManager, [...this.rooms.values()]);
-        this.street.create();
+        // The plaza, roads and the wall around the map (RoomLayout's hub).
+        this.outdoors = new Outdoors(this.scene, this.collisionManager);
+        this.outdoors.create();
     }
 
     getRoom(roomId) {

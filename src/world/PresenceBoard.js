@@ -7,7 +7,7 @@ const MAX_NAMES = 18;         // two columns of 9
 
 // "Who's here" board on the front wall (where the forum TV used to be): the
 // players currently inside this room, 🎙️ while they talk, plus how many are
-// in the other rooms and on the street. Built from the positions every
+// in the other rooms and outside. Built from the positions every
 // client already knows, so it needs no server state.
 export class PresenceBoard {
     constructor(room) {

@@ -3,14 +3,14 @@ import { DEFAULT_LIGHTS } from '../world/LightSwitches';
 
 // Turns each bar's light switches into lighting. The scene has one ambient
 // and one directional light (from level.json), shared by both bars, so they
-// follow the switches of the bar the local player is in (the street keeps
+// follow the switches of the bar the local player is in (outside keeps
 // the default). Disco is three colored point lights circling that bar's
 // ceiling. They always exist (intensity 0 when off), so flipping a switch
 // never changes the light count, which would recompile every material.
 // Because those two lights follow where you are, the other spaces need help
 // to look right through an open door: a bar you're not in gets two door
 // lights inside (its switches, only while its door is open), and while
-// you're inside, the street's own materials are dimmed to the sky's light.
+// you're inside, the plaza's and roads' own materials are dimmed to the sky's light.
 
 const LEVELS = {
     // Base light when only normal is on, or normal and low together.
@@ -75,10 +75,10 @@ export class RoomLighting {
         this.collectOutdoorMaterials();
     }
 
-    // Lit materials that only exist outside (street, car, lamp posts). Room walls
+    // Lit materials that only exist outside (plaza, roads, car, lamp posts). Room walls
     // are shared by both faces, so they stay as they are.
     collectOutdoorMaterials() {
-        const groups = [this.game.world.street?.group, this.game.environment.car?.group, this.game.weather?.lampGroup];
+        const groups = [this.game.world.outdoors?.group, this.game.environment.car?.group, this.game.weather?.lampGroup];
         const materials = new Set();
         groups.filter(Boolean).forEach(group => group.traverse(object => {
             if (!object.isMesh) return;
@@ -90,7 +90,7 @@ export class RoomLighting {
     }
 
     // A bar you're not in, seen through its open door: lit by its switches
-    // (a little less by day, when the street is bright anyway).
+    // (a little less by day, when it's bright outside anyway).
     updateDoorLights(currentRoom, t) {
         const { environment } = this.game;
         const daylight = this.game.weather?.daylight() ?? 1;
@@ -120,7 +120,7 @@ export class RoomLighting {
         let levelName = state.normal ? 'normal' : state.low ? 'low' : 'off';
         let level = LEVELS[levelName];
         let outdoorColor = null;
-        // On the street the sky lights you (night, clouds, lightning).
+        // Outside, the sky lights you (night, clouds, lightning).
         const outdoor = !room && !bathroom ? this.game.weather?.outdoorLight() : null;
         if (outdoor) {
             levelName = 'outdoor';
@@ -139,7 +139,7 @@ export class RoomLighting {
         }
 
         this.updateDoorLights(room, t);
-        // Inside: the street (seen through the door) gets the sky's light, not the bar's.
+        // Inside: the outside (seen through the door) gets the sky's light, not the bar's.
         const sky = room ? this.game.weather?.outdoorLight() : null;
         const dim = sky ? THREE.MathUtils.clamp(sky.ambient / Math.max(0.05, level.ambient), 0.15, 1.3) : 1;
         this.outdoorDim += (dim - this.outdoorDim) * t;

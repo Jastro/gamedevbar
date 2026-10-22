@@ -1,7 +1,12 @@
 // Single source of truth for where each bar sits in the world.
 // Every room is built in the same local frame (the original Gamedev layout:
 // x in [-15, 15], z in [-10, 10], front wall at z = +10) and then placed with
-// an origin + Y rotation. Rotating by PI makes two rooms face each other.
+// an origin + Y rotation.
+// The world is a hub: a round plaza with up to SLOT_COUNT bars around it,
+// each facing the middle with its door on the plaza's edge; a small road
+// between each pair of bars leads out to a ring road, and a low wall closes
+// the map past it. Everything here follows from the room size, so bigger
+// rooms push the plaza and the roads out by themselves.
 
 export const ROOM_HALF_WIDTH = 15;   // local x extent
 export const ROOM_HALF_DEPTH = 10;   // local z extent (front wall at +z)
@@ -23,6 +28,46 @@ export const BAR_SHIFT = -2.65;
 export const BAR_COUNTER_Z = -3 + BAR_SHIFT;  // center; 2 deep, top at 1.3
 export const BACK_BAR_Z = -7 + BAR_SHIFT;     // center; 0.5 deep, against the wall
 
+// --- The hub -----------------------------------------------------------------
+export const SLOT_COUNT = 6;
+export const RADIAL_ROAD_WIDTH = 6;   // between neighboring bars' front corners
+export const RING_ROAD_WIDTH = 8;
+const RING_ROAD_MARGIN = 3;           // ring road clear of the bars' back corners
+const EDGE_MARGIN = 5;                // ring road to the wall at the map's edge
+// Small enough that the bars' front walls (a hexagon around the plaza) leave
+// exactly a road's width between neighbors.
+export const PLAZA_RADIUS = (2 * ROOM_HALF_WIDTH + RADIAL_ROAD_WIDTH) / (2 * Math.tan(Math.PI / SLOT_COUNT));
+// Gamedev (slot 0) stays at the world origin, facing +z toward the plaza.
+export const PLAZA_CENTER = { x: 0, z: ROOM_HALF_DEPTH + PLAZA_RADIUS };
+const BACK_CORNER_RADIUS = Math.hypot(PLAZA_RADIUS + 2 * ROOM_HALF_DEPTH, ROOM_HALF_WIDTH);
+export const RING_ROAD = {
+    inner: BACK_CORNER_RADIUS + RING_ROAD_MARGIN,
+    outer: BACK_CORNER_RADIUS + RING_ROAD_MARGIN + RING_ROAD_WIDTH
+};
+export const WORLD_RADIUS = RING_ROAD.outer + EDGE_MARGIN; // the wall at the map's edge
+
+// Slot k's angle around the plaza (slot 0 is Gamedev, south of it).
+export function slotAngle(slot) {
+    return (slot * 2 * Math.PI) / SLOT_COUNT;
+}
+
+// Unit vector from the plaza's center toward bearing `angle` (slot 0: -z).
+export function bearing(angle) {
+    return { x: -Math.sin(angle), z: -Math.cos(angle) };
+}
+
+// A bar in slot k: its center out along that bearing, turned so its front
+// wall (local +z) faces the middle.
+function slotPlacement(slot) {
+    const angle = slotAngle(slot);
+    const direction = bearing(angle);
+    const distance = PLAZA_RADIUS + ROOM_HALF_DEPTH;
+    return {
+        origin: { x: PLAZA_CENTER.x + direction.x * distance, z: PLAZA_CENTER.z + direction.z * distance },
+        rotationY: angle
+    };
+}
+
 // Where a player appears when choosing a room (room-local).
 export const SPAWN_LOCAL = { x: 0, y: 1, z: 0 };
 
@@ -34,22 +79,19 @@ export const ROOMS = [
         barSign: 'Gamedev MV',
         paintings: true,
         radioStation: 'rock-fm', // until someone changes it (src/audio/radioStations.js)
-        origin: { x: 0, z: 0 },
-        rotationY: 0
+        slot: 0
     },
     {
         id: 'desarrollo',
         name: 'Desarrollo',
-        tagline: 'Al otro lado de la calle',
+        tagline: 'Justo al lado, en la plaza',
         barSign: 'Desarrollo MV',
         paintings: false,
         radioStation: 'megastar',
-        // Rotated 180 degrees straight across a 14-unit street, so the two
-        // front doors face each other: Gamedev door at (0, 10), this one at (0, 24).
-        origin: { x: 0, z: 34 },
-        rotationY: Math.PI
+        // Gamedev's neighbor around the plaza (a short walk, door to door).
+        slot: 1
     }
-];
+].map(room => ({ ...room, ...slotPlacement(room.slot) }));
 
 export const DEFAULT_ROOM_ID = 'gamedev';
 
@@ -58,14 +100,6 @@ export function getRoomIdFromPath(pathname) {
     const name = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
     return ROOMS.some(room => room.id === name) ? name : null;
 }
-
-// Walkable outdoor area between the two facades (world coordinates).
-export const STREET = {
-    minX: -25,
-    maxX: 25,
-    minZ: 10,
-    maxZ: 24
-};
 
 export function getRoomDefinition(roomId) {
     return ROOMS.find(room => room.id === roomId) ?? ROOMS.find(room => room.id === DEFAULT_ROOM_ID);

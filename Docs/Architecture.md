@@ -7,7 +7,7 @@ audio, voice, known issues): [Systems.md](Systems.md). Messages: [Protocol.md](P
 
 **Taberna Virtual**: a multiplayer 3D hangout for the Mediavida forum (started in `/gamedev/`). The goal is
 one bar per subforum, embeddable in forum threads. Players pick a name, character and bar, walk around, chat,
-talk by voice (push to talk), sit, play arcades, open doors and cross the street to the other bar.
+talk by voice (push to talk), sit, play arcades, open doors and cross the plaza to the other bar.
 
 | Part | Tech | Entry |
 |---|---|---|
@@ -28,7 +28,8 @@ appearance/    catalog (slots, items, tints, name colors; one entry per accessor
 network/       WebSocketManager: transport only (JSON in → emit(type), send(type, data))
 entities/      Player, LocalPlayer (input + collisions), RemotePlayer, PlayerManager, Gestures (procedural
                right-click animations on the bones) + GestureSync
-world/         RoomLayout (where rooms are), Room, World (shells, colliders, street), Environment (props per room),
+world/         RoomLayout (the hub: plaza, slots, roads), Room, World (shells, colliders), Outdoors (plaza, roads,
+               edge wall), Environment (props per room),
                Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, VirconCabinet +
                Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), GraffitiWall +
                GraffitiSync (the drawable bathroom wall), Car + CarSync,
@@ -78,9 +79,9 @@ logged). Lifecycle hooks: `onConnect`, `onJoin` (after `initCompleted`, in regis
 
 ## How to add…
 
-- **A room**: an entry in `ROOMS` (`src/world/RoomLayout.js`), and its id in `ROOM_IDS`
-  (`server/config.js`; darts, graffiti and Pong only accept those). The selector, street fences, door and props
-  follow. Per-room flags (`barSign`, `paintings`) live on that entry.
+- **A room**: an entry in `ROOMS` (`src/world/RoomLayout.js`) with a free `slot` around the plaza, and its id
+  in `ROOM_IDS` (`server/config.js`; darts, graffiti and Pong only accept those). Its placement, door and
+  props follow. Per-room flags (`barSign`, `paintings`) live on that entry.
 - **Something clickable**: give its root group `userData.type = '<type>'` (and `originalMaterial` /
   `highlightMaterial` on meshes for the hover glow). Add `src/interactions/<type>Interaction.js` returning
   `{ type, use(object) }`, plus `findNearby(position)` and `hint(object)` if `F` should work near it. Register

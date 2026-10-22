@@ -1,6 +1,6 @@
 import { weatherKind } from './Weather';
 
-// Your own time and weather, for the bar clocks (the street outside shows
+// Your own time and weather, for the bar clocks (the plaza outside shows
 // Spain's, from the server). The browser asks once for your location; it's
 // rounded to ~10 km, kept for a day, and only ever sent to Open-Meteo, from
 // your browser. Without it: the Canary timezone gets Las Palmas, anything

@@ -10,6 +10,12 @@ import * as THREE from 'three';
 // Everything is static (doors toggle `enabled` instead of moving their
 // blocker), so each shape is measured once, on the first check, when the
 // room groups are in place.
+// Boxes are tested in their own frame (rooms around the plaza are rotated
+// by any angle, and a rotated wall's world-aligned box would cover half
+// the bar): the player's position goes into the collider's local space and
+// is checked against its local bounds. Heights use the world box (things
+// only ever rotate about the vertical).
+// The whole map is a disc: `setBoundary` keeps everyone inside its wall.
 
 // Feet within this of a platform top count as standing on it.
 const STEP_TOLERANCE = 0.05;
@@ -22,6 +28,12 @@ const LANDING_SNAP = 0.15;
 export class CollisionManager {
     constructor() {
         this.colliders = [];
+        this.boundary = null; // { x, z, radius }
+    }
+
+    // Nobody walks past this circle (world xz).
+    setBoundary(x, z, radius) {
+        this.boundary = { x, z, radius };
     }
 
     addCollider(mesh, type = 'box') {
@@ -34,8 +46,9 @@ export class CollisionManager {
             // Doors toggle this instead of being added/removed.
             enabled: true,
             update: () => {
-                mesh.updateWorldMatrix(true, false);
+                mesh.updateWorldMatrix(true, true);
                 box.setFromObject(mesh);
+                measureLocal(collider);
                 measured = true;
             },
             ensureMeasured: () => {
@@ -76,17 +89,19 @@ export class CollisionManager {
     checkCollision(position, radius = 0.5) {
         const feet = position.y - 1;
         const head = feet + PLAYER_HEIGHT;
+        const edge = this.boundary;
+        if (edge && Math.hypot(position.x - edge.x, position.z - edge.z) + radius > edge.radius) return true;
         for (const collider of this.colliders) {
             if (!collider.enabled) continue;
             collider.ensureMeasured();
             if (collider.type === 'platform') {
                 if (feet >= collider.top - STEP_TOLERANCE) continue;
                 if (collider.shape === 'box') {
-                    if (overlapsBoxXZ(position, radius, collider.box)) return true;
+                    if (overlapsXZ(position, radius, collider)) return true;
                 } else if (centerDistance(position, collider) < collider.radius + radius) {
                     return true;
                 }
-            } else if (collider.box.min.y < head && overlapsBoxXZ(position, radius, collider.box)) {
+            } else if (collider.box.min.y < head && overlapsXZ(position, radius, collider)) {
                 return true;
             }
         }
@@ -103,7 +118,7 @@ export class CollisionManager {
             collider.ensureMeasured();
             if (collider.top > feet + LANDING_SNAP || collider.top <= ground) continue;
             const under = collider.shape === 'box'
-                ? overlapsBoxXZ(position, PLATFORM_EDGE, collider.box)
+                ? overlapsXZ(position, PLATFORM_EDGE, collider)
                 : centerDistance(position, collider) < collider.radius + PLATFORM_EDGE;
             if (under) ground = collider.top;
         }
@@ -117,10 +132,39 @@ export class CollisionManager {
     }
 }
 
-// The player's square footprint against a box, ignoring height.
-function overlapsBoxXZ(position, radius, box) {
-    return position.x + radius > box.min.x && position.x - radius < box.max.x
-        && position.z + radius > box.min.z && position.z - radius < box.max.z;
+const scratchPoint = new THREE.Vector3();
+const scratchMatrix = new THREE.Matrix4();
+const scratchBox = new THREE.Box3();
+
+// The collider's bounds in its own frame (all its meshes), the way back
+// into that frame, and its scale along x and z (to scale the footprint).
+function measureLocal(collider) {
+    const { mesh } = collider;
+    const inverse = mesh.matrixWorld.clone().invert();
+    const local = new THREE.Box3();
+    mesh.traverse(child => {
+        if (!child.isMesh || !child.geometry) return;
+        if (!child.geometry.boundingBox) child.geometry.computeBoundingBox();
+        scratchMatrix.multiplyMatrices(inverse, child.matrixWorld);
+        local.union(scratchBox.copy(child.geometry.boundingBox).applyMatrix4(scratchMatrix));
+    });
+    const elements = mesh.matrixWorld.elements;
+    collider.local = local;
+    collider.inverse = inverse;
+    collider.scaleX = Math.hypot(elements[0], elements[1], elements[2]) || 1;
+    collider.scaleZ = Math.hypot(elements[8], elements[9], elements[10]) || 1;
+}
+
+// The player's square footprint (turned with the collider) against its
+// bounds, in the collider's frame, ignoring height.
+function overlapsXZ(position, radius, collider) {
+    const { local } = collider;
+    if (!local || local.isEmpty()) return false;
+    const point = scratchPoint.copy(position).applyMatrix4(collider.inverse);
+    const rx = radius / collider.scaleX;
+    const rz = radius / collider.scaleZ;
+    return point.x + rx > local.min.x && point.x - rx < local.max.x
+        && point.z + rz > local.min.z && point.z - rz < local.max.z;
 }
 
 // Horizontal distance from the player's center to a platform's center

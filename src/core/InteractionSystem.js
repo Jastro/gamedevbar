@@ -117,7 +117,7 @@ export class InteractionSystem {
             if (object) consider(interaction, object);
         }
         // Only things in the space you're in (a light switch is 0.6 away
-        // from the street, through the wall).
+        // from outside, through the wall).
         const world = this.game.world;
         const here = world.getRoomAt(position);
         for (const object of this.getInteractables()) {

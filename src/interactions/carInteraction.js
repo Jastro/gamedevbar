@@ -1,4 +1,4 @@
-// The street car: click it or press F next to it to take a free seat
+// The plaza car: click it or press F next to it to take a free seat
 // (CarSync). WASD gets you out.
 const CAR_REACH = 3.5;
 
