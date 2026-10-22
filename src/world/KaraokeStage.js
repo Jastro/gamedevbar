@@ -8,6 +8,9 @@ import * as THREE from 'three';
 // voice fill the bar, and the light follows whoever is up. Room-local.
 const STAGE = { minX: 11.6, maxX: 14.7, minZ: -2.6, maxZ: 2.6, height: 0.25 };
 const MIC = { x: 12.4, z: 0 };
+// Where the singer stands, behind the mic (closer and the bulky avatars
+// went through the stand).
+const SINGER_DISTANCE = 1.0;
 const LIGHT_STAND = { x: 11.1, z: 3.1, height: 3.4 };
 const LIGHT_INTENSITY = 30;
 const LIGHT_FADE = 6; // 1/s
@@ -96,7 +99,7 @@ export class KaraokeStage {
         stand.add(pole, foot, lamp);
         // Aim the lamp (its +z) at the singer: yaw, then pitch down. Done by
         // hand because lookAt needs world matrices that don't exist yet.
-        const singer = new THREE.Vector3(MIC.x + 0.45, 1.8, MIC.z);
+        const singer = new THREE.Vector3(MIC.x + SINGER_DISTANCE, 1.8, MIC.z);
         const aim = singer.clone().sub(new THREE.Vector3(LIGHT_STAND.x, LIGHT_STAND.height, LIGHT_STAND.z));
         lamp.rotation.order = 'YXZ';
         lamp.rotation.y = Math.atan2(aim.x, aim.z);
@@ -120,7 +123,7 @@ export class KaraokeStage {
 
     // Where F at the mic puts you: just behind the mic, facing the room.
     getMicSpot() {
-        const position = this.room.toWorld(MIC.x + 0.45, 1 + STAGE.height, MIC.z);
+        const position = this.room.toWorld(MIC.x + SINGER_DISTANCE, 1 + STAGE.height, MIC.z);
         const facing = this.room.toWorld(0, 1 + STAGE.height, MIC.z);
         return { position, rotation: Math.atan2(facing.x - position.x, facing.z - position.z) };
     }

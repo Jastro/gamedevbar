@@ -6,9 +6,10 @@ import * as THREE from 'three';
 // Space throws. Three darts, then the turn ends by itself; Esc leaves early.
 const DARTS_PER_TURN = 3;
 const THROW_COOLDOWN = 650; // ms (the server allows one per 600)
-const SWAY = 0.08;          // board units, sober
-const DRUNK_SWAY = 0.35;    // extra at full drunkenness
-const RELEASE_JITTER = 0.03;
+const SWAY = 0.14;          // board units, sober
+const DRUNK_SWAY = 0.45;    // extra at full drunkenness
+const SWAY_SPEED = 1.35;    // how fast the crosshair wanders
+const RELEASE_JITTER = 0.06;
 const CONFIRM_TIMEOUT = 1500; // ms to wait for the server's dartsThrow
 const HAND_OFFSET = new THREE.Vector3(0, 0.7, 0);
 const HINT = 'Apunta con el ratón · Clic o Espacio: lanzar · Esc: salir';
@@ -144,7 +145,8 @@ export class DartsSync {
     }
 
     // Crosshair = mouse aim + a slow figure-of-eight sway.
-    crosshairAt(time) {
+    crosshairAt(seconds) {
+        const time = seconds * SWAY_SPEED;
         const drunk = this.game.drinkSync?.effect ?? 0;
         const amount = SWAY + DRUNK_SWAY * drunk;
         return {

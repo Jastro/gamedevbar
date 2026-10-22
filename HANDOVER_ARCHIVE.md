@@ -2,6 +2,46 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-22 evening: doors light, futbolín, slots, weather)
+- 2026-10-22 Light through open doors (plan `Docs/Plans to be done/2026-10-22-doors-light-local-weather-gestures-plan.md`):
+  a bar you're not in is lit by two door lights while its door is open; from inside, the street's
+  materials are dimmed to the sky's light. **Verified** at night: from the street the open doorway shows
+  a lit inside (Gamedev's door lights at 9, Desarrollo's at 0 with its door closed); from inside, the
+  street through the door is dark (dim 0.35); screenshots.
+- 2026-10-22 Futbolín:
+  - **Table** on the left side of each bar; F on a long side joins that team, 2 per team (alone you have
+    all 4 rods, partners split back/front). Practice alone, matches to 5 with countdown and goal pauses.
+  - **The server runs the physics** (60 Hz against real time) and sends 20 snapshots/s; players send rod
+    targets and kicks. Your view looks down from your side, your avatar hidden.
+  - **Verified:** headless runs on the server (phases, rod split, a 25 s bot match: 65 kicks, 15 hits,
+    a goal; fixed real-time stepping and a dead zone between the midfield rods); in-app with two
+    clients: hints by side, red alone → practice, blue joins → countdown → play, blue's W slides its
+    rods away (server and the other client agree), the ball matches on both clients, Esc releases the
+    view and the avatar, a player who leaves can walk off (not stuck in the table); screenshots; no
+    errors.
+  - **Not judged:** the feel (speeds, kick strength), lag over a real network, 2 vs 2 with four people.
+- 2026-10-22 Meme slot machine:
+  - **Machine** against each bar's left wall; F pulls the lever, the server rolls, everyone watches the
+    same spin. Symbols drawn in code (🗿, 🤡, 💀, 🐕 much wow, 🍄 1UP, 🎂 cake is a lie, F, 📈 stonks).
+  - **Coins** per connection: 100 to start, bet 10, pair 18, triples up to 1000; broke → 50 once a minute.
+  - **Verified:** payout asserts (+ a wrong one that fails) and the expected return (8.79 per 10); a mock
+    hub: bailout once, then "broke" for 60 s, unjoined players and bad rooms ignored; in-app with two
+    clients: hint with coins, spins sync (same reels on both), only the spinner's coins change, a second
+    pull while spinning gets "Espera…"; screenshot of the screen.
+  - **Not judged:** the look, jingles, how generous it feels.
+- 2026-10-22 Real time and weather (Madrid):
+  - **Server** asks Open-Meteo every 10 min (code, temperature, clouds, wind, sunrise/sunset).
+  - **Client:** the sky follows the real sun and clouds; outside, the street light follows the sky and two
+    lamp posts come on at night; rain, drizzle, snow, fog and storms (lightning + thunder) over the
+    street only; a clock above each bar's door ("23:18 · 🌧️ 14°C · Madrid").
+  - **Verified:** a real fetch (13.9 °C, sunrise 08:33, sunset 19:24); in-app at 23:17 Madrid: night sky,
+    street ambient 0.22, lamps on (screenshot); forced storm: rain streaks and a lightning flash
+    (screenshot); forced snow by day: round flakes (screenshot, after fixing square flakes); inside the
+    bar the lights stay on their switch, no fog, rain quieter; the clock (screenshot).
+  - **Not judged:** the look by day, sound levels.
+- 2026-10-22 Small fixes (`8c2017e`): the karaoke mic faces the singer, no mic prompt while on stage,
+  bar stools face the counter straight on (they faced its middle).
+
 ## Done (2026-10-22: bar games batch)
 - 2026-10-22 Review fixes for the batch (independent review of `6026818..3f689ad`):
   - **Bug fixes:**

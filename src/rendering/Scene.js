@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { BAR_SHIFT } from '../world/RoomLayout';
 
 export class Scene {
     constructor() {
@@ -32,6 +33,11 @@ export class Scene {
             // Vircon32); the real one is src/world/Bathroom.js.
             const oldBathroom = template.getObjectByName('Bathroom');
             if (oldBathroom) oldBathroom.removeFromParent();
+            // A third copy of the counter and back shelf (World builds them,
+            // with colliders); the stools follow the counter back.
+            template.getObjectByName('BarArea')?.removeFromParent();
+            const stools = template.getObjectByName('BarStools');
+            if (stools) stools.position.z += BAR_SHIFT;
 
             this.levelTemplate = template;
             this.isLoaded = true;

@@ -11,14 +11,16 @@ function registerSeats(hub) {
         if (user.seatId) seats.delete(user.seatId);
 
         user.seatId = data.seatId;
+        user.seatPose = data.pose === 'stand' ? 'stand' : 'sit';
         seats.set(data.seatId, user.id);
-        hub.broadcast({ type: 'userSat', userId: user.id, seatId: data.seatId }, ws);
+        hub.broadcast({ type: 'userSat', userId: user.id, seatId: data.seatId, pose: user.seatPose }, ws);
     });
 
     hub.on('userStood', ({ ws, user }) => {
         if (!user.seatId) return;
         seats.delete(user.seatId);
         user.seatId = null;
+        user.seatPose = null;
         hub.broadcast({ type: 'userStood', userId: user.id }, ws);
     });
 

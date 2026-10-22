@@ -18,6 +18,15 @@ export class PlayerManager {
         this.game.network.on('userMoved', (data) => this.handleUserMoved(data));
         this.game.network.on('init', (data) => this.handleInit(data));
         this.game.network.on('userUsername', (data) => this.handleUserUpdate(data));
+        // Who's seated (BathroomSync turns it into the seated pose).
+        this.game.network.on('userSat', (data) => {
+            const player = this.players.get(data.userId);
+            if (player && player !== this.localPlayer) player.seatPose = data.pose === 'stand' ? 'stand' : 'sit';
+        });
+        this.game.network.on('userStood', (data) => {
+            const player = this.players.get(data.userId);
+            if (player && player !== this.localPlayer) player.seatPose = null;
+        });
     }
 
     handleInit(data) {
@@ -83,6 +92,7 @@ export class PlayerManager {
         // Crear nuevo jugador remoto
         const player = new RemotePlayer(data.userId, position, this.game);
         if (data.appearance) player.setAppearance(data.appearance);
+        if (data.seatId) player.seatPose = data.seatPose === 'stand' ? 'stand' : 'sit';
         
         // Primero añadir al mapa de jugadores
         this.players.set(data.userId, player);

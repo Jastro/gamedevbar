@@ -1,6 +1,6 @@
 import { BET } from '../world/SlotMachine';
 
-// The meme slot machine: click or F pulls the lever (SlotSync).
+// The tragaperras: click or F pulls the lever (SlotSync).
 const REACH = 2.5;
 
 export function createSlotInteraction(game) {

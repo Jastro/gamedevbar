@@ -46,6 +46,8 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
     and works the same way;
   - chairs have no collider.
 - **Seats:** stools, chairs (sit lower, facing their table) and the toilet. Clicking or F sits you down,
+  Every seat shows the seated pose (feet forward, `Player.setPose('sit')`) to everyone: `userSat` carries
+  the pose (`stand` only at the toilet's pee spot) and late joiners get it in `userJoined.seatPose`.
   and WASD stands you up.
 - **Network smoothing.** The position goes out at most 20 times a second. Other players ease toward the
   latest position and rotation (`RemotePlayer`, frame-rate independent) and snap after a teleport (> 5).
@@ -105,7 +107,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 
 ## Bar service and drinks
 
-- **Ordering:** a beer tap on each counter (`src/world/BarTap.js`, room-local (5, 1.3, -3.2), past the last
+- **Ordering:** a beer tap on each counter (`src/world/BarTap.js`, room-local (5, 1.3, `BAR_COUNTER_Z` - 0.2), past the last
   stool so F picks it over a seat). F or click → "🍺 ¿Qué te pongo?" → Caña, Vino, Chupito, Cubata, Café,
   Refresco (`src/bar/drinks.js`). The drink shows in your right hand through the appearance hand slot
   (`Player.setHeldItem` overrides `hand` without touching your saved appearance).
@@ -131,7 +133,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Playing:** F or click at the line asks the server for the board (one thrower per board, and one board
   per player). Once you're the thrower (`DartsSync`): you stand at the line, the camera locks on a close
   aiming view (`Camera.setView`), the mouse aims and a crosshair sways around the aim (more when drunk:
-  `SWAY` + `DRUNK_SWAY` × the drink effect). Click or Space throws, Esc leaves. Three darts per turn; the
+  `SWAY` 0.14 + `DRUNK_SWAY` 0.45 × the drink effect, at `SWAY_SPEED` 1.35; release jitter 0.06). Click or Space throws, Esc leaves. Three darts per turn; the
   turn ends 2.5 s after the third, or after 30 s without throwing.
 - **Scoring** is only on the server (`scoreAt` in `server/features/darts.js`): the client sends where the
   dart hit in board units (1 = outer edge of the double ring), the server answers with sector, double,
@@ -142,7 +144,8 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 
 - **Stage** (`src/world/KaraokeStage.js`): a 0.25-high box platform in front of each projector screen
   (room-local x 11.6..14.7, z -2.6..2.6) with a glowing front edge, a mic stand and a stage light on a
-  stand. Jump onto it, or F at the mic to be placed behind it facing the room.
+  stand. Jump onto it, or F at the mic to be placed 1.0 behind it (`SINGER_DISTANCE`) facing the room;
+  F offers nothing more while you're on the stage.
 - **No server state:** "on stage" (`KaraokeStage.contains`: inside the rectangle, feet on top) is worked out
   from positions on every client. `Environment.updateStages` fades the stage light in while anyone is up.
 - **Voice:** `VoiceChat.update` gives a singer's voice a ref distance of 25 instead of 4 for listeners in
@@ -185,13 +188,16 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   `allow="geolocation"` on its iframe.
 - Inside the bars nothing changes: their lights follow their switches.
 
-## Slot machine (meme slots)
+## Tragaperras (video-game meme slot machine)
 
 - **Where:** against each bar's left wall (`src/world/SlotMachine.js`, room-local (-14.35, 0, 2.6)). F or
   click pulls the lever; one spin at a time per machine (2.6 s), and everyone sees the same spin: the
   reels stop one by one on the server's result.
-- **Symbols** are drawn in code (emoji + caption, no images): 🗿 MOAI, 🤡 PAYASO, 💀 RIP, 🐕 MUCH WOW,
-  🍄 1UP, 🎂 IS A LIE, a keyboard "F" (PRESS F) and 📈 STONKS.
+- **Symbols** are drawn in code, no images: emoji on a loud gradient tile with a meme caption (Impact,
+  white with a black outline): 👾 ALL YOUR BASE, 🛩️ DO A BARREL ROLL, 💀 YOU DIED, 🗡️ TAKE THIS (it's
+  dangerous to go alone), 🍄 1UP, 🎂 IS A LIE, a keyboard F (PRESS F) and 🏆 GG EZ (jackpot). The
+  screen shouts the result: the full meme line on three of a kind, "COMBO x2" on a pair, a red
+  "WASTED" on nothing. The sign says TRAGAPERRAS.
 - **Pays** (`server/features/slots.js`, bet 10): any pair 18; three of a kind 60 / 80 / -20 (💀 takes
   more) / 120 / 160 / 0 (🎂 the cake is a lie) / 200 / 1000 (📈 jackpot, announced to the whole bar).
   Returns ~88% of what's bet.
@@ -224,9 +230,12 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   and converted to each bone's space every frame, after the walk/idle animation, so they fit every
   character and size. 0.25 s fade in/out; bones the clip doesn't key are put back each frame.
   - 💃 Baile sexy and 💪 Flexiones loop (10 s max; push-ups tip the whole model face down onto its hands
-    and need you standing); ✊ Paja (comic hand pumping in front of the belly), 😘 Beso (hand to the mouth,
+    and need you standing); ✊ Paja (comic: a sideways fist pumping in front of the belly, faster and faster, then a
+    juicy finish: droplets from the hand and a squelch), 😘 Beso (hand to the mouth,
     hearts), 💦 Escupir (head back, then droplets that splat on the floor), 🙌 Animar (hands up, jingle),
     🍻 Brindar (raise, clink sound, sip; lends you a beer if your hand is empty).
+  - Hands can rotate too (`handR.rot`): the kiss turns the fingers to the lips then flips the palm out,
+    the toast tilts the glass into the mouth. Spitting has a short "ptuh" (`spit` recipe).
   - Walking cuts a gesture short, for everyone.
 - **Sync** (`GestureSync`, `server/features/gestures.js`): `playerGesture` / `playerGestureStop` relayed
   to everyone else; not replayed for late joiners.
@@ -281,7 +290,9 @@ come back at the live point when anyone is inside again. Choices stay on the ser
 ## World layout and rooms
 
 All room content is authored in one **room-local frame** (the original bar): x ∈ [-15, 15], z ∈ [-10, 10],
-walls 8 high, bar counter at z = -3, back bar at z = -7, front wall at z = +10 with the entrance centered
+walls 8 high, bar counter at z = `BAR_COUNTER_Z` (-5.65), back bar against the back wall at `BACK_BAR_Z`
+(-9.65; both moved back 2.65 on 2026-10-23 with the stools, radio, glasses and tap), arcades against the
+back wall (z -9.05), paintings at y 5 (5.6 over the bathroom), the sign at y 7, front wall at z = +10 with the entrance centered
 (x = 0) and the "who's here" board beside it (x = 7).
 `src/world/RoomLayout.js` is the single source of truth for placing rooms:
 
@@ -448,8 +459,8 @@ see [Protocol.md](Protocol.md).
 - ~~Pong multiplayer sync was broken~~ (fixed 2026-10-22): `WebSocketManager.send` let a `type` inside the
   data override the message type, so Pong's messages never arrived as sent. `send` now puts `type` last,
   and Pong was rebuilt on its own messages (see "Pong (two players)"). Snake is still local.
-- Seat ids are Three.js object ids (client-local), so server seat occupancy is meaningless across clients, and
-  no client handles `userSat`/`userStood` (others don't see you sit).
+- Seat ids are Three.js object ids (client-local, though built in the same order everywhere), so server
+  seat occupancy is only as good as that. Seated poses are synced since 2026-10-23.
 - Duel messages (`duelRequest`...) exist on the server but there is no client UI for them.
 - Fixed 2026-10-21: a page loaded hidden or zero-sized (background tab, hidden pane, collapsed iframe)
   left the camera aspect at 0/0 = NaN until the next resize. The scene rendered black, and anything
@@ -457,7 +468,9 @@ see [Protocol.md](Protocol.md).
   `Game.start` re-syncs the size.
 - `window.game` is still used as a global by older modules (Bar, arcades, SoccerGame, ChatUI); new code
   gets `game` passed in.
-- Geometry is duplicated: `level.json`, `World` and `Bar` all create floor/walls/bar counter (z-fighting).
+- Geometry is duplicated: `level.json` and `World` both create floor/walls (z-fighting). The bar counter and
+  back shelf are only `World`'s since 2026-10-23 (level.json's `BarArea` is removed on load, `Bar` keeps
+  the decoration).
 - `Bathroom.js` and `Lighting.js` are never used (level.json has an empty Bathroom group).
 - The 6 character previews keep their own WebGL contexts and render loops after the game starts.
   (Fixed 2026-10-20: `ModelSelector.init()` ran twice, creating 12.)

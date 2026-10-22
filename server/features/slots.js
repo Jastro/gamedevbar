@@ -1,6 +1,7 @@
-// The meme slot machine, one per room. The server rolls the reels and keeps
-// each player's coins (per connection, nothing is saved); everyone gets the
-// result and watches the same spin (src/world/SlotMachine.js draws it).
+// The tragaperras (a video-game meme slot machine), one per room. The server
+// rolls the reels and keeps each player's coins (per connection, nothing is
+// saved); everyone gets the result and watches the same spin
+// (src/world/SlotMachine.js draws it).
 const { isRoomId } = require('../config');
 
 const BET = 10;
@@ -13,14 +14,14 @@ const PAIR = 18;               // any pair: the bet back and a bit
 // Rarer symbols pay more; with PAIR the machine returns ~88% of what's bet.
 // Keep ids in sync with SYMBOLS in SlotMachine.js.
 const SYMBOLS = [
-    { id: 'moai', weight: 22, triple: 60 },
-    { id: 'clown', weight: 20, triple: 80 },
-    { id: 'skull', weight: 14, triple: -20 }, // three skulls take 20 more
-    { id: 'doge', weight: 14, triple: 120 },
-    { id: 'oneup', weight: 12, triple: 160 },
-    { id: 'cake', weight: 8, triple: 0 },      // the cake is a lie
-    { id: 'pressf', weight: 6, triple: 200 },
-    { id: 'stonks', weight: 4, triple: 1000 }  // jackpot
+    { id: 'allyourbase', weight: 22, triple: 60 },  // All your base are belong to us
+    { id: 'barrelroll', weight: 20, triple: 80 },   // Do a barrel roll!
+    { id: 'youdied', weight: 14, triple: -20 },     // YOU DIED: three take 20 more
+    { id: 'takethis', weight: 14, triple: 120 },    // It's dangerous to go alone!
+    { id: 'oneup', weight: 12, triple: 160 },       // 1UP
+    { id: 'cake', weight: 8, triple: 0 },           // the cake is a lie
+    { id: 'pressf', weight: 6, triple: 200 },       // Press F to pay respects
+    { id: 'ggez', weight: 4, triple: 1000 }         // GG EZ: jackpot
 ];
 const TOTAL_WEIGHT = SYMBOLS.reduce((sum, symbol) => sum + symbol.weight, 0);
 

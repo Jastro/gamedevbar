@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OcclusionChain, OCCLUSION_LEVELS } from '../audio/Occlusion';
 import { getStation } from '../audio/radioStations';
+import { BAR_COUNTER_Z } from './RoomLayout';
 
 const RADIO_VOLUME = 0.5;
 const RETRY_DELAY = 5000; // ms before reconnecting a dropped live stream
@@ -102,7 +103,8 @@ export class Radio {
         radioGroup.add(indicator);
 
         // Posicionar la radio
-        radioGroup.position.set(-5, 1.5, -3);
+        // On the counter, near its left end.
+        radioGroup.position.set(-5, 1.5, BAR_COUNTER_Z);
 
         this.createLabel(radioGroup);
 

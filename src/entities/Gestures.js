@@ -11,7 +11,7 @@ import { playSynth, playTones } from '../audio/synth';
 const FADE = 0.25; // s
 const BONES = ['CORE', 'Body', 'Head', 'HandL', 'HandR'];
 
-// pose(t) → { core: {pos, rot}, body: {rot}, head: {rot}, handL: {pos}, handR: {pos}, root: {pos, rot} }
+// pose(t) → { core: {pos, rot}, body: {rot}, head: {rot}, handL: {pos, rot?}, handR: {pos, rot?}, root: {pos, rot} }
 // pos are avatar-space points (hands) or offsets (core, root); rot are
 // avatar-space Euler angles [x, y, z] added on top of the animation.
 const wave = (t, hz, phase = 0) => Math.sin(t * hz * Math.PI * 2 + phase);
@@ -43,16 +43,21 @@ export const GESTURES = {
         }
     },
     jerk: {
-        label: 'Paja', icon: '✊', duration: 4,
+        label: 'Paja', icon: '✊', duration: 4.2,
         pose(t) {
+            // Faster and faster, then the finish (and a sigh of relief).
+            const done = THREE.MathUtils.smoothstep(t, 3.2, 3.5);
+            const stroke = wave(t, 2.6 + t * 0.6) * (1 - done);
             return {
-                core: { pos: [0, 0, 0], rot: [0.08, 0, 0] },
-                head: { rot: [-0.3 - 0.05 * wave(t, 1.5), 0, 0] },
-                // In front of the belly (bulky characters reach ~0.6 forward).
-                handR: { pos: [0.06, -0.62 + 0.08 * wave(t, 3.2), 0.66] },
+                core: { pos: [0, 0, 0], rot: [0.08 - 0.12 * done, 0, 0] },
+                head: { rot: [-0.3 - 0.05 * wave(t, 1.5) - 0.2 * done, 0, 0] },
+                // In front of the belly (bulky characters reach ~0.6 forward),
+                // a sideways fist tilting with each stroke.
+                handR: { pos: [0.06, -0.62 + 0.08 * stroke, 0.66], rot: [0.35 * stroke, 0, 1.4] },
                 handL: { pos: [-0.42, -0.5, 0.05] }
             };
-        }
+        },
+        effect: { at: 3.3, kind: 'finish' }
     },
     kiss: {
         label: 'Beso', icon: '😘', duration: 2.2,
@@ -64,7 +69,8 @@ export const GESTURES = {
                 .lerp(new THREE.Vector3(0.25, 0.45, 1.1), blow);
             return {
                 head: { rot: [0.15 * toMouth - 0.1 * blow, 0, 0] },
-                handR: { pos: hand.toArray() }
+                // Fingers to the lips, then the palm flips out toward everyone.
+                handR: { pos: hand.toArray(), rot: [-1.3 * toMouth + 0.9 * blow, 0, -0.4 * toMouth + 0.3 * blow] }
             };
         },
         effect: { at: 0.95, kind: 'hearts' }
@@ -106,7 +112,8 @@ export const GESTURES = {
                 .lerp(new THREE.Vector3(0.08, 0.2, 0.74), drink);
             return {
                 head: { rot: [-0.25 * drink, 0, 0] },
-                handR: { pos: hand.toArray() }
+                // Raised a little tilted, a forward clink, then tipped toward the mouth.
+                handR: { pos: hand.toArray(), rot: [0.35 * clink - 1.3 * drink, 0, -0.2 * raise] }
             };
         },
         effect: { at: 0.8, kind: 'clink' }
@@ -247,9 +254,12 @@ export function applyGesture(player, deltaTime) {
     const head = bone('Head');
     if (head && pose.head) rotateBone(player, head, pose.head.rot, weight);
     const handL = bone('HandL');
-    if (handL && pose.handL) placeBone(player, handL, pose.handL.pos, weight);
     const handR = bone('HandR');
-    if (handR && pose.handR) placeBone(player, handR, pose.handR.pos, weight);
+    [[handL, pose.handL], [handR, pose.handR]].forEach(([hand, target]) => {
+        if (!hand || !target) return;
+        placeBone(player, hand, target.pos, weight);
+        if (target.rot) rotateBone(player, hand, target.rot, weight);
+    });
     rememberBones(gesture, bones);
 
     if (def.effect && !gesture.effectDone && gesture.time >= def.effect.at) {
@@ -259,7 +269,7 @@ export function applyGesture(player, deltaTime) {
     return true;
 }
 
-// --- Effects (hearts, spit, cheers, the clink) ------------------------------
+// --- Effects (hearts, spit, the finish, cheers, the clink) ------------------
 
 const effects = [];
 let heartTexture = null;
@@ -299,24 +309,34 @@ function spawnEffect(player, kind) {
         }
         if (listener) playTones(listener, player.mesh, new THREE.Vector3(0, 0.2, 0.5), [[1568, 0, 0.08], [2093, 0.08, 0.12]], 0.12, 2);
     } else if (kind === 'spit') {
-        const material = new THREE.MeshBasicMaterial({ color: 0xd6f0ff, transparent: true, opacity: 0.85 });
-        for (let i = 0; i < 6; i++) {
-            const drop = new THREE.Mesh(new THREE.SphereGeometry(0.025 + Math.random() * 0.02, 6, 4), material);
-            drop.position.copy(mouth);
-            scene.add(drop);
-            effects.push({
-                object: drop, life: 2.6, age: 0, geometry: drop.geometry,
-                velocity: forward.clone().multiplyScalar(2.6 + Math.random()).add(new THREE.Vector3((Math.random() - 0.5) * 0.5, 1 + Math.random() * 0.5, 0)),
-                gravity: -9, splat: true
-            });
-        }
-        effects.push({ material, life: 2.8, age: 0 });
-        if (listener) playSynth(listener, player.mesh, new THREE.Vector3(0, 0.2, 0.5), 'spray', 2);
+        spawnDroplets(scene, mouth, forward, { color: 0xd6f0ff, count: 6, speed: 2.6, lift: 1 });
+        if (listener) playSynth(listener, player.mesh, new THREE.Vector3(0, 0.2, 0.5), 'spit', 2);
+    } else if (kind === 'finish') {
+        const hand = player.model.getObjectByName('HandR');
+        const from = hand ? hand.getWorldPosition(new THREE.Vector3()) : mouth;
+        spawnDroplets(scene, from, forward, { color: 0xf4f1e8, count: 9, speed: 3.2, lift: 1.4 });
+        if (listener) playSynth(listener, player.mesh, new THREE.Vector3(0, -0.6, 0.6), 'squelch', 2);
     } else if (kind === 'cheer') {
         if (listener) playTones(listener, player.mesh, new THREE.Vector3(0, 0.5, 0), [[523, 0, 0.1], [659, 0.1, 0.1], [784, 0.2, 0.1], [1047, 0.3, 0.25]], 0.1, 3);
     } else if (kind === 'clink') {
         if (listener) playTones(listener, player.mesh, new THREE.Vector3(0.3, 0.75, 0.6), [[2637, 0, 0.18], [3136, 0.02, 0.25]], 0.12, 3);
     }
+}
+
+// Drops flying out of `from` that splat on the floor (spit, the finish).
+function spawnDroplets(scene, from, forward, { color, count, speed, lift }) {
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 });
+    for (let i = 0; i < count; i++) {
+        const drop = new THREE.Mesh(new THREE.SphereGeometry(0.025 + Math.random() * 0.02, 6, 4), material);
+        drop.position.copy(from);
+        scene.add(drop);
+        effects.push({
+            object: drop, life: 2.6, age: 0, geometry: drop.geometry,
+            velocity: forward.clone().multiplyScalar(speed + Math.random()).add(new THREE.Vector3((Math.random() - 0.5) * 0.5, lift + Math.random() * 0.5, 0)),
+            gravity: -9, splat: true
+        });
+    }
+    effects.push({ material, life: 2.8, age: 0 });
 }
 
 // Per frame (Game.update): moves and removes the effects.

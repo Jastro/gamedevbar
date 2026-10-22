@@ -114,8 +114,9 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       night and whether the lamp posts help, the clock above the door. To see weather without waiting
       for it, in the browser console: `Object.assign(game.weather.state, { code: 95 })` (storm; 61 rain,
       73 snow, 45 fog, 0 clear). Rain sound volume outside/inside, thunder volume, snow look.
-- [ ] **Meme slots** (left wall). F pulls the lever: do the reels, sounds and jingles feel like a
-      tragaperras? Are the symbols readable and funny enough (or want other memes)? Too stingy or too
+- [ ] **Tragaperras** (left wall). F pulls the lever: do the reels, sounds and jingles feel like a
+      tragaperras? Are the video-game memes (all your base, barrel roll, YOU DIED, take this, 1UP, cake,
+      press F, GG EZ, WASTED) readable from a step back, and funny enough? Too stingy or too
       generous (~88%)? A friend nearby sees the same spin.
 - [ ] **Futbolín** (left side of the bar). With a friend, one on each long side, F: the camera view
       from your side, W/S to slide the rods, Space/click to kick. Is the ball speed, kick strength and rod
@@ -131,8 +132,11 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Light through the door.** At night, from the street, open a bar's door: the inside should look
       lit (and dark again when the door closes). From inside, the street through the open door should
       look like night. Too bright or too dim (`DOOR_LIGHT_INTENSITY` in `RoomLighting.js`)?
-- [ ] **Bar counter and sign.** Jump onto the counter and walk along it. Is the "Gamedev MV" sign on the
-      back wall (above the paintings) readable from the entrance?
+- [ ] **Bar counter and sign** (moved back 2026-10-23). The shelf and arcades are against the back wall, the
+      counter, stools, tap and radio moved back with them, paintings and sign higher. Room in front of the
+      counter OK? Jump onto the counter; is the sign readable from the entrance?
+- [ ] **Seated pose everywhere.** Sit on a stool, a chair and in the car with a friend watching: feet
+      forward like on the toilet. Does it look right at each height?
 - [ ] **Light switches** (by each door, inside). Try normal / low / disco and their combinations with a
       friend: both of you see the same thing. Does low look cosy, all off dark enough, disco fun
       (`RoomLighting.js`: `LEVELS`, `DISCO_*`)? Frame rate with disco on?

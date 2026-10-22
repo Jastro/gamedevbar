@@ -1,4 +1,8 @@
 import * as THREE from 'three';
+import { BAR_COUNTER_Z, BACK_BAR_Z } from './RoomLayout';
+
+// What sits on and behind the bar: shelves with bottles, glasses on the
+// counter, the sign. The counter and the back shelf themselves are World's.
 
 export class Bar {
     constructor(scene, signText = 'Gamedev MV') {
@@ -13,29 +17,18 @@ export class Bar {
     }
 
     createMainBar() {
-        const barGeometry = new THREE.BoxGeometry(12, 1.2, 2);
-        const barMaterial = new THREE.MeshStandardMaterial({
-            color: 0x8b4513,
-            roughness: 0.6,
-        });
-        const bar = new THREE.Mesh(barGeometry, barMaterial);
-        bar.position.set(0, 0.7, -3);
-        bar.castShadow = true;
-        bar.receiveShadow = true;
-        this.scene.add(bar);
-
         this.createBarSign();
     }
 
     createBarSign() {
-        // On the back wall, above the paintings (they span y 3..5), and bigger
+        // On the back wall, above the paintings (they span y 4..6), and bigger
         // since it's seen from across the room.
         const signGeometry = new THREE.BoxGeometry(4.2, 1.05, 0.1);
         const signMaterial = new THREE.MeshStandardMaterial({
             color: 0xff8c00,
         });
         const sign = new THREE.Mesh(signGeometry, signMaterial);
-        sign.position.set(0, 6.1, -9.8);
+        sign.position.set(0, 7, -9.8);
         this.scene.add(sign);
 
         // Texto del cartel
@@ -61,28 +54,18 @@ export class Bar {
         });
         const textGeometry = new THREE.PlaneGeometry(3.8, 0.84);
         const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-        textMesh.position.set(0, 6.1, -9.74);
+        textMesh.position.set(0, 7, -9.74);
         this.scene.add(textMesh);
     }
 
     createBackBar() {
-        const backBarGeometry = new THREE.BoxGeometry(12, 3, 0.5);
-        const backBarMaterial = new THREE.MeshStandardMaterial({
-            color: 0x4a3219,
-            roughness: 0.7,
-        });
-        const backBar = new THREE.Mesh(backBarGeometry, backBarMaterial);
-        backBar.position.set(0, 1.5, -7);
-        backBar.castShadow = true;
-        this.scene.add(backBar);
-
-        // Estantes
+        // Estantes, in front of the back shelf
         const estantesAlturas = [1.5, 2.0, 2.5];
         estantesAlturas.forEach((altura) => {
             const shelfGeometry = new THREE.BoxGeometry(11.5, 0.1, 0.8);
             const shelfMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
             const shelf = new THREE.Mesh(shelfGeometry, shelfMaterial);
-            shelf.position.set(0, altura, -6.8);
+            shelf.position.set(0, altura, BACK_BAR_Z + 0.2);
             shelf.castShadow = true;
             this.scene.add(shelf);
         });
@@ -98,19 +81,19 @@ export class Bar {
         for (let i = -5; i <= 5; i += 1) {
             // Primera fila de botellas
             const bottle1 = this.createBottle(colors[Math.floor(Math.random() * colors.length)]);
-            bottle1.position.set(i, 1.8, -6.7);
+            bottle1.position.set(i, 1.8, BACK_BAR_Z + 0.3);
             bottleGroup.add(bottle1);
 
             // Segunda fila de botellas
             const bottle2 = this.createBottle(colors[Math.floor(Math.random() * colors.length)]);
-            bottle2.position.set(i * 0.8, 2.3, -6.7);
+            bottle2.position.set(i * 0.8, 2.3, BACK_BAR_Z + 0.3);
             bottleGroup.add(bottle2);
         }
 
         // Crear vasos
         for (let i = -5; i <= 5; i += 1) {
             const glass = this.createGlass();
-            glass.position.set(i * 0.8, 1.4, -2.5);
+            glass.position.set(i * 0.8, 1.4, BAR_COUNTER_Z + 0.5);
             bottleGroup.add(glass);
         }
 

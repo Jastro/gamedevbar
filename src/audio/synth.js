@@ -59,6 +59,20 @@ const RECIPES = {
         filter: { type: 'lowpass', from: 420, to: 70, q: 0.7 },
         volume: 1
     },
+    // Spitting: a short, wet "ptuh".
+    spit: {
+        duration: 0.16,
+        envelope: (t) => Math.min(1, t / 0.008) * Math.exp(-t * 28),
+        filter: { type: 'bandpass', from: 2600, to: 1100, q: 1.4 },
+        volume: 0.9
+    },
+    // Something wetter and juicier: a short squelchy splurt.
+    squelch: {
+        duration: 0.5,
+        envelope: (t, d) => fade(t, d, 0.01, 0.25) * (0.45 + 0.55 * Math.abs(Math.sin(t * 55))),
+        filter: { type: 'lowpass', from: 1400, to: 260, q: 7 },
+        volume: 0.9
+    },
     // A dart hitting the board: a dull thunk.
     dart: {
         duration: 0.15,

@@ -1,5 +1,6 @@
 import { Player, lerpAngle } from './Player';
 import * as THREE from 'three';
+import { BAR_COUNTER_Z } from '../world/RoomLayout';
 
 // Movement tuning, per second (the old per-frame values at 60 fps).
 const WALK_SPEED = 3.2;           // units/s
@@ -71,7 +72,7 @@ export class LocalPlayer extends Player {
         this.verticalSpeed = 0;
 
         // Face the table (chairs), a fixed way (car seats), or the bar for
-        // stools (stools sit at room-local z < 0; the counter is at z = -3)
+        // stools (stools sit at room-local z < 0, in front of the counter)
         const room = this.game.world.getRoomForObject(seat);
         const faceTarget = seat.userData.faceTarget;
         if (seat.userData.faceYaw !== undefined) {
@@ -80,18 +81,20 @@ export class LocalPlayer extends Player {
             const target = room.toWorld(faceTarget.x, this.position.y, faceTarget.z);
             this.rotation = Math.atan2(target.x - this.position.x, target.z - this.position.z);
         } else if (room && room.toLocal(seatPosition).z < 0) {
-            // Stools: straight at the counter (z = -3), not at its middle,
+            // Stools: straight at the counter (BAR_COUNTER_Z), not at its middle,
             // which turned the outer stools sideways.
             const local = room.toLocal(seatPosition);
-            const barPosition = room.toWorld(local.x, this.position.y, -3);
+            const barPosition = room.toWorld(local.x, this.position.y, BAR_COUNTER_Z);
             const direction = barPosition.sub(this.position).normalize();
             this.rotation = Math.atan2(direction.x, direction.z);
         }
 
         this.seat = seat;
         // Notificar al servidor
+        // Everyone else shows us seated (or standing, at the toilet's front).
         this.game.network.send('userSat', {
-            seatId: seat.userData.seatId ?? seat.id
+            seatId: seat.userData.seatId ?? seat.id,
+            pose: seat.userData.pose === 'stand' ? 'stand' : 'sit'
         });
     }
 

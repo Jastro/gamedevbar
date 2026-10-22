@@ -20,13 +20,13 @@ const ELEMENT_HEIGHT = 360;
 //   so play mode shows an exit button.
 export const CABINETS = {
     vircon: {
-        key: 'vircon', type: 'vircon', title: 'VIRCON32', position: { x: 12.5, y: 2, z: -8 },
+        key: 'vircon', type: 'vircon', title: 'VIRCON32', position: { x: 12.5, y: 2, z: -9.05 },
         colors: { body: 0x1d1b4b, marquee: ['#3a1c71', '#d76d77', '#ffaf7b'], idle: '#8be9fd' },
         frame: { width: 640, height: 360 }, sameOrigin: true,
         source: (rom) => `/vircon32/index.html?rom=${encodeURIComponent(rom.url)}`
     },
     pokebonk: {
-        key: 'pokebonk', type: 'webgame', title: 'POKEBONK', position: { x: 8.8, y: 2, z: -8 },
+        key: 'pokebonk', type: 'webgame', title: 'POKEBONK', position: { x: 8.8, y: 2, z: -9.05 },
         colors: { body: 0x7a1f1f, marquee: ['#c22e28', '#ee8130', '#f7d02c'], idle: '#ffcb05' },
         // A 3D browser game: render it bigger, the CSS3D object scales it down.
         frame: { width: 1280, height: 720 }, sameOrigin: false,

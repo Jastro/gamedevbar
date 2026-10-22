@@ -73,8 +73,9 @@ export class Environment {
             contents.furniture.create();
             contents.radio.create();
             if (contents.paintings) contents.paintings.create();
-            contents.arcadeSnake.create({ x: -12, y: 2, z: -8 });
-            contents.arcadePong.create({ x: -7.5, y: 2, z: -8 });
+            // Against the back wall (cabinets are 1.6 deep).
+            contents.arcadeSnake.create({ x: -12, y: 2, z: -9.05 });
+            contents.arcadePong.create({ x: -7.5, y: 2, z: -9.05 });
             contents.door.create();
             contents.projector.create();
             contents.presenceBoard.create();

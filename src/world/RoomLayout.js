@@ -16,6 +16,13 @@ export const FRONT_DOOR = {
     height: 3
 };
 
+// The bar, against the back wall (room-local z). level.json had the counter at
+// -3 and the back shelf at -7; both moved back by BAR_SHIFT (2026-10-23), the
+// stools and everything on the counter with them, keeping the same gap.
+export const BAR_SHIFT = -2.65;
+export const BAR_COUNTER_Z = -3 + BAR_SHIFT;  // center; 2 deep, top at 1.3
+export const BACK_BAR_Z = -7 + BAR_SHIFT;     // center; 0.5 deep, against the wall
+
 // Where a player appears when choosing a room (room-local).
 export const SPAWN_LOCAL = { x: 0, y: 1, z: 0 };
 

@@ -1,10 +1,11 @@
 import * as THREE from 'three';
+import { BAR_COUNTER_Z } from './RoomLayout';
 
 // The beer tap on each bar's counter (room-local; the counter's top is at
-// 1.3, its front edge at z -2). Click or F in front of it to order a drink
-// (barTapInteraction → DrinkSync). Past the last stool (x 4), so F in front
-// of it picks the tap and not a seat.
-const TAP_POSITION = { x: 5, z: -3.2 };
+// 1.3, its front edge 1 in front of BAR_COUNTER_Z). Click or F in front of
+// it to order a drink (barTapInteraction → DrinkSync). Past the last stool
+// (x 4), so F in front of it picks the tap and not a seat.
+const TAP_POSITION = { x: 5, z: BAR_COUNTER_Z - 0.2 };
 const COUNTER_TOP = 1.3;
 
 export class BarTap {

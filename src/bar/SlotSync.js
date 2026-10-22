@@ -4,7 +4,7 @@ import { describeResult } from '../world/SlotMachine';
 // shared spins, your coins, and chat lines for the spinner (and for the whole
 // bar on a jackpot).
 const START_COINS = 100;
-const JACKPOT = 1000; // three 📈 (server/features/slots.js)
+const JACKPOT = 1000; // three 🏆 GG EZ (server/features/slots.js)
 
 export class SlotSync {
     constructor(game) {
@@ -52,7 +52,7 @@ export class SlotSync {
                 if (spin.userId === this.localId) {
                     this.say(`🎰 ${text} · Tienes ${spin.coins} 🪙`);
                 } else if (spin.win >= JACKPOT && player && this.game.world.getRoomAt(player.position) === slotMachine.room) {
-                    this.say(`🎰 ¡${spin.name} ha sacado el JACKPOT! 📈📈📈`);
+                    this.say(`🏆 ¡${spin.name} ha sacado GG EZ en la tragaperras! JACKPOT +1000`);
                 }
             });
         });

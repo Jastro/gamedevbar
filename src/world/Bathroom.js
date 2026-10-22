@@ -233,7 +233,8 @@ export class Bathroom {
         };
         this.standSpot = new THREE.Object3D();
         this.standSpot.position.set(TOILET.x + 1.05, 0, TOILET.z);
-        this.standSpot.userData = { sitHeight: 1, faceTarget: { x: BATHROOM_BOUNDS.minX, z: TOILET.z }, seatId: `${this.room.id}:toilet-front` };
+        // Peeing: you stand there (no seated pose).
+        this.standSpot.userData = { sitHeight: 1, faceTarget: { x: BATHROOM_BOUNDS.minX, z: TOILET.z }, seatId: `${this.room.id}:toilet-front`, pose: 'stand' };
         this.group.add(this.sitSpot, this.standSpot);
     }
 

@@ -21,7 +21,8 @@ class User {
             rotation: this.rotation,
             selectedModel: this.selectedModel,
             appearance: this.appearance,
-            seatId: this.seatId ?? null
+            seatId: this.seatId ?? null,
+            seatPose: this.seatPose ?? null
         };
     }
 }

@@ -8,7 +8,9 @@ import {
     ROOM_HALF_DEPTH,
     WALL_HEIGHT,
     WALL_THICKNESS,
-    FRONT_DOOR
+    FRONT_DOOR,
+    BAR_COUNTER_Z,
+    BACK_BAR_Z
 } from './RoomLayout';
 
 export class World {
@@ -150,7 +152,7 @@ export class World {
         // Barra principal
         const barGeometry = new THREE.BoxGeometry(12, 1.2, 2);
         const bar = new THREE.Mesh(barGeometry, barMaterial);
-        bar.position.set(0, 0.7, -3);
+        bar.position.set(0, 0.7, BAR_COUNTER_Z);
         bar.castShadow = true;
         bar.receiveShadow = true;
         room.add(bar);
@@ -159,8 +161,10 @@ export class World {
 
         // Estantería trasera
         const backBarGeometry = new THREE.BoxGeometry(12, 3, 0.5);
-        const backBar = new THREE.Mesh(backBarGeometry, barMaterial);
-        backBar.position.set(0, 1.5, -7);
+        // Darker wood than the counter.
+        const backBarMaterial = new THREE.MeshToonMaterial({ color: 0x4a3219, gradientMap: this.toonGradient });
+        const backBar = new THREE.Mesh(backBarGeometry, backBarMaterial);
+        backBar.position.set(0, 1.5, BACK_BAR_Z);
         backBar.castShadow = true;
         backBar.receiveShadow = true;
         room.add(backBar);

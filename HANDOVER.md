@@ -3,7 +3,8 @@
 ## Start here
 2026-10-22 (night). Done and pushed: light through open doors, Spain weather outside with each player's
 local clock, and the right-click radial menu with seven gestures (plan in `Docs/Plans done/`). Before
-that: futbolín, meme slots, Madrid time/weather and the bar games batch. Next: Borja's checks in
+that: futbolín, the tragaperras, Madrid time/weather and the bar games batch. 2026-10-23: a round of
+fixes (seated pose everywhere, gesture hands, bar layout against the back wall, meme tragaperras). Next: Borja's checks in
 `Docs/PendingUserChecks.md`; the forum embed waits for the Mediavida add-on admin.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
@@ -17,6 +18,22 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 Borja's round of fixes:
+  - **Seated pose on every seat** (stools, chairs, car), shown to everyone (`userSat` carries the pose).
+  - **Gestures:** hands rotate (kiss: fingers to the lips then palm out; toast: glass tipped into the
+    mouth; paja: sideways fist), the paja ends with droplets and a squelch, spitting is a short "ptuh".
+  - **Karaoke:** the singer stands 1.0 behind the mic (they overlapped). **Darts** harder (wider, faster
+    sway, shakier release).
+  - **Layout:** the back shelf and the four arcades are against the back wall; counter, stools, tap,
+    radio and glasses moved back 2.65 with the shelf (same gap); paintings up 1, sign up to y 7. The
+    counter existed three times (level.json, World, Bar): now only World's, Bar keeps the decoration.
+  - **Tragaperras:** renamed, video-game memes on loud tiles with Impact captions, WASTED / COMBO /
+    YOU DIED / GG EZ jackpot results (server ids changed, payouts the same, ~88%).
+  - **Verified in-app:** overview of the new back wall (screenshot); stools at z -4.15, sitting on a stool
+    and a chair shows the pose, the other client gets `seatPose: 'sit'`; kiss/toast/paja frozen at key
+    moments (screenshots: rotated hand at the lips, tipped glass, sideways fist); the finish spawns 9
+    droplets and ends; singer at 13.4 vs grille 12.6 (screenshot); the tragaperras screen (screenshot);
+    payout return recomputed (8.79 per 10).
 - 2026-10-22 Right-click radial menu and gestures: Emojis / Animaciones; 💃 dance, 💪 push-ups, ✊ paja,
   😘 kiss, 💦 spit, 🙌 cheer, 🍻 toast, procedural on the bones in avatar space, synced to everyone.
   **Verified in-app with two clients:** both rings (7 gestures + back); dance and cheer move the
@@ -31,44 +48,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   storm wins, fog, overcast, Madrid sun times, average temperature; plus a wrong one that fails); live
   8-city fetch (partly cloudy, 16.3 °C); in-app: location denied → Madrid local weather on the clock;
   stubbed location (Barcelona) → rounded 41.4 / 2.2, cached, "☁️ 18°C · Tu zona".
-- 2026-10-22 Light through open doors (plan `Docs/Plans to be done/2026-10-22-doors-light-local-weather-gestures-plan.md`):
-  a bar you're not in is lit by two door lights while its door is open; from inside, the street's
-  materials are dimmed to the sky's light. **Verified** at night: from the street the open doorway shows
-  a lit inside (Gamedev's door lights at 9, Desarrollo's at 0 with its door closed); from inside, the
-  street through the door is dark (dim 0.35); screenshots.
-- 2026-10-22 Futbolín:
-  - **Table** on the left side of each bar; F on a long side joins that team, 2 per team (alone you have
-    all 4 rods, partners split back/front). Practice alone, matches to 5 with countdown and goal pauses.
-  - **The server runs the physics** (60 Hz against real time) and sends 20 snapshots/s; players send rod
-    targets and kicks. Your view looks down from your side, your avatar hidden.
-  - **Verified:** headless runs on the server (phases, rod split, a 25 s bot match: 65 kicks, 15 hits,
-    a goal; fixed real-time stepping and a dead zone between the midfield rods); in-app with two
-    clients: hints by side, red alone → practice, blue joins → countdown → play, blue's W slides its
-    rods away (server and the other client agree), the ball matches on both clients, Esc releases the
-    view and the avatar, a player who leaves can walk off (not stuck in the table); screenshots; no
-    errors.
-  - **Not judged:** the feel (speeds, kick strength), lag over a real network, 2 vs 2 with four people.
-- 2026-10-22 Meme slot machine:
-  - **Machine** against each bar's left wall; F pulls the lever, the server rolls, everyone watches the
-    same spin. Symbols drawn in code (🗿, 🤡, 💀, 🐕 much wow, 🍄 1UP, 🎂 cake is a lie, F, 📈 stonks).
-  - **Coins** per connection: 100 to start, bet 10, pair 18, triples up to 1000; broke → 50 once a minute.
-  - **Verified:** payout asserts (+ a wrong one that fails) and the expected return (8.79 per 10); a mock
-    hub: bailout once, then "broke" for 60 s, unjoined players and bad rooms ignored; in-app with two
-    clients: hint with coins, spins sync (same reels on both), only the spinner's coins change, a second
-    pull while spinning gets "Espera…"; screenshot of the screen.
-  - **Not judged:** the look, jingles, how generous it feels.
-- 2026-10-22 Real time and weather (Madrid):
-  - **Server** asks Open-Meteo every 10 min (code, temperature, clouds, wind, sunrise/sunset).
-  - **Client:** the sky follows the real sun and clouds; outside, the street light follows the sky and two
-    lamp posts come on at night; rain, drizzle, snow, fog and storms (lightning + thunder) over the
-    street only; a clock above each bar's door ("23:18 · 🌧️ 14°C · Madrid").
-  - **Verified:** a real fetch (13.9 °C, sunrise 08:33, sunset 19:24); in-app at 23:17 Madrid: night sky,
-    street ambient 0.22, lamps on (screenshot); forced storm: rain streaks and a lightning flash
-    (screenshot); forced snow by day: round flakes (screenshot, after fixing square flakes); inside the
-    bar the lights stay on their switch, no fog, rain quieter; the clock (screenshot).
-  - **Not judged:** the look by day, sound levels.
-- 2026-10-22 Small fixes (`8c2017e`): the karaoke mic faces the singer, no mic prompt while on stage,
-  bar stools face the counter straight on (they faced its middle).
+- 2026-10-22 (evening) Light through open doors, the futbolín, the meme slot machine, Madrid time and
+  weather, small fixes (mic, stools). Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-22 Bar games batch: drinks and drunkenness, darts, bathroom graffiti, karaoke stage, two-player Pong,
   then review fixes. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-22 Bathroom in each bar, then tweaks (quieter flush, latch click, ceiling, camera collision, jumpable
@@ -158,4 +139,4 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 
 ## Next
 - Bathroom and lights still accept any room id up to 32 (like darts did): switch them to `isRoomId`.
-- Remove duplicated geometry (level.json vs World vs Bar).
+- Remove the remaining duplicated geometry (level.json vs World: floor and walls).
