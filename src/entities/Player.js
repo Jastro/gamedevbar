@@ -100,7 +100,7 @@ export class Player {
             // model was matched as a "chat sprite" and kept, so every change
             // stacked another model.
             this.mesh.children
-                .filter(child => !child.isSprite)
+                .filter(child => !child.isSprite && !child.userData.keepOnModelSwap)
                 .forEach(child => {
                     disposeTree(child);
                     this.mesh.remove(child);

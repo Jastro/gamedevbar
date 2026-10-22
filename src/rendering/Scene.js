@@ -28,6 +28,10 @@ export class Scene {
             // The front wall is rebuilt with a doorway by World.
             const frontWall = template.getObjectByName('FrontWall');
             if (frontWall) frontWall.removeFromParent();
+            // An old, empty "Bathroom" (an invisible toilet seat next to the
+            // Vircon32); the real one is src/world/Bathroom.js.
+            const oldBathroom = template.getObjectByName('Bathroom');
+            if (oldBathroom) oldBathroom.removeFromParent();
 
             this.levelTemplate = template;
             this.isLoaded = true;

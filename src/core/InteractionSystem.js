@@ -122,6 +122,8 @@ export class InteractionSystem {
             const interaction = this.interactions.get(object.userData.type);
             if (!interaction?.range || interaction.findNearby) continue;
             if (world.getRoomForObject(object) !== here) continue;
+            // E.g. bathroom fixtures: only from inside the cubicle.
+            if (interaction.canReach && !interaction.canReach(object, position)) continue;
             if (horizontalDistance(position, object.getWorldPosition(scratch)) <= interaction.range) {
                 consider(interaction, object);
             }

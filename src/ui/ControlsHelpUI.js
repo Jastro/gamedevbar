@@ -10,6 +10,7 @@ const SECTIONS = [
             ['W A S D', 'Andar (Mayús: correr)'],
             ['Espacio', 'Saltar (también a las mesas)'],
             ['F o clic', 'Puertas, sillas, radio, proyector, máquinas e interruptores de luz'],
+            ['Baño (F o clic)', 'Puerta y pestillo, váter, cadena, lavabo, ambientador y luz'],
             ['Q / E', 'Girar la cámara'],
             ['Clic derecho + arrastrar', 'Girar la cámara'],
             ['Rueda', 'Acercar / alejar'],
