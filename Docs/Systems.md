@@ -65,6 +65,30 @@ body).
     counter, or the street away from the car), and fades back in;
   - the server clears the seats when the smoke starts and keeps the car closed (`riding`) for 6 s.
 
+## Bathroom
+
+Each bar has a bathroom in its front-left corner (`src/world/Bathroom.js`, room-local x -15..-10,
+z 5..10, so about 4.8 × 4.8 inside). The partitions are 3.2 m high with no roof.
+- **Door:** it swings inward, with a blocker while closed and a 🟢 Libre / 🔴 Ocupado sign outside. A latch
+  knob is inside: while latched, only whoever latched it can open the door, and opening unlatches it.
+- **Toilet:** F or click → *💧 Pis* (you stand at the bowl, trickle sound, yellow water) or *💩 Caca* (you
+  sit, a fart from `cacota1-4.mp3`, a swirl in the bowl, and a green stink haze with flies for 10 min).
+  - The handle on the tank flushes: a whoosh, and the bowl's content spins away.
+  - The other sounds are synthesized noise (`src/audio/synth.js`), so there are no new files.
+- **Sink:** washes your hands. The mirror above it is a `Reflector`, rendered only while you're inside.
+- **Air freshener:** a spray hiss and particles; the stink is gone.
+- **Light:** the cubicle's own lamp and switch. While you're inside, `RoomLighting` follows that switch
+  instead of the bar's (on = normal, off = dark, no disco).
+- **Dirty hands:** using the toilet dirties them. Outside any bathroom, a dirty-handed player gets rising
+  green smell lines at the hands and a "🤢 No se ha lavado las manos" tag (`src/entities/Shame.js`), until
+  they wash or 10 min pass.
+- **Reaching things:** fixtures only respond from inside the cubicle (the interaction's `canReach`); the
+  door works from both sides.
+- **State:** server-side in `server/features/bathroom.js` (see Protocol.md). Disconnecting frees the latch
+  and the toilet.
+- **Leftover removed:** the old empty "Bathroom" group in `level.json` (an invisible seat by the Vircon32)
+  is removed when the level loads.
+
 ## Light switches
 
 - **Switches:** three switches on the inside of each bar's front wall (`LightSwitches.js`): 💡 normal

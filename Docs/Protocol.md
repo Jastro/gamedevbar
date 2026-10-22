@@ -29,6 +29,9 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `virconStop` | `roomId` | free it (only its player) → `virconState` to all |
 | `carSit` | `slot` (optional 0-4; normally omitted: the server picks the first free one) | take a car seat → `carState` to all, or `carDenied {reason}` to sender (`full`, `riding`, `taken`) |
 | `carLeave` | – | free your car seat → `carState` |
+| `bathroomDoor` / `bathroomLatch` / `bathroomLight` | `roomId` | toggle; a door latched by someone else → `bathroomRefused {reason: 'latched'}`; opening unlatches; latching closes the door → `bathroomState` to all |
+| `toiletUse` | `roomId`, `kind` (`pee` \| `poo`) | occupy the toilet (else `bathroomRefused {reason: 'occupied'}`), set the bowl (poo outranks pee), poo → stink 10 min, sender's hands dirty → `bathroomEvent` + `hygiene` + `bathroomState` |
+| `toiletLeave` / `toiletFlush` / `washHands` / `airFreshener` | `roomId` | free the toilet / empty the bowl (`bathroomEvent flush`) / clean hands (`wash`) / end the stink (`spray`) |
 | `lightsToggle` | `roomId`, `light` (`normal` \| `low` \| `disco`) | flip it for that room → `lightsState` to all |
 | `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, always with `peerId`; ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player; an offer that can't be relayed gets `{refused, peerId}` back (as if from the target) |
 | `snakeHighScore` | `username`, `score` | keep top 10, `snakeHighScores` to all |
@@ -58,6 +61,11 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `carState` | `slots` (5 × playerId or null), `countdownEndsAt` (server ms or null), `riding` | `CarSync`: sit down when listed, countdown overlay; also the join snapshot |
 | `carSmoke` | `occupants` (playerIds) | smoke + hiss for all; the occupants fade out and land at random spots. Seats are already cleared; `riding` stays true 6 s |
 | `carDenied` | `reason` | chat line |
+| `bathroomState` | `roomId`, `state` (`{ doorOpen, latchedBy, lightOn, mess, stinkUntil, occupant }`) | `Bathroom.applyState` |
+| `bathroomStates` | `rooms: { roomId: state }`, `dirty` (userIds) | join snapshot |
+| `bathroomEvent` | `roomId`, `kind` (`pee`, `poo`, `flush`, `wash`, `spray`), `userId` | sounds/particles; the sender sits (poo) or stands at the bowl (pee) |
+| `hygiene` | `userId`, `dirty` | shame on/off (cleared by washing or after 10 min) |
+| `bathroomRefused` | `roomId`, `reason` | chat line |
 | `lightsState` | `roomId`, `state` (`{ normal, low, disco }`) | `LightsSync` → switches + `RoomLighting` |
 | `lightsStates` | `rooms: { roomId: state }` (only rooms someone touched) | join snapshot; unlisted rooms → default (normal on) |
 | `virconSignal` | `roomId`, `fromId`, `signal` | `VirconSpectating`: answer (player) or apply (watcher) |

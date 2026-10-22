@@ -62,7 +62,11 @@ export class RoomLighting {
         const { world, environment, players } = this.game;
         const position = players.localPlayer?.position;
         const room = position ? world.getRoomAt(position) : null;
-        const state = room ? environment.getLights(room.id) : DEFAULT_LIGHTS;
+        // Inside a bathroom its own switch rules (and there's no disco in there).
+        const bathroom = position ? environment.getBathroomAt(position) : null;
+        const state = bathroom
+            ? { normal: bathroom.state.lightOn, low: false, disco: false }
+            : room ? environment.getLights(room.id) : DEFAULT_LIGHTS;
 
         const levelName = state.normal ? 'normal' : state.low ? 'low' : 'off';
         const level = LEVELS[levelName];

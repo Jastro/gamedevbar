@@ -83,6 +83,8 @@ export class InteractionSystem {
 
     handleClick(event) {
         if (this.game.chatActive || this.game.playMode || !this.highlightedObject) return;
+        // Like F: seated, you get up first (WASD).
+        if (this.game.players.localPlayer?.isSitting) return;
         const clicked = document.elementFromPoint(event.clientX, event.clientY);
         const onUi = UI_ELEMENT_IDS.some(id => document.getElementById(id)?.contains(clicked));
         if (onUi) return;
@@ -122,6 +124,8 @@ export class InteractionSystem {
             const interaction = this.interactions.get(object.userData.type);
             if (!interaction?.range || interaction.findNearby) continue;
             if (world.getRoomForObject(object) !== here) continue;
+            // E.g. bathroom fixtures: only from inside the cubicle.
+            if (interaction.canReach && !interaction.canReach(object, position)) continue;
             if (horizontalDistance(position, object.getWorldPosition(scratch)) <= interaction.range) {
                 consider(interaction, object);
             }

@@ -18,6 +18,8 @@ import { createLightSwitchInteraction } from '../interactions/lightSwitchInterac
 import { createWebGameInteraction } from '../interactions/webGameInteraction';
 import { createCarInteraction } from '../interactions/carInteraction';
 import { CarSync } from '../world/CarSync';
+import { BathroomSync } from '../world/BathroomSync';
+import { createBathroomInteractions } from '../interactions/bathroomInteraction';
 import { VirconSpectating } from '../vircon/VirconSpectating';
 import { ServerClock } from '../network/ServerClock';
 import { AudioSettings } from '../audio/AudioSettings';
@@ -79,6 +81,7 @@ export class Game {
         this.virconSync = new VirconSync(this);
         this.lightsSync = new LightsSync(this);
         this.carSync = new CarSync(this);
+        this.bathroomSync = new BathroomSync(this);
         this.lighting = new RoomLighting(this);
         this.virconSpectating = new VirconSpectating(this);
         // Set while the local player is at an arcade screen ({ hint }): movement
@@ -100,6 +103,7 @@ export class Game {
         this.interactions.register(createLightSwitchInteraction(this));
         this.interactions.register(createWebGameInteraction(this));
         this.interactions.register(createCarInteraction(this));
+        createBathroomInteractions(this).forEach(interaction => this.interactions.register(interaction));
 
         this.clock = new THREE.Clock();
 
@@ -193,6 +197,7 @@ export class Game {
         this.virconSync.bind();
         this.lightsSync.bind();
         this.carSync.bind();
+        this.bathroomSync.bind();
         this.virconSpectating.bind();
         bindArcadeNetwork(this);
 
@@ -280,6 +285,7 @@ export class Game {
         this.environment.update(deltaTime, playerPosition);
         this.environment.updateDormancy(this.players.players.values());
         this.lighting.update(deltaTime);
+        this.bathroomSync.update(deltaTime);
         this.voice.update(playerPosition);
         this.ui.vircon.update();
         this.virconSpectating.update(playerPosition);

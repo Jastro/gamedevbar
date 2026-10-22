@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { LightSwitches, DEFAULT_LIGHTS } from './LightSwitches';
 import { Car } from './Car';
+import { Bathroom } from './Bathroom';
 import { Bar } from './Bar';
 import { Furniture } from './Furniture';
 import { Radio } from './Radio';
@@ -45,7 +46,8 @@ export class Environment {
                 presenceBoard: new PresenceBoard(room),
                 vircon: new VirconCabinet(room, this.world.collisionManager, CABINETS.vircon),
                 pokebonk: new VirconCabinet(room, this.world.collisionManager, CABINETS.pokebonk),
-                lightSwitches: new LightSwitches(room)
+                lightSwitches: new LightSwitches(room),
+                bathroom: new Bathroom(room, this.world.collisionManager)
             };
 
             contents.bar.create();
@@ -60,6 +62,7 @@ export class Environment {
             contents.vircon.create();
             contents.pokebonk.create();
             contents.lightSwitches.create();
+            contents.bathroom.create();
             if (contents.paintings) this.loadPaintings(contents.paintings);
 
             this.rooms.set(room.id, contents);
@@ -141,6 +144,16 @@ export class Environment {
 
     getDoor(doorId) {
         return this.doors.get(doorId);
+    }
+
+    getBathrooms() {
+        return [...this.rooms.values()].map(({ bathroom }) => bathroom);
+    }
+
+    // The bathroom a world position is inside, or null.
+    getBathroomAt(worldPosition) {
+        if (!worldPosition) return null;
+        return this.getBathrooms().find(bathroom => bathroom.containsPoint(worldPosition)) ?? null;
     }
 
     // Every page-playing cabinet (Vircon32, Pokebonk) in every room.
