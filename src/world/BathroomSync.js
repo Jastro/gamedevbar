@@ -175,6 +175,17 @@ export class BathroomSync {
         // Walked out with the toilet panel open: it no longer applies.
         if (this.panel.isOpen && this.panelBathroom && !this.isInside(this.panelBathroom)) this.panel.close();
 
+        // Seated pose on the toilet: ours from our seat (no round trip),
+        // everyone else's from the bathroom state.
+        const pooping = new Set();
+        this.bathrooms.forEach(bathroom => {
+            if (bathroom.state.occupant && bathroom.state.occupantKind === 'poo') pooping.add(bathroom.state.occupant);
+        });
+        players.players.forEach((player, id) => {
+            const seated = player === local ? player.seat?.userData.pose === 'sit' : pooping.has(id);
+            player.setPose(seated ? 'sit' : null);
+        });
+
         // Shame: dirty hands, outside any bathroom.
         players.players.forEach((player, id) => {
             const show = this.dirty.has(id) && !environment.getBathroomAt(player.position);

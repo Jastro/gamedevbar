@@ -6,6 +6,13 @@ import { DEFAULT_APPEARANCE, normalizeAppearance } from '../appearance/catalog';
 import { prepareAnchors, applyAppearance, disposeTree } from '../appearance/Accessories';
 
 // Moves angle `from` toward `to` by fraction t (0..1) the short way round.
+// Seated pose: feet forward and up (legs sticking out from the seat), soles
+// tilted forward. Avatar-space offset per foot, and the tilt about the foot
+// bone's own X axis.
+const SIT_FOOT_OFFSET = new THREE.Vector3(0, 0.22, 0.34);
+const SIT_FOOT_TILT = -1.0;
+const SIT_FEET = ['FootL', 'FootR'];
+
 export function lerpAngle(from, to, t) {
     const delta = Math.atan2(Math.sin(to - from), Math.cos(to - from));
     return from + delta * t;
@@ -23,6 +30,9 @@ export class Player {
         this.isSitting = false;
 
         this.selectedModel = null;
+        // null or 'sit' (applyPose, after the animation each frame).
+        this.pose = null;
+        this.poseFeet = null; // per foot: { bone, restPosition, restQuaternion, offset }
         // Accessories, tint, size, name color (src/appearance/catalog.js).
         this.appearance = { ...DEFAULT_APPEARANCE };
         this.model = null;
@@ -152,6 +162,7 @@ export class Player {
         if (this.animations.mixer) {
             this.animations.mixer.update(deltaTime);
         }
+        this.applyPose();
 
         // Actualizar animaciones basadas en el estado
         if (this.isMoving && this.animations.actions.get('walk')) {
@@ -259,6 +270,55 @@ export class Player {
         this.nameSprite.position.y = 1.3 * (this.appearance.scale ?? 1);
         this.nameSprite.scale.set(2.5, 0.6, 1); // Escala más grande
         this.nameSprite.renderOrder = 999;
+    }
+
+    setPose(pose) {
+        if (pose === this.pose) return;
+        this.restoreFeet();
+        this.pose = pose;
+    }
+
+    // Called after the mixer each frame. The idle animation doesn't drive
+    // the feet's position (and barely their rotation), so the pose is set
+    // from the rest transform each time instead of being added on top.
+    applyPose() {
+        if (this.pose !== 'sit' || !this.model) return;
+        if (!this.poseFeet || this.poseFeet.model !== this.model) this.measureFeet();
+        this.poseFeet.feet.forEach(({ bone, restPosition, restQuaternion, offset, tilt }) => {
+            bone.position.copy(restPosition).add(offset);
+            bone.quaternion.copy(restQuaternion).multiply(tilt);
+        });
+    }
+
+    // Rest transforms, and the avatar-space offset expressed in each foot's
+    // parent space (measured once per model).
+    measureFeet() {
+        this.mesh.updateMatrixWorld(true);
+        const feet = SIT_FEET.map(name => this.model.getObjectByName(name)).filter(Boolean).map(bone => {
+            const start = bone.getWorldPosition(new THREE.Vector3());
+            const end = this.mesh.localToWorld(this.mesh.worldToLocal(start.clone()).add(SIT_FOOT_OFFSET));
+            const offset = bone.parent.worldToLocal(end).sub(bone.parent.worldToLocal(start.clone()));
+            return {
+                bone,
+                restPosition: bone.position.clone(),
+                restQuaternion: bone.quaternion.clone(),
+                offset,
+                tilt: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), SIT_FOOT_TILT)
+            };
+        });
+        this.poseFeet = { model: this.model, feet };
+    }
+
+    restoreFeet() {
+        if (!this.poseFeet || this.poseFeet.model !== this.model) {
+            this.poseFeet = null;
+            return;
+        }
+        this.poseFeet.feet.forEach(({ bone, restPosition, restQuaternion }) => {
+            bone.position.copy(restPosition);
+            bone.quaternion.copy(restQuaternion);
+        });
+        this.poseFeet = null;
     }
 
     setAppearance(appearance) {

@@ -12,7 +12,8 @@ const OCCUPANT_TIMEOUT_MS = 2 * 60 * 1000;
 const COOLDOWN_MS = { door: 300, latch: 300, light: 300, toilet: 5000, flush: 2500, wash: 2000, spray: 2000 };
 
 function freshState() {
-    return { doorOpen: false, latchedBy: null, lightOn: true, mess: null, stinkUntil: 0, occupant: null, occupiedAt: 0 };
+    // occupantKind: 'pee' (standing at the bowl) or 'poo' (seated).
+    return { doorOpen: false, latchedBy: null, lightOn: true, mess: null, stinkUntil: 0, occupant: null, occupantKind: null, occupiedAt: 0 };
 }
 
 function registerBathroom(hub) {
@@ -105,6 +106,7 @@ function registerBathroom(hub) {
             return;
         }
         state.occupant = user.id;
+        state.occupantKind = kind;
         state.occupiedAt = Date.now();
         // A poo outranks a pee in the bowl.
         if (kind === 'poo' || state.mess !== 'poo') state.mess = kind;
@@ -119,6 +121,7 @@ function registerBathroom(hub) {
         const state = stateOf(roomId);
         if (state.occupant !== user.id) return;
         state.occupant = null;
+        state.occupantKind = null;
         publish(roomId);
     });
 
@@ -161,6 +164,7 @@ function registerBathroom(hub) {
             }
             if (state.occupant === user.id) {
                 state.occupant = null;
+                state.occupantKind = null;
                 changed = true;
             }
             if (changed) publish(roomId);

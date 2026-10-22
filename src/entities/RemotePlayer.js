@@ -29,6 +29,7 @@ export class RemotePlayer extends Player {
         if (this.animations.mixer) {
             this.animations.mixer.update(deltaTime);
         }
+        this.applyPose();
 
         const distance = this.position.distanceTo(this.targetPosition);
         const t = 1 - Math.exp(-FOLLOW_RATE * Math.min(deltaTime, 0.1));

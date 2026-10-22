@@ -103,7 +103,7 @@ export class Bathroom {
         this.colliders.forEach(mesh => this.collisionManager.addCollider(mesh));
         this.doorCollider = this.collisionManager.addCollider(this.doorBlocker);
         // The third-person camera stays out of the walls and under the ceiling.
-        this.world?.cameraOccluders.push(...this.colliders, this.ceiling, this.doorPanel);
+        this.world?.cameraOccluders.push(...this.colliders, this.ceiling, this.lintel, this.doorPanel);
         this.applyState(this.state);
     }
 
@@ -119,15 +119,20 @@ export class Bathroom {
         // Partition facing the bar, with the door gap.
         wall(DOOR.minX - minX, WALL_THICKNESS, (minX + DOOR.minX) / 2, minZ);
         wall(maxX - DOOR.maxX, WALL_THICKNESS, (DOOR.maxX + maxX) / 2, minZ);
-        // Lintel above the door (above anyone's head, so it never blocks).
+        // Lintel above the door: above anyone's head, so it never blocks
+        // walking, but the camera can't slip out over the door.
         const lintelHeight = WALL_HEIGHT - DOOR.height;
-        this.group.add(box(DOOR.maxX - DOOR.minX, lintelHeight, WALL_THICKNESS, white,
-            (DOOR.minX + DOOR.maxX) / 2, DOOR.height + lintelHeight / 2, minZ));
+        this.lintel = box(DOOR.maxX - DOOR.minX, lintelHeight, WALL_THICKNESS, white,
+            (DOOR.minX + DOOR.maxX) / 2, DOOR.height + lintelHeight / 2, minZ);
+        this.group.add(this.lintel);
         // Partition along the room side.
         wall(WALL_THICKNESS, maxZ - minZ, maxX, (minZ + maxZ) / 2);
-        // Ceiling (privacy, and the camera stays under it while inside).
-        this.ceiling = box(maxX - minX, WALL_THICKNESS, maxZ - minZ, white,
-            (minX + maxX) / 2, WALL_HEIGHT + WALL_THICKNESS / 2, (minZ + maxZ) / 2);
+        // Ceiling (privacy, and the camera stays under it while inside). It
+        // overlaps the tops of the partitions and reaches past them, so
+        // there's no seam for a camera ray to slip through.
+        const overlap = WALL_THICKNESS;
+        this.ceiling = box(maxX - minX + overlap, WALL_THICKNESS + overlap, maxZ - minZ + overlap, white,
+            (minX + maxX) / 2 + overlap / 2, WALL_HEIGHT + WALL_THICKNESS / 2 - overlap / 2, (minZ + maxZ) / 2 - overlap / 2);
         this.group.add(this.ceiling);
         // Tiled floor inside.
         const floor = new THREE.Mesh(new THREE.PlaneGeometry(maxX - minX, maxZ - minZ), tiles);
@@ -222,7 +227,10 @@ export class Bathroom {
         // LocalPlayer.sitDown reads sitHeight / faceTarget (room-local).
         this.sitSpot = new THREE.Object3D();
         this.sitSpot.position.set(TOILET.x + 0.06, 0, TOILET.z);
-        this.sitSpot.userData = { sitHeight: 1.1, faceTarget: { x: BATHROOM_BOUNDS.maxX, z: TOILET.z }, seatId: `${this.room.id}:toilet` };
+        // Hips on the seat (its top is at 0.69); the feet stick out (Player 'sit' pose).
+        this.sitSpot.userData = {
+            sitHeight: 1.45, pose: 'sit', faceTarget: { x: BATHROOM_BOUNDS.maxX, z: TOILET.z }, seatId: `${this.room.id}:toilet`
+        };
         this.standSpot = new THREE.Object3D();
         this.standSpot.position.set(TOILET.x + 1.05, 0, TOILET.z);
         this.standSpot.userData = { sitHeight: 1, faceTarget: { x: BATHROOM_BOUNDS.minX, z: TOILET.z }, seatId: `${this.room.id}:toilet-front` };

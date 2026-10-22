@@ -70,13 +70,17 @@ body).
 
 Each bar has a bathroom in its front-left corner (`src/world/Bathroom.js`, room-local x -15..-10,
 z 5..10, so about 4.8 × 4.8 inside). The partitions are 3.2 m high, with a ceiling. The walls, ceiling and
-closed door are camera occluders, so the camera stays inside (and under the ceiling) or outside the walls.
+closed door, including the lintel above the door, are camera occluders, so the camera stays inside (and
+under the ceiling) or outside the walls. The ceiling overlaps the partition tops so there's no seam.
 The three bar paintings over that corner were raised to y 4.6 so they clear the ceiling.
 - **Door:** it swings inward, with a blocker while closed and a 🟢 Libre / 🔴 Ocupado sign outside. A latch
   knob is inside, and it clicks when used. While latched, only whoever latched it, or anyone inside, can
   open the door; opening unlatches it.
 - **Toilet** (centered on the left wall, scaled 1.25): F or click → "¿Qué vas a hacer, guarro?" →
-  *💧 Mear* (you stand at the bowl, trickle sound, yellow water) or *💩 Cagar* (you
+  *💧 Mear* (you stand at the bowl, trickle sound, yellow water) or *💩 Cagar* (you sit with your hips on
+  the seat in a procedural seated pose, `Player.setPose('sit')`: feet moved forward and up and tilted, since
+  the rig has no sit animation and only foot bones below the body. Other players see it through the
+  bathroom state's `occupantKind`. Then
   sit, a fart from `cacota1-4.mp3`, a swirl in the bowl, and a green stink haze with flies for 10 min).
   - The handle on the tank flushes: a whoosh, and the bowl's content spins away.
   - The other sounds are synthesized noise (`src/audio/synth.js`), so there are no new files.

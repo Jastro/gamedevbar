@@ -17,6 +17,14 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Toilet seated pose and the camera gap:
+  - **Seated pose:** pooping sits you properly, with hips on the seat and feet forward and up (a procedural
+    pose on the foot bones), and everyone sees it.
+  - **Bug fix:** the camera escaped the bathroom over the door, because the lintel wasn't a camera occluder.
+    Verified with a sweep of 4,410 camera positions from 6 spots inside: 0 escapes. With the lintel removed,
+    the same sweep gives 39, so the test can fail.
+  - **Also verified:** the pose locally and on a second client (feet at z 0.36, toes 0.48 forward), and a
+    front screenshot.
 - 2026-10-22 Bathroom and bar tweaks:
   - **Bathroom:**
     - the flush is quieter and the latch clicks;

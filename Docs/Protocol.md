@@ -61,7 +61,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `carState` | `slots` (5 × playerId or null), `countdownEndsAt` (server ms or null), `riding` | `CarSync`: sit down when listed, countdown overlay; also the join snapshot |
 | `carSmoke` | `occupants` (playerIds) | smoke + hiss for all; the occupants fade out and land at random spots. Seats are already cleared; `riding` stays true 6 s |
 | `carDenied` | `reason` | chat line |
-| `bathroomState` | `roomId`, `state` (`{ doorOpen, latchedBy, lightOn, mess, stinkUntil, occupant }`) | `Bathroom.applyState` |
+| `bathroomState` | `roomId`, `state` (`{ doorOpen, latchedBy, lightOn, mess, stinkUntil, occupant, occupantKind }`; `occupantKind` 'poo' = seated pose) | `Bathroom.applyState` |
 | `bathroomStates` | `rooms: { roomId: state }`, `dirty` (userIds) | join snapshot |
 | `bathroomEvent` | `roomId`, `kind` (`pee`, `poo`, `flush`, `wash`, `spray`), `userId` | sounds/particles; the sender sits (poo) or stands at the bowl (pee) |
 | `hygiene` | `userId`, `dirty` | shame on/off (cleared by washing or after 10 min) |
