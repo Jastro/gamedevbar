@@ -101,7 +101,8 @@ export class DrinkSync {
     applyState({ userId, drink, sips, drunk, at }) {
         if (typeof userId !== 'string') return;
         const previous = this.states.get(userId);
-        this.states.set(userId, { drink: getDrink(drink)?.id ?? null, sips: sips ?? 0, drunk: Number(drunk) || 0, at: Number(at) || 0 });
+        drink = getDrink(drink)?.id ?? null;
+        this.states.set(userId, { drink, sips: sips ?? 0, drunk: Number(drunk) || 0, at: Number(at) || 0 });
         if (userId === this.localId && drink && previous?.drink !== drink) {
             this.game.ui.chat?.addMessage({ type: 'system', message: `${getDrink(drink).icon} Marchando. Pulsa B para beber.` });
         }

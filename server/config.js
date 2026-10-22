@@ -59,9 +59,15 @@ if (TURN.urls.length > 0 && !TURN.secret) {
     console.error('TURN_URLS is set but TURN_SECRET is missing: TURN disabled.');
 }
 
+// The bars that exist (ROOMS in src/world/RoomLayout.js; keep both in sync).
+// Per-room features only accept these, so made-up ids can't fill their state.
+const ROOM_IDS = new Set(['gamedev', 'desarrollo']);
+const isRoomId = (roomId) => typeof roomId === 'string' && ROOM_IDS.has(roomId);
+
 module.exports = {
     PORT,
     LIMITS,
+    isRoomId,
     getIceServers,
     turnCredentials
 };

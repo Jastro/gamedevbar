@@ -86,26 +86,41 @@ function boardTexture() {
     return texture;
 }
 
-function createDart(color) {
+// Every dart shares these (darts come and go all the time; nothing to dispose).
+let dartParts = null;
+function getDartParts() {
+    if (dartParts) return dartParts;
+    const fin = new THREE.PlaneGeometry(0.06, 0.07);
+    fin.rotateX(Math.PI / 2);
+    dartParts = {
+        metal: new THREE.MeshStandardMaterial({ color: 0xcfd8dc, metalness: 0.8, roughness: 0.3 }),
+        flights: DART_COLORS.map(color => new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide })),
+        tip: new THREE.ConeGeometry(0.008, 0.05, 8),
+        barrel: new THREE.CylinderGeometry(0.013, 0.011, 0.09, 10),
+        shaft: new THREE.CylinderGeometry(0.005, 0.005, 0.08, 6),
+        fin
+    };
+    return dartParts;
+}
+
+function createDart(index) {
+    const parts = getDartParts();
     const dart = new THREE.Group();
     // Points along -z (into the board); the flights trail toward +z.
-    const metal = new THREE.MeshStandardMaterial({ color: 0xcfd8dc, metalness: 0.8, roughness: 0.3 });
-    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.05, 8), metal);
+    const tip = new THREE.Mesh(parts.tip, parts.metal);
     tip.rotation.x = -Math.PI / 2;
     tip.position.z = -0.025;
-    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.011, 0.09, 10), metal);
+    const barrel = new THREE.Mesh(parts.barrel, parts.metal);
     barrel.rotation.x = Math.PI / 2;
     barrel.position.z = 0.045;
-    const flightMaterial = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide });
-    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.08, 6), flightMaterial);
+    const flightMaterial = parts.flights[index % parts.flights.length];
+    const shaft = new THREE.Mesh(parts.shaft, flightMaterial);
     shaft.rotation.x = Math.PI / 2;
     shaft.position.z = 0.13;
     dart.add(tip, barrel, shaft);
     // Two crossed fins along the dart's axis.
     [0, Math.PI / 2].forEach(angle => {
-        const geometry = new THREE.PlaneGeometry(0.06, 0.07);
-        geometry.rotateX(Math.PI / 2);
-        const flight = new THREE.Mesh(geometry, flightMaterial);
+        const flight = new THREE.Mesh(parts.fin, flightMaterial);
         flight.rotation.z = angle;
         flight.position.z = 0.16;
         dart.add(flight);
@@ -240,7 +255,7 @@ export class Dartboard {
             ctx.fillStyle = '#a5d6a7';
             ctx.font = 'bold 26px "Segoe UI", sans-serif';
             const labels = (state.darts ?? []).map(d => d.label).join('  ');
-            ctx.fillText(`Tira: ${state.thrower.name}`, 24, y);
+            ctx.fillText(`Tira: ${String(state.thrower.name ?? '?')}`, 24, y);
             y += 34;
             ctx.font = '24px "Segoe UI", sans-serif';
             ctx.fillText(labels || '…', 24, y);
@@ -257,7 +272,8 @@ export class Dartboard {
         y += 34;
         ctx.font = '22px "Segoe UI", sans-serif';
         (state?.history ?? []).forEach(turn => {
-            const name = turn.name.length > 14 ? `${turn.name.slice(0, 13)}…` : turn.name;
+            const full = String(turn.name ?? '?');
+            const name = full.length > 14 ? `${full.slice(0, 13)}…` : full;
             ctx.fillText(`${name}: ${turn.total}`, 24, y);
             ctx.fillStyle = '#90a4ae';
             ctx.textAlign = 'right';
@@ -312,7 +328,7 @@ export class Dartboard {
 
     placeDart(index, x, y) {
         this.stuck[index]?.removeFromParent();
-        const dart = createDart(DART_COLORS[index % DART_COLORS.length]);
+        const dart = createDart(index);
         dart.position.set(x * SCORING_RADIUS, y * SCORING_RADIUS, FACE_Z + 0.02);
         // Slightly crooked, as real darts land; stable per position.
         dart.rotation.set(Math.sin(x * 37) * 0.15, Math.cos(y * 29) * 0.15, 0);
@@ -340,7 +356,7 @@ export class Dartboard {
     throwDart(index, x, y, fromWorld, listener) {
         const from = this.board.worldToLocal(fromWorld.clone());
         const to = new THREE.Vector3(x * SCORING_RADIUS, y * SCORING_RADIUS, FACE_Z + 0.02);
-        const dart = createDart(DART_COLORS[index % DART_COLORS.length]);
+        const dart = createDart(index);
         dart.position.copy(from);
         this.board.add(dart);
         this.flights.push({ dart, index, x, y, from, to, t: 0, listener });

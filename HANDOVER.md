@@ -16,6 +16,21 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-22 Review fixes for the batch (independent review of `6026818..3f689ad`):
+  - **Bug fixes:**
+    - a client that never joined could take the darts board and leave a nameless turn that broke every
+      chalkboard until a restart;
+    - made-up room ids could fill the 32-id cap of darts, graffiti and Pong (now only the real rooms,
+      `ROOM_IDS` in `server/config.js`);
+    - every dart leaked its geometry and materials (now shared);
+    - a throw the server dropped for arriving early still counted on the client, which locked the thrower
+      in (throws now count on the server's confirmation);
+    - `drinkOrder {drink: 'constructor'}` was accepted;
+    - the drunk slur garbled `/` commands;
+    - a full graffiti wall redrew on every stroke (now every 200 segments).
+  - **Verified:** from a raw socket, unjoined `dartsStart`/`pongJoin`, fake room ids, a `constructor` drink
+    and an unknown darts room are all rejected (no state in the join snapshots); in-app, 6 rapid throws
+    give exactly 3 darts, the turn ends and the view comes back; Pong join/leave still work; no errors.
 - 2026-10-22 Two-player Pong:
   - **Bug fix:** `WebSocketManager.send` let a `type` inside the data override the message type, so Pong's
     messages never arrived as sent; `type` now always wins. The old relay (`arcadeState`/`arcadeUpdate`)
@@ -105,6 +120,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     If wrong: tune `EFFECT_START` in `src/bar/DrinkSync.js`.
   - **Darts board at y 2.1 and 1.3× real size** (plan said y 1.75): avatars are 2.15 tall. The aiming
     view is a close camera 2.4 from the board, not over the shoulder: from the line the board was a dot.
+  - **Graffiti can differ between clients** when two people paint the same spot at the same moment
+    (your strokes show at once, theirs in server order) until a reload. Cheap to live with.
   - **Pong is run by player 1's client** (not the server): simpler and smooth for player 1; player 2 sees
     the ball through the relay (~50 ms + latency behind). If that feels laggy, the next step is running the
     game on the server.
@@ -143,4 +160,5 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 - Desarrollo's identity: different decoration, default music?
 
 ## Next
+- Bathroom and lights still accept any room id up to 32 (like darts did): switch them to `isRoomId`.
 - Remove duplicated geometry (level.json vs World vs Bar).

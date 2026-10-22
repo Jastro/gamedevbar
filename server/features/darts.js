@@ -2,8 +2,8 @@
 // client sends where each dart hit (board units: 1 = outer edge of the
 // double ring, x right, y up) and the server scores it, so scoring lives
 // only here. Recent turns and the day's best show on the chalkboard.
-const ROOM_ID_PATTERN = /^[a-z0-9_-]{1,32}$/;
-const MAX_ROOMS = 32;
+const { isRoomId } = require('../config');
+
 const DARTS_PER_TURN = 3;
 const THROW_COOLDOWN_MS = 600;
 const TURN_IDLE_MS = 30000;   // a thrower who stops throwing loses the line
@@ -45,9 +45,9 @@ function registerDarts(hub) {
     const rooms = new Map(); // roomId -> { thrower, darts, history, best, timers }
 
     const roomFor = (roomId, create) => {
-        if (typeof roomId !== 'string' || !ROOM_ID_PATTERN.test(roomId)) return null;
+        if (!isRoomId(roomId)) return null;
         if (!rooms.has(roomId)) {
-            if (!create || rooms.size >= MAX_ROOMS) return null;
+            if (!create) return null;
             rooms.set(roomId, { thrower: null, darts: [], history: [], best: null, idleTimer: null, endTimer: null });
         }
         return rooms.get(roomId);
@@ -75,7 +75,8 @@ function registerDarts(hub) {
     };
 
     hub.on('dartsStart', ({ ws, user }, { roomId }) => {
-        const room = roomFor(roomId, true);
+        // Only players who have joined (they have a name for the chalkboard).
+        const room = user.username ? roomFor(roomId, true) : null;
         if (!room) return;
         if (room.thrower && room.thrower.userId !== user.id && hub.findUser(room.thrower.userId)) {
             hub.send(ws, { type: 'dartsBusy', roomId, thrower: room.thrower });

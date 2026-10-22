@@ -25,7 +25,7 @@ function registerDrinks(hub) {
     const publish = (user) => hub.broadcastAll({ type: 'drinkState', ...stateOf(user) });
 
     hub.on('drinkOrder', ({ user }, { drink }) => {
-        if (!(drink in DRINKS)) return;
+        if (typeof drink !== 'string' || !Object.hasOwn(DRINKS, drink)) return;
         const now = Date.now();
         if (now - (user.lastDrinkOrder ?? 0) < ORDER_COOLDOWN_MS) return;
         user.lastDrinkOrder = now;

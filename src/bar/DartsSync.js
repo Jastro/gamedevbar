@@ -9,6 +9,7 @@ const THROW_COOLDOWN = 650; // ms (the server allows one per 600)
 const SWAY = 0.08;          // board units, sober
 const DRUNK_SWAY = 0.35;    // extra at full drunkenness
 const RELEASE_JITTER = 0.03;
+const CONFIRM_TIMEOUT = 1500; // ms to wait for the server's dartsThrow
 const HAND_OFFSET = new THREE.Vector3(0, 0.7, 0);
 const HINT = 'Apunta con el ratón · Clic o Espacio: lanzar · Esc: salir';
 
@@ -97,6 +98,10 @@ export class DartsSync {
             state.darts[index] = { x, y, score, label };
             board.drawChalkboard(state);
         }
+        if (userId === this.localId && this.session?.roomId === roomId) {
+            this.session.thrown = Math.max(this.session.thrown, index + 1);
+            this.session.awaitingUntil = 0;
+        }
         if (userId === this.localId) {
             const points = score > 0 ? `${label} (${score})` : label;
             this.game.ui.chat?.addMessage({ type: 'system', message: `🎯 ${points}` });
@@ -152,8 +157,11 @@ export class DartsSync {
         const session = this.session;
         const now = performance.now();
         if (!session || session.thrown >= DARTS_PER_TURN || now - this.lastThrow < THROW_COOLDOWN) return;
+        // One dart in the air at a time: the next waits for the server's answer
+        // (or the timeout, if it dropped this one).
+        if (now < (session.awaitingUntil ?? 0)) return;
         this.lastThrow = now;
-        session.thrown += 1;
+        session.awaitingUntil = now + CONFIRM_TIMEOUT;
         const point = this.crosshairAt(now / 1000);
         const jitter = () => (Math.random() + Math.random() - 1) * RELEASE_JITTER;
         this.game.network.send('dartsThrow', { roomId: session.roomId, x: point.x + jitter(), y: point.y + jitter() });

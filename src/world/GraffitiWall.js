@@ -11,6 +11,7 @@ export const WALL_COLOR = '#f4f4f0'; // the partition's white; also the eraser
 export const ERASER = GRAFFITI_COLORS.length;
 export const GRAFFITI_SIZES = [4, 10, 22]; // px on the canvas
 export const MAX_SEGMENTS = 3000;
+const TRIM_SLACK = 200; // segments over the cap before trimming (a trim redraws)
 const WALL = { minZ: 5.4, maxZ: 9.5, minY: 0.9, maxY: 2.9 };
 const CANVAS_WIDTH = 1024;
 const CANVAS_HEIGHT = Math.round(CANVAS_WIDTH * (WALL.maxY - WALL.minY) / (WALL.maxZ - WALL.minZ));
@@ -67,8 +68,8 @@ export class GraffitiWall {
         this.texture.needsUpdate = true;
     }
 
-    // Appends (drawing just those) and trims to MAX_SEGMENTS like the server
-    // (a trim means a full redraw).
+    // Appends (drawing just those) and trims to MAX_SEGMENTS like the server,
+    // in steps of TRIM_SLACK since a trim means a full redraw.
     addSegments(segments) {
         const ctx = this.canvas.getContext('2d');
         ctx.lineCap = 'round';
@@ -76,7 +77,7 @@ export class GraffitiWall {
             this.segments.push(segment);
             this.drawSegment(ctx, segment);
         });
-        if (this.segments.length > MAX_SEGMENTS) {
+        if (this.segments.length > MAX_SEGMENTS + TRIM_SLACK) {
             this.segments.splice(0, this.segments.length - MAX_SEGMENTS);
             this.redraw();
         }

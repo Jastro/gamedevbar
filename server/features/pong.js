@@ -3,8 +3,8 @@
 // 2 and the match restarts. Player 1's client runs the game and sends
 // snapshots (`pongState`), player 2 sends its paddle (`pongPaddle`); both are
 // relayed to everyone else. Anyone leaving ends the match.
-const ID_PATTERN = /^[a-z0-9_-]{1,32}$/;
-const MAX_MACHINES = 32;
+const { isRoomId } = require('../config');
+
 const MIN_RELAY_MS = 30; // per user, for snapshots and paddles
 const SIZE = 512;        // the game's canvas, in px
 const PHASES = ['countdown', 'play', 'over'];
@@ -49,16 +49,16 @@ function registerPong(hub) {
     };
 
     const machineFor = (machineId, create) => {
-        if (typeof machineId !== 'string' || !ID_PATTERN.test(machineId)) return null;
+        if (!isRoomId(machineId)) return null;
         if (!machines.has(machineId)) {
-            if (!create || machines.size >= MAX_MACHINES) return null;
+            if (!create) return null;
             machines.set(machineId, idle());
         }
         return machines.get(machineId);
     };
 
     hub.on('pongJoin', ({ ws, user }, { machineId }) => {
-        const machine = machineFor(machineId, true);
+        const machine = user.username ? machineFor(machineId, true) : null;
         if (!machine || playerOf(machine, user)) return;
         if (machine.player1 && machine.player2) {
             hub.send(ws, { type: 'pongBusy', machineId });

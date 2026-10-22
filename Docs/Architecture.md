@@ -74,7 +74,8 @@ logged). Lifecycle hooks: `onConnect`, `onJoin` (after `initCompleted`, in regis
 
 ## How to add…
 
-- **A room**: an entry in `ROOMS` (`src/world/RoomLayout.js`). The selector, street fences, door and props
+- **A room**: an entry in `ROOMS` (`src/world/RoomLayout.js`), and its id in `ROOM_IDS`
+  (`server/config.js`; darts, graffiti and Pong only accept those). The selector, street fences, door and props
   follow. Per-room flags (`barSign`, `paintings`) live on that entry.
 - **Something clickable**: give its root group `userData.type = '<type>'` (and `originalMaterial` /
   `highlightMaterial` on meshes for the hover glow). Add `src/interactions/<type>Interaction.js` returning
