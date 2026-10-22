@@ -133,8 +133,6 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
     reconnect respawns the avatar anyway. If wrong: a short network blip kicks you out of the game.
   - **`public/vircon32/index.html` audio tap edited by hand** (the same script as `shell.html`), with no
     emsdk rebuild. If wrong: the next rebuild differs, though it should be identical.
-  - **Branch stacked on `feature/direct-join`.** Merge #18 first, otherwise the spectating PR also shows
-    #18's commits.
 - Direct links (away mode, 2026-10-21):
   - **Any way of closing the first-visit popup counts as answered** (✕, Esc, clicking outside). If wrong:
     people who click past it never see it again.
@@ -149,7 +147,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   arcades.
 - Chat, `/furbo` and Snake high scores stay global across rooms.
 - No roofs (camera would clip on them); exterior is minimal.
-- Git: per the request, work went to a branch + PR instead of straight to `main`.
+- Git (since 2026-10-22): commits go straight to `main` on Jastro/gamedevbar (Borja has write access); no
+  branches or PRs. Every push deploys, so only finished, built, checked slices get pushed.
 
 ## Open questions
 - Carra's own Vircon32 games (BSD-3) are only on itch.io as zips: download them by hand to add them?
