@@ -273,10 +273,28 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   and your own avatar is hidden (others see it). The score is printed on both long side walls (nothing
   floats over the table); kick/goal sounds.
 
+## Stickers
+
+- **Placing:** right click → 🎨 Pegatina sticks the sticker picked in 👤 → Pegatina where the right click
+  aimed (`StickerSync.aim`: a raycast from the camera; the first visible solid mesh that isn't an avatar).
+  Within 3.5 of your avatar's head. Not on doors, the bathroom door or cars (`UNSTICKABLE`: they move).
+- **The sticker:** a flat 0.7 square a hair off the surface (polygon offset, no depth write, no raycast),
+  upright on walls; on floors and tables its top points away from the camera, so it reads for whoever
+  stuck it. A lit material, so it takes the light of its space. A spray hiss for everyone near.
+- **Rules** (`server/features/stickers.js`): one per person, a new one replaces your previous one, at
+  most one every 10 s (client and server), each lasts 24 h, 300 at most in total (oldest first).
+  "Person" is a random key the browser keeps (`PlayerProfile.stickerOwnerKey`, never relayed), so a
+  reconnect still replaces your old sticker. Memory only: a restart (every deploy) wipes them.
+- **Designs** (`src/stickers/StickerArt.js`, ids in `server/shared/stickers.json`): 12 drawn in code
+  (canvas, no image files), in each meme's spirit rather than copies: Pito feliz, GG EZ, Leeroy, Cake is
+  a lie, Press F, Wasted, Git gud, Skill issue, This is fine, Doge, Nerf this, /gamedev/. The choice is
+  kept in the browser (`PlayerProfile.loadSticker`), not part of the appearance.
+
 ## Right-click menu and gestures
 
 - **Right click** (no drag) on the 3D view opens a radial menu at the cursor (`src/ui/RadialMenu.js`):
-  😀 Emojis (the old emoji panel) and 🕺 Animaciones, a second ring with the gestures (‹ goes back).
+  😀 Emojis (the old emoji panel), 🕺 Animaciones (a second ring with the gestures, ‹ goes back) and
+  🎨 Pegatina (see Stickers).
 - **Gestures** (`src/entities/Gestures.js`) are procedural, on the rig's own bones (CORE, Body, Head and the
   floating HandL/HandR; there are no arm bones). Poses are written in avatar space (the player mesh's
   frame at size 1: +z forward, feet at y -1, hands rest at x ±0.4 / y -0.52, the big head up to +1.1)

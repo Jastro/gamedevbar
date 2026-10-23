@@ -10,6 +10,8 @@ const NAME_KEY = 'playerName';
 const MODEL_KEY = 'selectedModel';
 const PROMPT_KEY = 'customizePromptSeen';
 const APPEARANCE_KEY = 'playerAppearance';
+const STICKER_KEY = 'sticker';
+const STICKER_OWNER_KEY = 'stickerOwnerKey';
 
 function read(key) {
     try {
@@ -60,6 +62,26 @@ export function loadAppearance() {
 
 export function saveAppearance(appearance) {
     write(APPEARANCE_KEY, JSON.stringify(appearance));
+}
+
+// The sticker picked in the 👤 menu (validated by the caller).
+export function loadSticker() {
+    return read(STICKER_KEY);
+}
+
+export function saveSticker(stickerId) {
+    write(STICKER_KEY, stickerId);
+}
+
+// A random key that marks this browser's sticker on the server (so a new
+// one replaces it, even after a reconnect). Never shown to anyone else.
+export function stickerOwnerKey() {
+    let key = read(STICKER_OWNER_KEY);
+    if (!key || !/^[A-Za-z0-9_-]{8,40}$/.test(key)) {
+        key = Array.from({ length: 24 }, () => 'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random() * 36)]).join('');
+        write(STICKER_OWNER_KEY, key);
+    }
+    return key;
 }
 
 export function hasSeenCustomizePrompt() {

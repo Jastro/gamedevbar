@@ -19,6 +19,13 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 Stickers: 👤 → Pegatina picks one of 12 code-drawn stickers; right click → 🎨 Pegatina sticks it
+  where you aimed (3.5 reach, not on doors/cars); one per person (a browser key), replaced by your next,
+  10 s cooldown, 24 h. **Verified with two clients:** stuck on the bathroom partition (normal +x, upright)
+  and seen by both; after a page reload it came back from the snapshot; a floor one (another design)
+  replaced it on both clients, upright from the camera; a second within 10 s: refused by the client and,
+  sent directly, by the server (wait 5.1 s), old one kept; the door is refused; the radial menu shows
+  Pegatina; the 👤 tab shows the 12 with the choice selected; sticker sheet screenshot.
 - 2026-10-23 Toilet light patch, four graffiti walls, stickers in the backlog: a space now has a height
   (the bathroom ends at its ceiling), so the bar's walls above the cubicle no longer take its lamp and
   light; a drawable panel on each of the cubicle's four walls (`graffitiDraw` now carries `wallId`);
@@ -54,6 +61,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   WS hardening, repo docs, rooms/street/doors/occlusion. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 
 ## Decisions to review
+- **Stickers are flat squares, not projected decals:** on edges and curved things they overhang. They
+  live in server memory (a deploy wipes them). The 12 designs are ours, in the memes' spirit.
 - **Uber Suicida:** seat 0 drives; it lost its collider (walk through it, like the other cars). If it
   should still block people: a collider moved with it.
 - **Light per space is per pixel** (world position + a nudge along the normal), only for ambient and
@@ -126,19 +135,6 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 - Desarrollo's identity: different decoration, default music?
 
 ## Next
-- **Stickers / sprays (like CS:GO and Overwatch)** (2026-10-23, Borja asked; not started):
-  - Right click → radial menu option (🎨 Spray / Pegatina) sticks your chosen sticker where the mouse
-    aims, on any wall, floor or object surface within a short reach (~3 m): raycast from the camera,
-    a decal aligned to the hit surface's normal (`DecalGeometry` from three's examples).
-  - The sticker is picked in the 👤 personalize menu (a grid of stickers; saved like the other
-    choices). A short cooldown per player (e.g. 10 s), and a cap per room (oldest go first).
-  - Shared through the server (one module in `server/features/`, like graffiti): `stickerPlace
-    {stickerId, position, normal, roomId}` → to everyone, snapshot on join, kept in memory.
-  - A spray sound; stickers fade or wear after a while (or when the room cap is hit).
-  - Stickers: drawn in code or as small images in `public/`. Ideas: a cartoon penis with a goofy face,
-    GG EZ, "git gud", Leeroy Jenkins, the cake is a lie, "It's dangerous to go alone", F to pay respects,
-    "Wasted", a trollface-like grin, "This is fine" dog-style fire, Doge-style shiba, "Get over here!".
-    Famous memes may be copyrighted: prefer our own drawings in the meme's spirit over copied images.
 - More characters: the six models are by an artist who collaborates with the project; new ones (or
   variations) wait for them. They must keep the rig (CORE/Body/Head + floating hands/feet with finger
   bones, clips Grounded/Idle/Jump/Sprint/Walk) for accessories, the seated pose and the gestures.

@@ -24,6 +24,7 @@ import { DrinkSync } from '../bar/DrinkSync';
 import { createBarTapInteraction } from '../interactions/barTapInteraction';
 import { DartsSync } from '../bar/DartsSync';
 import { GraffitiSync } from '../world/GraffitiSync';
+import { StickerSync } from '../world/StickerSync';
 import { Weather } from '../world/Weather';
 import { LocalWeather } from '../world/LocalWeather';
 import { GestureSync } from '../entities/GestureSync';
@@ -102,6 +103,7 @@ export class Game {
         this.drinkSync = new DrinkSync(this);
         this.dartsSync = new DartsSync(this);
         this.graffitiSync = new GraffitiSync(this);
+        this.stickerSync = new StickerSync(this);
         this.weather = new Weather(this);
         this.localWeather = new LocalWeather();
         this.gestureSync = new GestureSync(this);
@@ -238,6 +240,7 @@ export class Game {
         this.drinkSync.bind();
         this.dartsSync.bind();
         this.graffitiSync.bind();
+        this.stickerSync.bind();
         this.weather.bind();
         this.gestureSync.bind();
         this.drivingSync.bind();
@@ -277,6 +280,8 @@ export class Game {
         // emojis or gestures.
         this.camera.onRightClick = (e) => {
             if (this.playMode || this.chatActive) return;
+            // Where a sticker goes (the menu itself may be nudged off the edges).
+            this.radialAim = { x: e.clientX, y: e.clientY };
             this.openRadialMenu(e.clientX, e.clientY);
         };
         // R: reset the camera (zoom, angle, pan).
@@ -320,7 +325,8 @@ export class Game {
         radial.openAt(x, y, [
             // Next tick: this click would otherwise close the emoji panel again.
             { icon: '😀', label: 'Emojis', onSelect: (cx, cy) => setTimeout(() => this.ui.chat.emotesUI?.openAt(cx, cy)) },
-            { icon: '🕺', label: 'Animaciones', onSelect: (cx, cy) => radial.openAt(cx, cy, gestures, { onBack: () => this.openRadialMenu(cx, cy) }) }
+            { icon: '🕺', label: 'Animaciones', onSelect: (cx, cy) => radial.openAt(cx, cy, gestures, { onBack: () => this.openRadialMenu(cx, cy) }) },
+            { icon: '🎨', label: 'Pegatina', onSelect: () => this.stickerSync.place(this.radialAim?.x ?? x, this.radialAim?.y ?? y) }
         ]);
     }
 

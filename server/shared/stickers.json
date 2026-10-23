@@ -1,0 +1,4 @@
+{
+  "comment": "Sticker ids, shared by server/features/stickers.js (validation) and src/stickers/StickerArt.js (the drawings, same order as the picker).",
+  "ids": ["pito", "ggez", "leeroy", "cake", "pressf", "wasted", "gitgud", "skill", "fine", "doge", "nerf", "gamedev"]
+}

@@ -3,11 +3,13 @@ import {
     saveName, saveModel, saveAppearance, hasSeenCustomizePrompt, markCustomizePromptSeen
 } from '../core/PlayerProfile';
 import { SLOTS, ITEMS, TINTS, NAME_COLORS, SCALE_RANGE } from '../appearance/catalog';
+import { STICKERS, stickerCanvas } from '../stickers/StickerArt';
 
 const TABS = [
     { id: 'character', name: 'Personaje' },
     { id: 'accessories', name: 'Accesorios' },
-    { id: 'color', name: 'Color' }
+    { id: 'color', name: 'Color' },
+    { id: 'sticker', name: 'Pegatina' }
 ];
 
 // 👤 menu to change nick, character, accessories, color and size from inside
@@ -78,7 +80,38 @@ export class CustomizeUI {
         this.choiceButtons = [];
         this.buildAccessoriesPage(this.tabPages.get('accessories'));
         this.buildColorPage(this.tabPages.get('color'));
+        this.buildStickerPage(this.tabPages.get('sticker'));
         this.showTab('character');
+    }
+
+    // Which sticker right click → 🎨 Pegatina sticks (StickerSync; kept in
+    // this browser, not part of the appearance).
+    buildStickerPage(page) {
+        const note = document.createElement('div');
+        note.className = 'floating-panel-note';
+        note.textContent = 'Clic derecho → 🎨 Pegatina la pega donde apuntes, cerca de ti. Solo una a la vez: la nueva quita la anterior. Dura 24 h.';
+        const grid = document.createElement('div');
+        grid.className = 'customize-items';
+        this.stickerButtons = STICKERS.map(({ id, name }) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'customize-item';
+            button.title = name;
+            const image = document.createElement('img');
+            image.className = 'customize-sticker';
+            image.alt = name;
+            image.src = stickerCanvas(id).toDataURL();
+            const label = document.createElement('span');
+            label.textContent = name;
+            button.append(image, label);
+            button.addEventListener('click', () => {
+                this.game.stickerSync.select(id);
+                this.refreshChoices();
+            });
+            grid.appendChild(button);
+            return { button, id };
+        });
+        page.append(note, grid);
     }
 
     showTab(id) {
@@ -169,6 +202,7 @@ export class CustomizeUI {
     }
 
     refreshChoices() {
+        this.stickerButtons?.forEach(({ button, id }) => button.classList.toggle('selected', id === this.game.stickerSync?.selected));
         const appearance = this.game.players.localPlayer?.appearance;
         if (!appearance) return;
         this.choiceButtons.forEach(({ button, key, value }) => {

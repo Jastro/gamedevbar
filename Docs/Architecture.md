@@ -33,7 +33,8 @@ world/         RoomLayout (the hub: plaza, slots, roads), Room, World (shells, c
                edge wall, fountain), DrivableCar + DrivingSync, Environment (props per room),
                Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, VirconCabinet +
                Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), GraffitiWall +
-               GraffitiSync (the drawable bathroom wall), Car + CarSync,
+               GraffitiSync (the drawable bathroom walls), StickerSync (stickers; designs in
+               src/stickers/StickerArt.js), Car + CarSync,
                VirconSync, SoccerGame, CollisionManager, BarTap, Dartboard, KaraokeStage, Weather (Madrid sky,
                street light, rain/snow/fog/storms), WallClock, SlotMachine, Foosball + FoosballSync
                (futbolín; layout shared with the server in server/shared/foosball.json)
