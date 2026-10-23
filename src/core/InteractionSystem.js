@@ -88,7 +88,10 @@ export class InteractionSystem {
         // Like F: seated, you get up first (WASD).
         if (this.game.players.localPlayer?.isSitting) return;
         const clicked = document.elementFromPoint(event.clientX, event.clientY);
-        const onUi = UI_ELEMENT_IDS.some(id => document.getElementById(id)?.contains(clicked));
+        // A panel's button over something clickable (e.g. Saludar over an
+        // avatar) shouldn't click through to it.
+        const onUi = UI_ELEMENT_IDS.some(id => document.getElementById(id)?.contains(clicked))
+            || clicked?.closest?.('.floating-panel');
         if (onUi) return;
 
         this.interactions.get(this.highlightedObject.userData.type).use(this.highlightedObject);

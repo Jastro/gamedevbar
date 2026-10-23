@@ -62,6 +62,8 @@ import { ProjectorUI } from '../ui/ProjectorUI';
 import { VirconUI } from '../ui/VirconUI';
 import { createDoorInteraction } from '../interactions/doorInteraction';
 import { createSeatInteraction } from '../interactions/seatInteraction';
+import { createPlayerInteraction } from '../interactions/playerInteraction';
+import { ProfileUI } from '../ui/ProfileUI';
 import { createRadioInteraction } from '../interactions/radioInteraction';
 import { createArcadeInteraction, bindArcadeNetwork } from '../interactions/arcadeInteraction';
 import { createProjectorInteraction } from '../interactions/projectorInteraction';
@@ -123,6 +125,7 @@ export class Game {
         this.ui.projector = new ProjectorUI(this);
         this.ui.vircon = new VirconUI(this);
         this.ui.customize = new CustomizeUI(this);
+        this.ui.profile = new ProfileUI(this);
         this.ui.controlsHelp = new ControlsHelpUI();
 
         this.interactions = new InteractionSystem(this);
@@ -141,6 +144,7 @@ export class Game {
         this.interactions.register(createSlotInteraction(this));
         this.interactions.register(createFoosballInteraction(this));
         this.interactions.register(createDriveInteraction(this));
+        this.interactions.register(createPlayerInteraction(this));
         createBathroomInteractions(this).forEach(interaction => this.interactions.register(interaction));
 
         this.clock = new THREE.Clock();

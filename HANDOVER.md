@@ -19,6 +19,11 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 Profiles on click (plan step 5): click an avatar → name, character, accessories, where they
+  are, this week's ranking and coins; 👋 Saludar and challenge buttons; the bartender has his own card.
+  Fixed: clicking a panel button also clicked whatever was behind it. **Verified in the browser** (two
+  clients): the real raycast click opened Manolo's card; the other client's panel showed its ranking
+  (darts 118, slots 18) and coins; Saludar played the cheer and posted the emote.
 - 2026-10-23 Weekly leaderboards (plan step 4): darts, futbolín, slots, laps and races per week, saved
   to `data/leaderboards.json`, shown on a board on each gallery. **Verified in the browser:** slots
   spins (best win 18) and a darts turn (118) land on the board and in the file; board picture.

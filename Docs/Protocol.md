@@ -38,6 +38,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `dartsThrow` | `roomId`, `x`, `y` (board units, clamped to ±2) | thrower only, 3 per turn, 0.6 s cooldown; scored on the server → `dartsThrow` to all; after the 3rd: history + day's best, `dartsState`, and 2.5 s later the turn ends (`dartsState` with no thrower). 30 s idle also ends it |
 | `dartsLeave` | `roomId` | the thrower gives up the board → `dartsState` |
 | `graffitiDraw` | `wallId` (`<roomId>:<0-3>`), `segments` (1-60 × `[x0, y0, x1, y1, color 0-6, size 0-2]`, coordinates 0..1) | 40 ms per-user rate limit; bad segments dropped, coordinates rounded to 0.001; kept (last 3000 per wall) → `graffitiDraw` to others |
+| `profileRequest` | `userId` | at most every 300 ms → `profile` to the sender |
 | `stickerPlace` | `stickerId` (`server/shared/stickers.json`), `ownerKey` (the browser's random key), `x`, `y`, `z`, `nx`, `ny`, `nz` (surface normal), `ux`, `uy`, `uz` (the sticker's up) | joined players; 10 s per key/user, else → `stickerCooldown {wait}`; replaces that key's sticker → `stickerRemoved` + `stickerPlaced` to all; gone after 24 h |
 | `slotSpin` | `roomId` | joined players, real rooms; busy machine → `slotBusy`; broke and no bailout yet → `slotBroke {retryIn}`; else roll → `slotResult` to all |
 | `foosballJoin` | `roomId`, `team` (0 red / 1 blue) | joined players; a free slot on that team (else `foosballFull`); leaves any other table → `foosballTable` |
@@ -99,6 +100,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `dartsBusy` | `roomId`, `thrower` | chat line |
 | `graffitiDraw` | `wallId`, `segments` | draw them on that wall |
 | `graffitiStates` | `walls: { wallId: segments }` | join snapshot |
+| `profile` | `userId`, `name`, `stats` (`{ darts: { value, rank }, … }`, this week, only categories they're in), `coins` (tragaperras) | fill the profile panel |
 | `leaderboardState` | `week` (`2026-W43`), `boards: { darts, foosball, slots, lap, races: [{ name, value }] }` (top 5 each) | redraw the ranking boards |
 | `stickerPlaced` | `id`, `stickerId`, `position`, `normal`, `up` (arrays) | add it (with a spray hiss) |
 | `stickerRemoved` | `id` | remove it |

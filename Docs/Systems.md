@@ -315,6 +315,16 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   each bar has a murmur of voices just outside its door (positional) that grows with the people
   inside (full at 6) and is silent for the bar you're in. Fades at 1.5/s; starts with the audio.
 
+## Profiles (click an avatar)
+
+- Click someone else's avatar (not yours, not with F): a panel (`src/ui/ProfileUI.js`) with their name,
+  character, accessories, where they are (bar, gallery "arriba", plaza, driving), and from the server
+  (`server/features/profiles.js`, `profileRequest` → `profile`) this week's ranking entries with their
+  place and their tragaperras coins. Buttons: 👋 Saludar (cheer gesture + "/me saluda a X"), 🎯 / ⚽
+  challenge (a "/me reta a X…" line; nothing is enforced).
+- The bartender has a fixed card instead (`NPC_CARDS`).
+- Clicks on any floating panel no longer reach the world behind it (`InteractionSystem.handleClick`).
+
 ## Bartender
 
 - `src/world/Bartender.js`: one behind each counter (Manolo in Gamedev, Paco in Desarrollo, a moustache),

@@ -12,6 +12,9 @@ export class RemotePlayer extends Player {
         this.targetPosition = initialPosition.clone();
         this.targetRotation = 0;
         this.lastUpdateTime = Date.now();
+        // Click to see their profile (ProfileUI); not our own avatar, which
+        // sits between the camera and whatever we click.
+        this.mesh.userData = { type: 'player', player: this };
     }
 
     updatePosition(position) {

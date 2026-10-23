@@ -6,6 +6,7 @@ const cors = require('cors');
 const { PORT } = require('./config');
 const { Hub } = require('./hub/Hub');
 const { registerLeaderboards } = require('./features/leaderboards');
+const { registerProfiles } = require('./features/profiles');
 const { registerPresence } = require('./features/presence');
 const { registerDoors } = require('./features/doors');
 const { registerSeats } = require('./features/seats');
@@ -56,6 +57,7 @@ const hub = new Hub(server);
 // (userLeft) goes out last.
 // First: other features record results in it (hub.leaderboards).
 registerLeaderboards(hub);
+registerProfiles(hub);
 registerPresence(hub);
 registerDoors(hub);
 registerRadio(hub);
