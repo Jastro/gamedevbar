@@ -295,6 +295,19 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   down keeps you on the stairs (`LocalPlayer.STEP_DOWN`). F skips things 3.5+ above or below you.
 - Gallery and terrace slabs are camera occluders.
 
+## Weekly leaderboards
+
+- **Server** (`server/features/leaderboards.js`): per ISO week (Monday to Sunday, Madrid), by player name
+  (no accounts): 🎯 best 3-dart turn, ⚽ futbolín matches won (both winners, only when both teams
+  played), 🎰 biggest slots win, ⏱️ fastest lap, 🏁 races won. Features report with
+  `hub.leaderboards.record(category, name, value)`; `stats(name)` / `best(category)` for profiles and
+  announcements. The last finished week is kept.
+- **Saved** to `DATA_DIR/leaderboards.json` (default `./data`, git-ignored; `/app/data` in the image):
+  a restart keeps them. **A redeploy replaces the container**: keeping them needs a volume on
+  `/app/data` in the server's stack (Jastro).
+- **Board** (`src/world/LeaderboardSync.js`): in each bar, on the gallery's front wall right of the
+  terrace doorway, the top 5 of each; `leaderboardState` on join and after changes (batched 0.5 s).
+
 ## Soundscape
 
 - `src/audio/Soundscape.js`, all synthesized (8 s loops): birds (chirp bursts) by day and two crickets

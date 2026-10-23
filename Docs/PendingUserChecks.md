@@ -47,6 +47,8 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       in `src/world/Roof.js`)? Inside: a sloped wooden ceiling; lit like the bar at night and by day?
 - [ ] **New bottom bar.** Chat input bottom left under the chat log; 🎙️ ⚙️ 👤 ❔ bottom right, all the
       same size; no 😊 button (emojis: right click). ❔ panel twice as wide. Also on a small window.
+- [ ] **Ranking board** (on the gallery, right of the terrace doorway). Play darts, the slots, a futbolín
+      match with two teams: your name shows up. Readable from the gallery?
 - [ ] **Soundscape** (2026-10-23). Outside by day: birds; at night: crickets (much fainter inside). With
       people in a bar, a murmur outside its door. Pleasant or annoying? Levels in `VOLUME`
       (`src/audio/Soundscape.js`).

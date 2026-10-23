@@ -176,6 +176,9 @@ function registerFoosball(hub) {
                 table.score[scorer] += 1;
                 table.changed = true;
                 if (table.score[scorer] >= WIN_SCORE) {
+                    // A real match (both teams played): the winners' names go on the board.
+                    const team = (index) => [index * 2, index * 2 + 1].map(slot => table.slots[slot]).filter(Boolean);
+                    if (team(1 - scorer).length > 0) team(scorer).forEach(player => hub.leaderboards?.record('foosball', player.name, 1));
                     table.phase = 'over';
                     table.timer = OVER_TIME;
                     table.winner = scorer;

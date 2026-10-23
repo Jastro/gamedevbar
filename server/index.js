@@ -5,6 +5,7 @@ const http = require('http');
 const cors = require('cors');
 const { PORT } = require('./config');
 const { Hub } = require('./hub/Hub');
+const { registerLeaderboards } = require('./features/leaderboards');
 const { registerPresence } = require('./features/presence');
 const { registerDoors } = require('./features/doors');
 const { registerSeats } = require('./features/seats');
@@ -53,6 +54,8 @@ const hub = new Hub(server);
 // Order matters for hooks: join hooks run in this order (the newcomer gets
 // door states before chat history); leave hooks run in reverse, so presence
 // (userLeft) goes out last.
+// First: other features record results in it (hub.leaderboards).
+registerLeaderboards(hub);
 registerPresence(hub);
 registerDoors(hub);
 registerRadio(hub);

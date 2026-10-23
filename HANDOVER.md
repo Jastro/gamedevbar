@@ -19,18 +19,11 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
-- 2026-10-23 Soundscape (plan step 3): birds by day, crickets at night, a murmur outside busy bars.
-  **Verified in the browser** (levels): day outside birds 0.18 / inside 0.022; night outside crickets
-  0.12 / inside 0.014; 4 people in Gamedev → murmur 0.27 outside its door, 0 once inside.
-- 2026-10-23 Bartender (plan step 2): Manolo / Paco walk behind the counters on a shared clock-driven
-  schedule, talk now and then, "¡Marchando!" when someone in the bar is served. **Verified in the
-  browser:** two bartenders, walking between stops in the lane (z -7.65), name tag and speech bubble.
-- 2026-10-23 Upper floor (plan `Docs/Plans to be done/2026-10-23 Upper floor, bartender, ...`, step 1 of
-  6): a gallery along each bar's front wall at 5 m with stairs, tables and a doorway onto a terrace over
-  the entrance facing the fountain; new `floor` and `ramp` colliders. **Verified in the browser:**
-  walked up the stairs (height rises with the treads), onto the landing and the gallery, along it,
-  through the doorway onto the terrace (outside), stopped by its railings, F on a terrace chair; the
-  same stairs in Desarrollo (rotated); walking under the gallery is free; pictures inside and out.
+- 2026-10-23 Weekly leaderboards (plan step 4): darts, futbolín, slots, laps and races per week, saved
+  to `data/leaderboards.json`, shown on a board on each gallery. **Verified in the browser:** slots
+  spins (best win 18) and a darts turn (118) land on the board and in the file; board picture.
+- 2026-10-23 Plan steps 1-3: an upper gallery with stairs and a terrace in each bar, a bartender
+  (Manolo / Paco), the soundscape. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Hanging lamps and a disco ball in each bar, windows on every building, car nitro, roofs
   as ceilings inside, faster walking. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Wall finishes (whitewash outside, wood wainscot inside), closed buildings in slots 2-5,
@@ -135,6 +128,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   branches or PRs. Every push deploys, so only finished, built, checked slices get pushed.
 
 ## Open questions
+- **Leaderboards across deploys (Jastro):** they're saved in `/app/data` inside the container, which a
+  deploy replaces. A volume on `/app/data` in the app's stack keeps them (and future saved state).
 - Carra's own Vircon32 games (BSD-3) are only on itch.io as zips: download them by hand to add them?
 - Should chat become per-room (or show which bar someone is in)?
 - Desarrollo's identity: different decoration, default music?

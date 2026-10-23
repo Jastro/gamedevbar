@@ -27,6 +27,7 @@ import { GraffitiSync } from '../world/GraffitiSync';
 import { StickerSync } from '../world/StickerSync';
 import { Bartender } from '../world/Bartender';
 import { Soundscape } from '../audio/Soundscape';
+import { LeaderboardSync } from '../world/LeaderboardSync';
 import { Weather } from '../world/Weather';
 import { LocalWeather } from '../world/LocalWeather';
 import { GestureSync } from '../entities/GestureSync';
@@ -227,6 +228,9 @@ export class Game {
         this.bartenders = [...this.world.rooms.values()].map(room => new Bartender(this, room));
         // Birds, crickets and the murmur of full bars (starts with the audio).
         this.soundscape = new Soundscape(this);
+        // The weekly ranking board in each bar.
+        this.leaderboards = new LeaderboardSync(this);
+        this.leaderboards.create();
         this.lighting.init();
         this.radioSync.applyDefaults();
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
@@ -273,6 +277,7 @@ export class Game {
         this.gestureSync.bind();
         this.drivingSync.bind();
         this.bartenders.forEach(bartender => bartender.bind());
+        this.leaderboards.bind();
         this.slotSync.bind();
         this.foosballSync.bind();
         this.virconSpectating.bind();

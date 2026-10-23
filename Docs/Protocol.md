@@ -99,6 +99,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `dartsBusy` | `roomId`, `thrower` | chat line |
 | `graffitiDraw` | `wallId`, `segments` | draw them on that wall |
 | `graffitiStates` | `walls: { wallId: segments }` | join snapshot |
+| `leaderboardState` | `week` (`2026-W43`), `boards: { darts, foosball, slots, lap, races: [{ name, value }] }` (top 5 each) | redraw the ranking boards |
 | `stickerPlaced` | `id`, `stickerId`, `position`, `normal`, `up` (arrays) | add it (with a spray hiss) |
 | `stickerRemoved` | `id` | remove it |
 | `stickerStates` | `stickers` (as `stickerPlaced`) | join snapshot |

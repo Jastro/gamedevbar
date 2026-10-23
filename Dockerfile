@@ -20,6 +20,10 @@ COPY --chown=appuser:appgroup --from=builder /app/dist ./dist
 COPY --chown=appuser:appgroup server.js .
 COPY --chown=appuser:appgroup server ./server
 
+# Leaderboards and other saved state (server/features/leaderboards.js). Mount
+# a volume here to keep them across deploys.
+RUN mkdir -p /app/data
+
 # Dar permisos necesarios
 RUN chown -R appuser:appgroup /app && \
     chmod -R 755 /app

@@ -69,6 +69,7 @@ function registerSlots(hub) {
         const win = payout(reels);
         coins = Math.max(0, coins - BET + win);
         user.slotCoins = coins;
+        if (win > 0) hub.leaderboards?.record('slots', user.username, win);
         busyUntil.set(roomId, now + SPIN_MS);
         hub.broadcastAll({ type: 'slotResult', roomId, userId: user.id, name: user.username, reels, win, coins, bailout });
     });

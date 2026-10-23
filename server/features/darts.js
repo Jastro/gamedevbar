@@ -119,6 +119,7 @@ function registerDarts(hub) {
         room.history.length = Math.min(room.history.length, HISTORY_LENGTH);
         const day = today();
         if (!room.best || room.best.day !== day || total > room.best.total) room.best = { name: user.username, total, day };
+        hub.leaderboards?.record('darts', user.username, total);
         clearTimeout(room.idleTimer);
         room.endTimer = setTimeout(() => endTurn(roomId, room), TURN_END_MS);
         publish(roomId, room);
