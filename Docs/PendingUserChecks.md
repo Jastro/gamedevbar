@@ -47,6 +47,11 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       in `src/world/Roof.js`)? Inside: a sloped wooden ceiling; lit like the bar at night and by day?
 - [ ] **New bottom bar.** Chat input bottom left under the chat log; 🎙️ ⚙️ 👤 ❔ bottom right, all the
       same size; no 😊 button (emojis: right click). ❔ panel twice as wide. Also on a small window.
+- [ ] **Lamps, disco ball, windows** (2026-10-23). Inside: two green hanging lamps, lit with the normal
+      light (switch it off: they go dark); is their light on the tables nice (`LAMP_LIGHT` in
+      `src/world/CeilingFixtures.js`)? Disco on: the ball spins and throws colored specks round the
+      room: fun, too many/few (`SPECKS`)? Outside: windows with green shutters on every building:
+      good spots, size? The projector hangs nearer its screen, its pole up to the ceiling.
 - [ ] **Nitro** (2026-10-23). Drive, hold Shift with W: faster, flames out the back, a whoosh and a
       roar, the view widens; a friend sees and hears it. Fun? Too loud (`createRoar` volume 0.35)?
       Top speed (`NITRO_MAX` 22 in `DrivingSync.js`)?

@@ -5,6 +5,7 @@ import { Outdoors } from './Outdoors';
 import { createRoof } from './Roof';
 import { wallFinish } from './WallTextures';
 import { createClosedBuilding } from './ClosedBuilding';
+import { addWindows } from './Windows';
 import {
     ROOMS,
     ROOM_HALF_WIDTH,
@@ -173,7 +174,9 @@ export class World {
         addWall(rightWidth, WALL_HEIGHT, WALL_THICKNESS, ROOM_HALF_WIDTH - rightWidth / 2, halfHeight, ROOM_HALF_DEPTH, front);
         addWall(FRONT_DOOR.width, lintelHeight, WALL_THICKNESS, FRONT_DOOR.x, FRONT_DOOR.height + lintelHeight / 2, ROOM_HALF_DEPTH, front);
 
-        room.roof = createRoof(room, wallMaterial, outside);
+        room.roof = createRoof(room, wallMaterial, outside, this.finishMaterial('plaster'));
+        // Two rows of windows round the outside; on the front, either side of the door.
+        addWindows(room, { lowerFront: [-10, -5, 5, 10], upperFront: [-10, -5, 5, 10] });
         this.cameraOccluders.push(...room.roof.userData.slopes);
     }
 

@@ -3,6 +3,7 @@ import {
     slotPlacement, ROOM_HALF_WIDTH, ROOM_HALF_DEPTH, WALL_HEIGHT, WALL_THICKNESS, FRONT_DOOR
 } from './RoomLayout';
 import { createRoof } from './Roof';
+import { addWindows } from './Windows';
 
 // A building in a slot with no bar yet: the same shell, walls and roof as a
 // bar, but solid all round (nothing inside), a door that doesn't open and a
@@ -37,6 +38,8 @@ export function createClosedBuilding(scene, slot, { collisionManager, cameraOccl
 
     addDoor(group);
     addSign(group);
+    // On the front only clear of the sign.
+    addWindows(group, { lowerFront: [-10, 10], upperFront: [-10, 10] });
     createRoof(group, wallMaterial);
 }
 

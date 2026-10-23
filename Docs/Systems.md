@@ -263,7 +263,20 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   ends like the outside walls, ridge cap, chimney). From inside: a sloped wooden ceiling, plaster gable
   ends; the camera stays under it (the slopes are camera occluders). The bar's light space reaches up
   to `ROOF_TOP`, so the ceiling takes the bar's light; the tiles, cap and chimney are lit as outside
-  (`litAsOutside` in `RegionLights.js`: a define that skips the space test). No shadows.
+  (`litAsOutside` in `RegionLights.js`: a define that skips the space test). No shadows. The gable
+  ends' inner faces are the walls' plaster (`plaster` finish, without the wainscot).
+- **Windows** (`src/world/Windows.js`): fake windows on every building's outside walls (bars and
+  closed buildings), two rows: a painted window, green shutters and a stone sill each, merged into
+  three meshes per building. On the front, either side of the door (closed buildings: clear of the
+  sign).
+- **Ceiling fixtures** (`src/world/CeilingFixtures.js`), per bar, hanging from the ceiling
+  (`Roof.ceilingHeightAt`):
+  - two pendant lamps over the tables (room-local x ±6, z 2), on with the normal light: the bulbs glow
+    and they light the bar below; RoomLighting hands their positions to RegionLights (`roomLamps`, up
+    to 8), which lights only that bar's pixels with them (not its bathroom, not outside);
+  - a disco ball in the middle: with disco on it spins, its mirror tiles flash in the cycling disco
+    color, and 110 colored specks land where its reflections would hit the walls, floor and ceiling.
+  - The projector box hangs 4 in front of its screen, its pole up to the ceiling.
 
 ## Tragaperras (video-game meme slot machine)
 

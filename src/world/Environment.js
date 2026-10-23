@@ -18,6 +18,7 @@ import { ArcadeSnake } from './ArcadeSnake';
 import { Door, DOOR_INTERACT_DISTANCE } from './Door';
 import { Projector } from './Projector';
 import { PresenceBoard } from './PresenceBoard';
+import { CeilingFixtures } from './CeilingFixtures';
 import { VirconCabinet, CABINETS } from './VirconCabinet';
 import { DEFAULT_ROOM_ID } from './RoomLayout';
 
@@ -61,6 +62,7 @@ export class Environment {
                 vircon: new VirconCabinet(room, this.world.collisionManager, CABINETS.vircon),
                 pokebonk: new VirconCabinet(room, this.world.collisionManager, CABINETS.pokebonk),
                 lightSwitches: new LightSwitches(room),
+                fixtures: new CeilingFixtures(room),
                 bathroom: new Bathroom(room, this.world.collisionManager, this.world)
             };
 
@@ -83,6 +85,7 @@ export class Environment {
             contents.vircon.create();
             contents.pokebonk.create();
             contents.lightSwitches.create();
+            contents.fixtures.create();
             contents.bathroom.create();
             contents.graffiti = WALLS.map((_, index) => new GraffitiWall(contents.bathroom, index));
             contents.graffiti.forEach(wall => wall.create());
@@ -169,6 +172,7 @@ export class Environment {
         this.doors.forEach(door => door.update(deltaTime));
         if (listenerPosition) this.updateAudioOcclusion(listenerPosition);
         this.rooms.forEach(({ projector }) => projector.update(listenerPosition, this, this.world));
+        this.rooms.forEach(({ room, fixtures }) => fixtures.update(deltaTime, this.getLights(room.id)));
     }
 
     // Occlusion between two spaces (a Room, or null for outside): clear in

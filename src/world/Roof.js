@@ -14,10 +14,18 @@ const RISE = 4.5;           // ridge height over the top of the walls
 export const ROOF_TOP = WALL_HEIGHT + RISE + 2.5; // above the chimney
 const TILE_THICKNESS = 0.25;
 const TILE_COLOR = 0xb5532f;
+const GABLE_V_START = 0.2; // where the gables' outside pattern starts (clear of a base band)
 const CHIMNEY = { x: 8, z: -4, size: 1.1 };
 
-// outside: the walls' outside finish ({ material, finish }, World) or null.
-export function createRoof(room, wallMaterial, outside = null) {
+// The ceiling's underside height (room-local y) at room-local z: highest at
+// the ridge (z 0), down to the top of the walls.
+export function ceilingHeightAt(z) {
+    return WALL_HEIGHT + RISE * (1 - Math.min(1, Math.abs(z) / ROOM_HALF_DEPTH));
+}
+
+// outside: the walls' outside finish ({ material, finish }, World) or null;
+// insideUpper: the plaster for the gable ends' inner faces, or null.
+export function createRoof(room, wallMaterial, outside = null, insideUpper = null) {
     const group = new THREE.Group();
     group.name = 'Roof';
     const tiles = litAsOutside(new THREE.MeshStandardMaterial({ map: getTileTexture(), color: TILE_COLOR, roughness: 0.85 }));
@@ -49,21 +57,28 @@ export function createRoof(room, wallMaterial, outside = null) {
     ]);
     const gableGeometry = new THREE.ExtrudeGeometry(gable, { depth: WALL_THICKNESS, bevelEnabled: false });
     if (outside) {
-        // The shape's UVs are in meters; continue the walls' pattern upward.
+        // The shape's UVs are in meters. Map them onto the pattern above its
+        // base (a full-height finish would repeat its base band up here).
         const uv = gableGeometry.attributes.uv;
         for (let i = 0; i < uv.count; i++) {
-            uv.setXY(i, uv.getX(i) / outside.finish.width, (uv.getY(i) + WALL_HEIGHT) / outside.finish.height);
+            uv.setXY(i, uv.getX(i) / outside.finish.width, GABLE_V_START + uv.getY(i) / outside.finish.height);
         }
     }
     // Shape x → room z, extrusion → room x.
     gableGeometry.rotateY(Math.PI / 2);
-    // Their inner faces: plain plaster, a hair inside.
+    // Their inner faces: the walls' plaster (without the wainscot), a hair inside.
     const innerGeometry = new THREE.ShapeGeometry(gable);
+    if (insideUpper) {
+        const uv = innerGeometry.attributes.uv;
+        for (let i = 0; i < uv.count; i++) {
+            uv.setXY(i, uv.getX(i) / insideUpper.finish.width, (uv.getY(i) + WALL_HEIGHT) / insideUpper.finish.height);
+        }
+    }
     [-1, 1].forEach(side => {
         const end = new THREE.Mesh(gableGeometry, outside?.material ?? wallMaterial);
         end.position.set(side * ROOM_HALF_WIDTH - WALL_THICKNESS / 2, WALL_HEIGHT, 0);
         group.add(end);
-        const inner = new THREE.Mesh(innerGeometry, wallMaterial);
+        const inner = new THREE.Mesh(innerGeometry, insideUpper?.material ?? wallMaterial);
         // The shape faces +z; turned to face the middle of the room.
         inner.rotation.y = -side * Math.PI / 2;
         inner.position.set(side * (ROOM_HALF_WIDTH - WALL_THICKNESS / 2 - 0.01), WALL_HEIGHT, 0);

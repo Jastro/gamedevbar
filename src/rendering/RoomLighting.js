@@ -2,8 +2,9 @@ import * as THREE from 'three';
 import { DEFAULT_LIGHTS } from '../world/LightSwitches';
 import { ROOM_HALF_WIDTH, ROOM_HALF_DEPTH } from '../world/RoomLayout';
 import { BATHROOM_BOUNDS, LAMP_RANGE, WALL_HEIGHT as BATHROOM_HEIGHT } from '../world/Bathroom';
-import { regionUniforms, installRegionLights, REGION_MAX } from './RegionLights';
+import { regionUniforms, installRegionLights, REGION_MAX, ROOM_LAMP_MAX } from './RegionLights';
 import { ROOF_TOP } from '../world/Roof';
+import { LAMP_LIGHT } from '../world/CeilingFixtures';
 
 // Turns each bar's light switches into lighting. The scene has one ambient
 // and one directional light (from level.json), shared by both bars, so they
@@ -148,6 +149,18 @@ export class RoomLighting {
             regionUniforms.regionLampColor.value[i].copy(region.lamp?.color ?? BLACK);
         }
         regionUniforms.regionLampRange.value = LAMP_RANGE;
+        // The bars' hanging lamps, each tagged with its bar's region.
+        let lamps = 0;
+        regions.slice(0, count).forEach((region, index) => {
+            const fixtures = environment.rooms.get(region.key)?.fixtures;
+            fixtures?.litLamps.forEach(point => {
+                if (lamps >= ROOM_LAMP_MAX) return;
+                regionUniforms.roomLamps.value[lamps++].set(point.x, point.y, point.z, index);
+            });
+        });
+        regionUniforms.roomLampCount.value = lamps;
+        regionUniforms.roomLampColor.value.copy(LAMP_LIGHT.color).multiplyScalar(LAMP_LIGHT.intensity);
+        regionUniforms.roomLampRange.value = LAMP_LIGHT.range;
         const sky = this.game.weather?.outdoorLight();
         const outdoorTarget = sky
             ? this.levelLight(sky, sky.color)

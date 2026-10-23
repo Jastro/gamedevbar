@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ceilingHeightAt } from './Roof';
 import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer';
 import { loadYouTubeApi, describeYouTubeError } from '../media/youtube';
 import { ROOM_HALF_WIDTH, WALL_THICKNESS } from './RoomLayout';
@@ -8,6 +9,7 @@ const SCREEN_WIDTH = 10;
 const SCREEN_HEIGHT = SCREEN_WIDTH * 9 / 16;
 const SCREEN_X = ROOM_HALF_WIDTH - WALL_THICKNESS / 2 - 0.05;
 const SCREEN_Y = 4.2;
+const DEVICE_DISTANCE = 4; // the projector box in front of the screen
 // The YouTube iframe is laid out at this CSS size and scaled into the scene.
 const ELEMENT_WIDTH = 1280;
 const ELEMENT_HEIGHT = 720;
@@ -123,14 +125,16 @@ export class Projector {
         lens.rotation.x = Math.PI / 2;
         lens.position.z = 0.34;
         device.add(lens);
+        // In the screen's frame: 4 units in front of it (room-local z 0, where
+        // the ceiling is highest), its pole up to the ceiling.
+        device.position.set(0, 2.4, DEVICE_DISTANCE);
+        const top = ceilingHeightAt(0) - SCREEN_Y - device.position.y;
         const pole = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.03, 0.03, 1.4, 8),
+            new THREE.CylinderGeometry(0.03, 0.03, top - 0.15, 8),
             new THREE.MeshStandardMaterial({ color: 0x333333 })
         );
-        pole.position.y = 0.85;
+        pole.position.y = 0.15 + (top - 0.15) / 2;
         device.add(pole);
-        // In the screen's frame: 7 units in front of it, near the top of the walls.
-        device.position.set(0, 2.4, 7);
         device.rotation.y = Math.PI; // lens towards the screen
         this.group.add(device);
     }

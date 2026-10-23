@@ -29,7 +29,8 @@ appearance/    catalog (slots, items, tints, name colors; one entry per accessor
 network/       WebSocketManager: transport only (JSON in → emit(type), send(type, data))
 entities/      Player, LocalPlayer (input + collisions), RemotePlayer, PlayerManager, Gestures (procedural
                right-click animations on the bones) + GestureSync
-world/         RoomLayout (the hub: plaza, slots, roads), Room, World (shells, colliders, Roof, WallTextures; ClosedBuilding in the free slots), Outdoors (plaza, roads,
+world/         RoomLayout (the hub: plaza, slots, roads), Room, World (shells, colliders, Roof, WallTextures, Windows; ClosedBuilding in the free slots),
+               CeilingFixtures (lamps, disco ball), Outdoors (plaza, roads,
                edge wall, fountain), DrivableCar + DrivingSync, Environment (props per room),
                Door + DoorSync, Bar, PresenceBoard, Radio, Furniture, Paintings, arcades, VirconCabinet +
                Bathroom + BathroomSync (cubicle, toilet, sink, mirror, stink, dirty hands), GraffitiWall +

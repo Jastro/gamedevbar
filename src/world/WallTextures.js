@@ -7,10 +7,12 @@ import * as THREE from 'three';
 //   timber:    half-timbered plaster (outside), a 4 × 4 m frame that repeats.
 //   whitewash: whitewashed wall with an ochre base (outside), wall height.
 //   wainscot:  wooden wainscot and cream plaster (inside), wall height.
+//   plaster:   the wainscot's cream plaster alone (the roof's inner gables).
 const STYLES = {
     timber: { width: 4, height: 4, size: [512, 512], draw: drawTimber },
     whitewash: { width: 4, height: 8, size: [512, 1024], draw: drawWhitewash },
-    wainscot: { width: 2, height: 8, size: [256, 1024], draw: drawWainscot }
+    wainscot: { width: 2, height: 8, size: [256, 1024], draw: drawWainscot },
+    plaster: { width: 2, height: 2, size: [256, 256], draw: (ctx, w, h, random) => plaster(ctx, w, h, random, '#efe2c4') }
 };
 
 const cache = new Map();

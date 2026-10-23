@@ -19,6 +19,13 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 Lamps, disco ball, windows: two pendant lamps per bar light it (only that bar) with the
+  normal light; a disco ball in the middle spins and throws colored specks with disco on; the
+  projector hangs 4 in front of its screen with its pole up to the ceiling; the roof's inner gables
+  take the walls' plaster; fake windows (green shutters, sills) on every building. **Verified in the
+  browser:** shaders compile, 4 lamps in the uniforms (region 2 for Gamedev), lamps and ball from
+  inside, disco on with specks on walls/floor/ceiling, all facades with windows, the projector pole;
+  fixed the outside gable showing the whitewash's base band.
 - 2026-10-23 Nitro, ceilings, Gamedev whitewashed, faster walking: Shift while driving is nitro (top 22,
   flames, whoosh and roar, wider view, synced); the roofs show from inside as a sloped wooden ceiling
   lit by the bar (tiles lit as outside); Gamedev's outside is whitewashed like Desarrollo's; walk 3.7,

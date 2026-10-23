@@ -14,6 +14,7 @@ import * as THREE from 'three';
 // per-light cost on every material.
 export const REGION_MAX = 12;
 export const LAMP_MAX = 32;
+export const ROOM_LAMP_MAX = 8;
 
 export const regionUniforms = {
     regionCount: { value: 0 },
@@ -32,7 +33,13 @@ export const regionUniforms = {
     lampCount: { value: 0 },
     lampPositions: { value: Array.from({ length: LAMP_MAX }, () => new THREE.Vector3()) },
     lampColor: { value: new THREE.Color(0, 0, 0) }, // color × intensity, black by day
-    lampRange: { value: 26 }
+    lampRange: { value: 26 },
+    // Lamps hanging in the bars (CeilingFixtures): world position, and in w
+    // the index of the region they light (only that space's pixels).
+    roomLampCount: { value: 0 },
+    roomLamps: { value: Array.from({ length: ROOM_LAMP_MAX }, () => new THREE.Vector4()) },
+    roomLampColor: { value: new THREE.Color(0, 0, 0) },
+    roomLampRange: { value: 10 }
 };
 
 const VERTEX_HEADER = 'varying vec3 vRegionWorld;\n';
@@ -50,6 +57,7 @@ vRegionWorld = ( modelMatrix * regionWorld ).xyz;
 const FRAGMENT_HEADER = `
 #define REGION_MAX ${REGION_MAX}
 #define LAMP_MAX ${LAMP_MAX}
+#define ROOM_LAMP_MAX ${ROOM_LAMP_MAX}
 uniform int regionCount;
 uniform vec4 regionBoxes[ REGION_MAX ];
 uniform vec4 regionHalf[ REGION_MAX ];
@@ -64,7 +72,13 @@ uniform int lampCount;
 uniform vec3 lampPositions[ LAMP_MAX ];
 uniform vec3 lampColor;
 uniform float lampRange;
+uniform int roomLampCount;
+uniform vec4 roomLamps[ ROOM_LAMP_MAX ];
+uniform vec3 roomLampColor;
+uniform float roomLampRange;
 varying vec3 vRegionWorld;
+// The region regionLightAt found (-1: outside).
+int regionHit = -1;
 
 // The first region containing p (bathrooms come before their bar), else
 // outside; returns whether p is outside.
@@ -87,6 +101,7 @@ bool regionLightAt( vec3 p, out vec3 ambient, out vec3 directional, out vec3 lam
 			directional = regionDirectional[ i ];
 			lampPosition = regionLampPosition[ i ];
 			lampLightColor = regionLampColor[ i ];
+			regionHit = i;
 			return false;
 		}
 	}
@@ -118,6 +133,19 @@ if ( max( regionLampLight.r, max( regionLampLight.g, regionLampLight.b ) ) > 0.0
 		lampLight.visible = true;
 		RE_Direct( lampLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight );
 	}
+}
+// The bars' hanging lamps, each only in its own bar.
+for ( int i = 0; i < ROOM_LAMP_MAX; i ++ ) {
+	if ( i >= roomLampCount ) break;
+	if ( int( roomLamps[ i ].w + 0.5 ) != regionHit ) continue;
+	vec3 toLamp = ( viewMatrix * vec4( roomLamps[ i ].xyz, 1.0 ) ).xyz - geometryPosition;
+	float lampDistance = length( toLamp );
+	if ( lampDistance >= roomLampRange ) continue;
+	IncidentLight lampLight;
+	lampLight.direction = toLamp / lampDistance;
+	lampLight.color = roomLampColor * getDistanceAttenuation( lampDistance, roomLampRange, 1.0 );
+	lampLight.visible = true;
+	RE_Direct( lampLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight );
 }
 // The street lamps, outside only.
 if ( regionOutdoor && max( lampColor.r, max( lampColor.g, lampColor.b ) ) > 0.0 ) {
