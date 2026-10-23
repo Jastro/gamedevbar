@@ -36,7 +36,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       slow down; keep pushing it slowly; pin it against a wall (you stop). Ram a friend's car: it gets
       shoved on their screen too. Does it feel right (`PUSH_*`, `SLIDE_FRICTION` in `DrivingSync.js`)?
 - [ ] **Toilet light** stays in the bathroom: with it on, nothing warm on the bar's walls or ceiling
-      around the cubicle, from inside or outside it.
+      around the cubicle (also above the toilet, over the cubicle's ceiling), from inside or outside it.
+- [ ] **Four graffiti walls** in the bathroom (2026-10-23): the partition, above the toilet, right of the
+      mirror, left of the door. F at each: right wall in the panel, drawing lands right-side up and not
+      mirrored; a friend sees it. Panels in good spots (not over a fixture)?
 - [ ] **Sound distance from your avatar.** Pull the camera far back (or zoom out) next to the radio or
       the fountain: the volume follows where your avatar stands, left/right still follows the view.
 - [ ] **The plaza** (2026-10-23). Walk around: the plaza, the six small roads, the ring road, the wall at

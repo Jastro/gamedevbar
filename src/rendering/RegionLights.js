@@ -17,9 +17,10 @@ export const LAMP_MAX = 32;
 
 export const regionUniforms = {
     regionCount: { value: 0 },
-    // Per region: center x, center z, cos(yaw), sin(yaw) / half width, half depth.
+    // Per region: center x, center z, cos(yaw), sin(yaw) / half width, half
+    // depth, lowest y, highest y (a bathroom ends at its ceiling).
     regionBoxes: { value: Array.from({ length: REGION_MAX }, () => new THREE.Vector4()) },
-    regionHalf: { value: Array.from({ length: REGION_MAX }, () => new THREE.Vector2()) },
+    regionHalf: { value: Array.from({ length: REGION_MAX }, () => new THREE.Vector4()) },
     regionAmbient: { value: Array.from({ length: REGION_MAX }, () => new THREE.Color()) },
     regionDirectional: { value: Array.from({ length: REGION_MAX }, () => new THREE.Color()) },
     // A space's own lamp (world position; color × intensity, black: none).
@@ -51,7 +52,7 @@ const FRAGMENT_HEADER = `
 #define LAMP_MAX ${LAMP_MAX}
 uniform int regionCount;
 uniform vec4 regionBoxes[ REGION_MAX ];
-uniform vec2 regionHalf[ REGION_MAX ];
+uniform vec4 regionHalf[ REGION_MAX ];
 uniform vec3 regionAmbient[ REGION_MAX ];
 uniform vec3 regionDirectional[ REGION_MAX ];
 uniform vec3 regionLampPosition[ REGION_MAX ];
@@ -77,7 +78,8 @@ bool regionLightAt( vec3 p, out vec3 ambient, out vec3 directional, out vec3 lam
 		vec4 box = regionBoxes[ i ];
 		vec2 d = p.xz - box.xy;
 		vec2 local = vec2( box.z * d.x - box.w * d.y, box.w * d.x + box.z * d.y );
-		if ( abs( local.x ) <= regionHalf[ i ].x && abs( local.y ) <= regionHalf[ i ].y ) {
+		if ( abs( local.x ) <= regionHalf[ i ].x && abs( local.y ) <= regionHalf[ i ].y
+			&& p.y >= regionHalf[ i ].z && p.y <= regionHalf[ i ].w ) {
 			ambient = regionAmbient[ i ];
 			directional = regionDirectional[ i ];
 			lampPosition = regionLampPosition[ i ];

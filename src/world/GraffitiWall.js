@@ -1,47 +1,70 @@
 import * as THREE from 'three';
 import { BATHROOM_BOUNDS } from './Bathroom';
 
-// The drawable wall inside each bathroom: the inner face of the partition
-// on the bar side (room-local x -10), clear of every fixture. A segment is
-// [x0, y0, x1, y1, color, size] in 0..1 wall coordinates (x to the right as
-// seen from inside, y down). The same canvas is the wall's texture and the
-// drawing surface in the panel (GraffitiSync).
+// The drawable walls inside each bathroom, one panel on each of its four
+// walls, clear of every fixture (WALLS). A segment is [x0, y0, x1, y1,
+// color, size] in 0..1 wall coordinates (x to the right as seen from
+// inside, y down). The same canvas is the wall's texture and the drawing
+// surface in the panel (GraffitiSync). Each wall's id is `<roomId>:<index>`.
 export const GRAFFITI_COLORS = ['#111111', '#d32f2f', '#1565c0', '#2e7d32', '#d81b60', '#f9a825'];
 export const WALL_COLOR = '#f4f4f0'; // the partition's white; also the eraser
 export const ERASER = GRAFFITI_COLORS.length;
 export const GRAFFITI_SIZES = [4, 10, 22]; // px on the canvas
 export const MAX_SEGMENTS = 3000;
 const TRIM_SLACK = 200; // segments over the cap before trimming (a trim redraws)
-const WALL = { minZ: 5.4, maxZ: 9.5, minY: 0.9, maxY: 2.9 };
+// Room-local: the panel's center a hair off the wall's inner face, its size,
+// and its turn (facing into the cubicle; its +x is the viewer's right).
+export const WALLS = [
+    // The partition on the bar side (x -10).
+    { x: BATHROOM_BOUNDS.maxX - 0.085, z: 7.45, y: 1.9, width: 4.1, height: 2, rotationY: -Math.PI / 2 },
+    // The bar's side wall behind the toilet (x -15): above the tank and the paper.
+    { x: BATHROOM_BOUNDS.minX + 0.11, z: 7.175, y: 2.2, width: 3.75, height: 1.4, rotationY: Math.PI / 2 },
+    // The bar's front wall (z 10): right of the mirror, above the powder table.
+    { x: -13.875, z: BATHROOM_BOUNDS.maxZ - 0.11, y: 2.025, width: 2.05, height: 1.75, rotationY: Math.PI },
+    // The door's partition (z 5): left of the door as you face it from inside.
+    { x: -13.475, z: BATHROOM_BOUNDS.minZ + 0.085, y: 1.9, width: 2.85, height: 2, rotationY: 0 }
+];
 const CANVAS_WIDTH = 1024;
-const CANVAS_HEIGHT = Math.round(CANVAS_WIDTH * (WALL.maxY - WALL.minY) / (WALL.maxZ - WALL.minZ));
 
 export class GraffitiWall {
-    constructor(bathroom) {
+    constructor(bathroom, index) {
         this.bathroom = bathroom;
+        this.index = index;
+        this.wall = WALLS[index];
         this.segments = [];
+    }
+
+    get id() {
+        return `${this.bathroom.room.id}:${this.index}`;
+    }
+
+    get width() {
+        return CANVAS_WIDTH;
+    }
+
+    get height() {
+        return Math.round(CANVAS_WIDTH * this.wall.height / this.wall.width);
     }
 
     create() {
         this.canvas = document.createElement('canvas');
-        this.canvas.width = CANVAS_WIDTH;
-        this.canvas.height = CANVAS_HEIGHT;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
         this.canvas.className = 'graffiti-canvas';
         this.texture = new THREE.CanvasTexture(this.canvas);
         this.texture.colorSpace = THREE.SRGBColorSpace;
         this.texture.anisotropy = 4;
         this.redraw();
 
-        const width = WALL.maxZ - WALL.minZ;
-        const height = WALL.maxY - WALL.minY;
+        const { x, y, z, width, height, rotationY } = this.wall;
         const material = new THREE.MeshStandardMaterial({ map: this.texture, roughness: 0.6 });
         const wall = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
-        // Facing into the cubicle (-x); its +x runs along +z, the viewer's right.
-        wall.rotation.y = -Math.PI / 2;
-        wall.position.set(BATHROOM_BOUNDS.maxX - 0.085, (WALL.minY + WALL.maxY) / 2, (WALL.minZ + WALL.maxZ) / 2);
+        wall.rotation.y = rotationY;
+        wall.position.set(x, y, z);
         wall.userData = {
             type: 'graffitiWall',
             bathroom: this.bathroom,
+            graffiti: this,
             originalMaterial: material,
             highlightMaterial: new THREE.MeshStandardMaterial({ map: this.texture, emissive: 0x222222 })
         };
@@ -54,15 +77,15 @@ export class GraffitiWall {
         ctx.strokeStyle = color === ERASER ? WALL_COLOR : GRAFFITI_COLORS[color] ?? GRAFFITI_COLORS[0];
         ctx.lineWidth = GRAFFITI_SIZES[size] ?? GRAFFITI_SIZES[0];
         ctx.beginPath();
-        ctx.moveTo(x0 * CANVAS_WIDTH, y0 * CANVAS_HEIGHT);
-        ctx.lineTo(x1 * CANVAS_WIDTH, y1 * CANVAS_HEIGHT);
+        ctx.moveTo(x0 * this.width, y0 * this.height);
+        ctx.lineTo(x1 * this.width, y1 * this.height);
         ctx.stroke();
     }
 
     redraw() {
         const ctx = this.canvas.getContext('2d');
         ctx.fillStyle = WALL_COLOR;
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        ctx.fillRect(0, 0, this.width, this.height);
         ctx.lineCap = 'round';
         this.segments.forEach(segment => this.drawSegment(ctx, segment));
         this.texture.needsUpdate = true;

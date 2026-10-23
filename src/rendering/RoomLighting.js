@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { DEFAULT_LIGHTS } from '../world/LightSwitches';
 import { ROOM_HALF_WIDTH, ROOM_HALF_DEPTH } from '../world/RoomLayout';
-import { BATHROOM_BOUNDS, LAMP_RANGE } from '../world/Bathroom';
+import { BATHROOM_BOUNDS, LAMP_RANGE, WALL_HEIGHT as BATHROOM_HEIGHT } from '../world/Bathroom';
 import { regionUniforms, installRegionLights, REGION_MAX } from './RegionLights';
 
 // Turns each bar's light switches into lighting. The scene has one ambient
@@ -114,6 +114,8 @@ export class RoomLighting {
                     yaw: room.root.rotation.y,
                     halfX: BATHROOM_REGION.halfX,
                     halfZ: BATHROOM_REGION.halfZ,
+                    // Under its ceiling: the bar's walls above it are the bar's.
+                    maxY: BATHROOM_HEIGHT,
                     light: this.switchLight({ normal: bathroom.state.lightOn, low: false }),
                     lamp: bathroom.lampLight
                 });
@@ -135,7 +137,7 @@ export class RoomLighting {
             const region = regions[i];
             const light = this.fadeRegion(region.key, region.light, t);
             regionUniforms.regionBoxes.value[i].set(region.center.x, region.center.z, Math.cos(region.yaw), Math.sin(region.yaw));
-            regionUniforms.regionHalf.value[i].set(region.halfX, region.halfZ);
+            regionUniforms.regionHalf.value[i].set(region.halfX, region.halfZ, -1000, region.maxY ?? 1000);
             regionUniforms.regionAmbient.value[i].copy(light.ambient);
             regionUniforms.regionDirectional.value[i].copy(light.directional);
             regionUniforms.regionLampPosition.value[i].copy(region.lamp?.position ?? ZERO);

@@ -37,7 +37,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `dartsStart` | `roomId` | take that room's board (ends your turn at any other board) → `dartsState` to all; taken by someone connected → `dartsBusy` to sender |
 | `dartsThrow` | `roomId`, `x`, `y` (board units, clamped to ±2) | thrower only, 3 per turn, 0.6 s cooldown; scored on the server → `dartsThrow` to all; after the 3rd: history + day's best, `dartsState`, and 2.5 s later the turn ends (`dartsState` with no thrower). 30 s idle also ends it |
 | `dartsLeave` | `roomId` | the thrower gives up the board → `dartsState` |
-| `graffitiDraw` | `roomId`, `segments` (1-60 × `[x0, y0, x1, y1, color 0-6, size 0-2]`, coordinates 0..1) | 40 ms per-user rate limit; bad segments dropped, coordinates rounded to 0.001; kept (last 3000 per wall) → `graffitiDraw` to others |
+| `graffitiDraw` | `wallId` (`<roomId>:<0-3>`), `segments` (1-60 × `[x0, y0, x1, y1, color 0-6, size 0-2]`, coordinates 0..1) | 40 ms per-user rate limit; bad segments dropped, coordinates rounded to 0.001; kept (last 3000 per wall) → `graffitiDraw` to others |
 | `slotSpin` | `roomId` | joined players, real rooms; busy machine → `slotBusy`; broke and no bailout yet → `slotBroke {retryIn}`; else roll → `slotResult` to all |
 | `foosballJoin` | `roomId`, `team` (0 red / 1 blue) | joined players; a free slot on that team (else `foosballFull`); leaves any other table → `foosballTable` |
 | `foosballLeave` | `roomId` | frees your slot → `foosballTable` |
@@ -95,8 +95,8 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `dartsStates` | `rooms: { roomId: state }` | join snapshot |
 | `dartsThrow` | `roomId`, `userId`, `index` (0-2), `x`, `y`, `score`, `label` (`20`, `T20`, `D20`, `25`, `Diana`, `Fuera`) | the dart flies from that player's hand and sticks; the thrower gets a chat line |
 | `dartsBusy` | `roomId`, `thrower` | chat line |
-| `graffitiDraw` | `roomId`, `segments` | draw them on that bathroom's wall |
-| `graffitiStates` | `rooms: { roomId: segments }` | join snapshot |
+| `graffitiDraw` | `wallId`, `segments` | draw them on that wall |
+| `graffitiStates` | `walls: { wallId: segments }` | join snapshot |
 | `weatherState` | Spain in general: `code` (WMO, combined from 8 cities), `temperature` (average °C or null), `cloudCover` (average %), `wind` (km/h), `sunrise`/`sunset` (Madrid minutes after midnight), `wetCities`, `updatedAt` | `Weather`: sky, street light, precipitation, clocks. Also sent on join |
 | `slotResult` | `roomId`, `userId`, `name`, `reels` (3 symbol ids), `win`, `coins` (the spinner's new total), `bailout` | everyone spins that machine to the result; chat line for the spinner (and the bar on a jackpot) |
 | `slotBusy` / `slotBroke` | `roomId` (+ `retryIn` s) | chat line |

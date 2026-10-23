@@ -2,6 +2,16 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-23: car pushing, toilet lamp)
+- 2026-10-23 Cars push each other, toilet light kept in: a hit shoves the other car and kicks it into a
+  slide (85% of your speed along the hit, friction stops it), you lose speed; parked cars are slid by
+  the pusher's client (`drivePush`), driven ones by their driver (`drivePushed`). The bathroom lamp is
+  a bathroom-only shader light (no three.js light left there). **Verified with two clients:** car8
+  rammed parked car1 at 7.5: car1 slid 4.0 and stopped, car8 dropped to 3.4; the other client shows
+  car1 0.03 from the same spot; car8 rammed car1 driven by the other client: car1 moved 2.6 on its
+  driver's screen, matching the pusher's view within 0.2; bathroom lit inside, no warm patch on its
+  outside, only the 3 disco point lights left in the scene.
+
 ## Done (2026-10-23: shader lamps, more cars, sound from the avatar)
 - 2026-10-23 Lamps in the shader, more cars, sound from the avatar: every lamp now lights outside pixels
   from the lit-material shader (`RegionLights`, up to 32), so no cap, no popping and no light inside the

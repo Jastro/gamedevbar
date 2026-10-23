@@ -1,8 +1,9 @@
 import { FloatingPanel } from '../ui/FloatingPanel';
 import { GRAFFITI_COLORS, GRAFFITI_SIZES, ERASER, WALL_COLOR } from './GraffitiWall';
 
-// Bathroom graffiti (server: server/features/graffiti.js). F at the wall
-// opens a panel showing the wall's own canvas; drawing on it adds segments
+// Bathroom graffiti (server: server/features/graffiti.js), four walls per
+// bathroom (id `<roomId>:<index>`). F at a wall opens a panel showing its
+// own canvas; drawing on it adds segments
 // locally at once and sends them in small batches; everyone else gets them
 // from the server, and late joiners get the whole wall.
 const SEND_INTERVAL = 100; // ms between batches
@@ -21,8 +22,9 @@ export class GraffitiSync {
         setInterval(() => this.flush(), SEND_INTERVAL);
     }
 
-    wallFor(roomId) {
-        return this.game.environment.rooms.get(roomId)?.graffiti ?? null;
+    wallFor(wallId) {
+        const [roomId, index] = String(wallId).split(':');
+        return this.game.environment.rooms.get(roomId)?.graffiti?.[Number(index)] ?? null;
     }
 
     createPanel() {
@@ -112,39 +114,38 @@ export class GraffitiSync {
     addSegment(from, to) {
         const segment = [round(from.x), round(from.y), round(to.x), round(to.y), this.color, this.size];
         this.wall.addSegments([segment]);
-        this.pending.push({ roomId: this.wall.bathroom.room.id, segment });
+        this.pending.push({ wallId: this.wall.id, segment });
     }
 
     // One message per call (the server rate-limits per user); anything left
     // goes on the next tick.
     flush() {
         if (this.pending.length === 0) return;
-        const { roomId } = this.pending[0];
+        const { wallId } = this.pending[0];
         const batch = [];
         const rest = [];
         this.pending.forEach(item => {
-            if (item.roomId === roomId && batch.length < MAX_BATCH) batch.push(item.segment);
+            if (item.wallId === wallId && batch.length < MAX_BATCH) batch.push(item.segment);
             else rest.push(item);
         });
         this.pending = rest;
-        this.game.network.send('graffitiDraw', { roomId, segments: batch });
+        this.game.network.send('graffitiDraw', { wallId, segments: batch });
     }
 
     bind() {
         const { network } = this.game;
         network.on('graffitiStates', (data) => {
-            Object.entries(data.rooms || {}).forEach(([roomId, segments]) => {
-                if (Array.isArray(segments)) this.wallFor(roomId)?.setSegments(segments);
+            Object.entries(data.walls || {}).forEach(([wallId, segments]) => {
+                if (Array.isArray(segments)) this.wallFor(wallId)?.setSegments(segments);
             });
         });
         network.on('graffitiDraw', (data) => {
-            if (Array.isArray(data.segments)) this.wallFor(data.roomId)?.addSegments(data.segments);
+            if (Array.isArray(data.segments)) this.wallFor(data.wallId)?.addSegments(data.segments);
         });
     }
 
     // From the interaction (already checked to be inside that bathroom).
-    open(bathroom) {
-        const wall = this.wallFor(bathroom.room.id);
+    open(wall) {
         if (!wall) return;
         this.wall = wall;
         this.surface.replaceChildren(wall.canvas);

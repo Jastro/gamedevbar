@@ -18,7 +18,7 @@ function fixture(game, type, range, hint, act) {
                 game.ui.chat?.addMessage({ type: 'system', message: '¡Entra al baño primero!' });
                 return;
             }
-            act(bathroom, player);
+            act(bathroom, player, object);
         }
     };
 }
@@ -62,8 +62,9 @@ export function createBathroomInteractions(game) {
             (bathroom, player) => {
                 if (!player.isSitting) sync().snort(bathroom);
             }),
-        // The wall's center is ~2.4 from the middle of the cubicle.
-        fixture(game, 'graffitiWall', 2.6, () => 'Pintar en la pared', (bathroom) => game.graffitiSync.open(bathroom)),
+        // A wall's center is up to ~2.4 from the middle of the cubicle.
+        fixture(game, 'graffitiWall', 2.6, () => 'Pintar en la pared',
+            (bathroom, player, object) => game.graffitiSync.open(object.userData.graffiti)),
         fixture(game, 'bathroomLight', 1.6,
             (object) => `${object.userData.bathroom.state.lightOn ? 'Apagar' : 'Encender'} la luz del baño`,
             (bathroom) => sync().toggleLight(bathroom))

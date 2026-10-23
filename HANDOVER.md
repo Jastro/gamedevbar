@@ -19,18 +19,17 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
-- 2026-10-23 Cars push each other, toilet light kept in: a hit shoves the other car and kicks it into a
-  slide (85% of your speed along the hit, friction stops it), you lose speed; parked cars are slid by
-  the pusher's client (`drivePush`), driven ones by their driver (`drivePushed`). The bathroom lamp is
-  a bathroom-only shader light (no three.js light left there). **Verified with two clients:** car8
-  rammed parked car1 at 7.5: car1 slid 4.0 and stopped, car8 dropped to 3.4; the other client shows
-  car1 0.03 from the same spot; car8 rammed car1 driven by the other client: car1 moved 2.6 on its
-  driver's screen, matching the pusher's view within 0.2; bathroom lit inside, no warm patch on its
-  outside, only the 3 disco point lights left in the scene.
-- 2026-10-23 Street lamps in the shader (all lit, outside only), eight cars that collide, sound distance
-  from the avatar. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- 2026-10-23 Toilet light patch, four graffiti walls, stickers in the backlog: a space now has a height
+  (the bathroom ends at its ceiling), so the bar's walls above the cubicle no longer take its lamp and
+  light; a drawable panel on each of the cubicle's four walls (`graffitiDraw` now carries `wallId`);
+  the sticker/spray system is specced under *Next*. **Verified in the browser:** rendering the bar's
+  walls above the cubicle with the toilet light on vs off: 0 pixels differ (100,504 with the old
+  unlimited height, so the test catches it); a "Γ" drawn top-left on each of the four walls shows
+  top-left and unmirrored from inside (free-camera renders) and reached the second client.
+- 2026-10-23 Cars push each other (shove + slide), the toilet lamp as a bathroom-only shader light.
+  Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Uber Suicida drivable, light per space through doors, ring-road lamps, quieter fountain,
-  futbolín turned. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+  futbolín turned; then street lamps in the shader, eight cars, sound distance from the avatar. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 The hub (round plaza, 6 bar slots, roads, ring road, colliders in their own frame), then
   four drivable cars and the fountain. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Two rounds of fixes: seated pose on every seat, gesture hands aimed by finger direction,
@@ -49,26 +48,10 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   per-second movement, wall sliding). Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-21 Vircon32 spectating + Arcade slider (#19), and direct links + 👤 menu (#18). Details in
   [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- Earlier 2026-10-21 (details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md)):
-  - camera pan/reset, with Vircon32 played on the arcade screen;
-  - 21 bundled Vircon32 games;
-  - the Vircon32 cabinet;
-  - the "who's here" board;
-  - open mic;
-  - GHCR + Portainer deploy;
-  - volume sliders and far radios stopping;
-  - the arcade jingle fix;
-  - El Fary removed;
-  - shared radio and projector.
-- 2026-10-20 (details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md)):
-  - TURN deploy automation;
-  - voice-over-TURN fix (per-user coturn credentials);
-  - mic settings panel;
-  - modular refactor;
-  - push-to-talk voice chat;
-  - WS hardening and the chat XSS fix;
-  - repo docs;
-  - rooms, street, doors and audio occlusion.
+- Earlier 2026-10-21: camera pan/reset, 21 Vircon32 games and the cabinet, "who's here" board, open mic,
+  GHCR + Portainer deploy, volume sliders, shared radio and projector. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- 2026-10-20: TURN deploy and voice-over-TURN fix, mic settings, modular refactor, push-to-talk voice,
+  WS hardening, repo docs, rooms/street/doors/occlusion. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 
 ## Decisions to review
 - **Uber Suicida:** seat 0 drives; it lost its collider (walk through it, like the other cars). If it
@@ -143,6 +126,19 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 - Desarrollo's identity: different decoration, default music?
 
 ## Next
+- **Stickers / sprays (like CS:GO and Overwatch)** (2026-10-23, Borja asked; not started):
+  - Right click → radial menu option (🎨 Spray / Pegatina) sticks your chosen sticker where the mouse
+    aims, on any wall, floor or object surface within a short reach (~3 m): raycast from the camera,
+    a decal aligned to the hit surface's normal (`DecalGeometry` from three's examples).
+  - The sticker is picked in the 👤 personalize menu (a grid of stickers; saved like the other
+    choices). A short cooldown per player (e.g. 10 s), and a cap per room (oldest go first).
+  - Shared through the server (one module in `server/features/`, like graffiti): `stickerPlace
+    {stickerId, position, normal, roomId}` → to everyone, snapshot on join, kept in memory.
+  - A spray sound; stickers fade or wear after a while (or when the room cap is hit).
+  - Stickers: drawn in code or as small images in `public/`. Ideas: a cartoon penis with a goofy face,
+    GG EZ, "git gud", Leeroy Jenkins, the cake is a lie, "It's dangerous to go alone", F to pay respects,
+    "Wasted", a trollface-like grin, "This is fine" dog-style fire, Doge-style shiba, "Get over here!".
+    Famous memes may be copyrighted: prefer our own drawings in the meme's spirit over copied images.
 - More characters: the six models are by an artist who collaborates with the project; new ones (or
   variations) wait for them. They must keep the rig (CORE/Body/Head + floating hands/feet with finger
   bones, clips Grounded/Idle/Jump/Sprint/Walk) for accessories, the seated pose and the gestures.

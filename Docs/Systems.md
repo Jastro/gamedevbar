@@ -133,12 +133,14 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Light:** the cubicle's own lamp and switch. While you're inside, `RoomLighting` follows that switch
   instead of the bar's (on = normal, off = dark, no disco). The lamp is a bathroom-only light in the
   shaders (`Bathroom.lampLight` → `RegionLights`), not a three.js light, so it never shines through
-  the partitions or the ceiling into the bar, and it shows for everyone looking in.
+  the partitions or the ceiling into the bar, and it shows for everyone looking in. Its space ends at
+  the ceiling (3.2): the bar's walls above the cubicle get the bar's light.
 - **Dirty hands:** using the toilet dirties them. Outside any bathroom, a dirty-handed player gets rising
   green smell lines at the hands and a "🤢 No se ha lavado las manos" tag (`src/entities/Shame.js`), until
   they wash or 10 min pass.
-- **Graffiti:** the inside of the partition facing the bar (room-local x -10, z 5.4..9.5, y 0.9..2.9) is
-  a drawable wall (`GraffitiWall.js`). F → a panel with the wall's own canvas (it's also the texture): 6
+- **Graffiti:** a drawable panel on each of the cubicle's four walls (`GraffitiWall.WALLS`, id
+  `<roomId>:<0-3>`), clear of the fixtures: the partition facing the bar (x -10), above the toilet
+  (x -15), right of the mirror above the powder table (z 10), left of the door (z 5), as you face them. F → a panel with the wall's own canvas (it's also the texture): 6
   colors, a 🧽 eraser (wall white), 3 sizes, mouse/pen/touch. Segments are drawn locally at once and sent
   in batches (`GraffitiSync`, one message per 100 ms, ≤ 60 segments); the server keeps the last 3000 per
   wall in memory (a restart wipes it) and late joiners get them all. Walking out closes the panel.
@@ -309,7 +311,8 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
     when off), so the light count never changes and no material recompiles.
 - **Through open doors** (`src/rendering/RegionLights.js`): every lit material is patched at compile
   time (`Material.prototype.onBeforeCompile`, only for the main renderer). Each pixel finds its space from
-  its world position: the bathrooms, then the bars (rotated boxes, room-local x ±15, z ±10), else
+  its world position: the bathrooms (up to their ceiling), then the bars (rotated boxes, room-local
+  x ±15, z ±10), else
   outside, and uses that space's ambient and directional light instead of the scene's. A point 0.05 in
   front of the surface decides, so a wall's inner face takes the bar's light and its outer face the
   sky's. `RoomLighting.updateRegions` fills the uniforms each frame (each space fades on its own, the
