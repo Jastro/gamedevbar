@@ -136,7 +136,11 @@ export class GraffitiSync {
         const { network } = this.game;
         network.on('graffitiStates', (data) => {
             Object.entries(data.walls || {}).forEach(([wallId, segments]) => {
-                if (Array.isArray(segments)) this.wallFor(wallId)?.setSegments(segments);
+                const wall = this.wallFor(wallId);
+                if (!wall || !Array.isArray(segments)) return;
+                wall.setSegments(segments);
+                // Upload it now (on joining), not on the first look into the bathroom.
+                this.game.renderer.renderer.initTexture(wall.texture);
             });
         });
         network.on('graffitiDraw', (data) => {

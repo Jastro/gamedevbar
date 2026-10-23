@@ -125,6 +125,9 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   - The handle on the tank flushes: a whoosh, and the bowl's content spins away.
   - The other sounds are synthesized noise (`src/audio/synth.js`), so there are no new files.
 - **Sink:** washes your hands. The mirror above it is a `Reflector`, rendered only while you're inside.
+  Its shaders (and what it reflects) compile once as you enter the bar (`Game.warmUpBathrooms`: each
+  bathroom drawn once from inside), and the walls' drawings upload on joining, so stepping into the
+  cubicle doesn't hitch (it was ~120 ms).
 - **Air freshener:** a spray hiss and particles; the stink is gone.
 - **Powder table:** a small table in the corner right of the mirror (as you face it) with a mirror tray, a
   white line and a rolled-up note. F → "Esnifar": a sniff and a video-game power-up for everyone near, you
@@ -138,9 +141,9 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Dirty hands:** using the toilet dirties them. Outside any bathroom, a dirty-handed player gets rising
   green smell lines at the hands and a "🤢 No se ha lavado las manos" tag (`src/entities/Shame.js`), until
   they wash or 10 min pass.
-- **Graffiti:** a drawable panel on each of the cubicle's four walls (`GraffitiWall.WALLS`, id
-  `<roomId>:<0-3>`), clear of the fixtures: the partition facing the bar (x -10), above the toilet
-  (x -15), right of the mirror above the powder table (z 10), left of the door (z 5), as you face them. F → a panel with the wall's own canvas (it's also the texture): 6
+- **Graffiti:** each of the cubicle's four walls is drawable, floor to ceiling and corner to corner
+  (`GraffitiWall.WALLS`, id `<roomId>:<0-3>`); the fixtures stand in front, and the door's wall has the
+  doorway cut out of its panel (shaded "puerta" on the canvas). F → a panel with the wall's own canvas (it's also the texture): 6
   colors, a 🧽 eraser (wall white), 3 sizes, mouse/pen/touch. Segments are drawn locally at once and sent
   in batches (`GraffitiSync`, one message per 100 ms, ≤ 60 segments); the server keeps the last 3000 per
   wall in memory (a restart wipes it) and late joiners get them all. Walking out closes the panel.

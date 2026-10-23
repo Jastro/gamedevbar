@@ -200,6 +200,7 @@ export class Game {
         await this.init();
         // The window may have been resized (or been 0x0) since the page loaded.
         this.handleResize();
+        this.warmUpBathrooms();
         this.setupInput();
         this.animate();
 
@@ -225,6 +226,27 @@ export class Game {
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
         this.bindNetwork();
         await this.soccerGame.init();
+    }
+
+    // The first look into a bathroom compiled its shaders (the mirror and what
+    // it reflects) and uploaded its walls: a ~120 ms hitch on stepping in.
+    // Done once as you enter the bar instead, where it goes unnoticed: each
+    // bathroom is drawn once from inside, mirror on.
+    warmUpBathrooms() {
+        const camera = this.camera.getCamera();
+        const position = camera.position.clone();
+        const quaternion = camera.quaternion.clone();
+        this.environment.getBathrooms().forEach(bathroom => {
+            bathroom.mirror.visible = true;
+            camera.position.copy(bathroom.worldPoint(-12.5, 1.7, 6.2));
+            camera.lookAt(bathroom.worldPoint(-12.5, 1.6, 10));
+            camera.updateMatrixWorld();
+            this.render();
+            bathroom.mirror.visible = bathroom.localInside;
+        });
+        camera.position.copy(position);
+        camera.quaternion.copy(quaternion);
+        camera.updateMatrixWorld();
     }
 
     // Network → systems wiring that doesn't belong to a single system.

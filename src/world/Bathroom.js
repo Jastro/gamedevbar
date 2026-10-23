@@ -12,7 +12,7 @@ import { playSynth, playFile, playTones } from '../audio/synth';
 export const BATHROOM_BOUNDS = { minX: -15, maxX: -10, minZ: 5, maxZ: 10 };
 export const WALL_HEIGHT = 3.2;
 const WALL_THICKNESS = 0.15;
-const DOOR = { minX: -11.9, maxX: -10.7, height: 2.4 };
+export const DOOR = { minX: -11.9, maxX: -10.7, height: 2.4 };
 const DOOR_SWING_SPEED = 5; // 1/s
 // Centered on the left wall, away from the sink.
 const TOILET = { x: -14.3, z: 7.5 };

@@ -19,6 +19,12 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 Whole-wall graffiti, no toilet hitch: the four drawable panels now cover each wall floor
+  to ceiling (the door's wall with the doorway cut out, shaded on the canvas); the bathrooms' shaders
+  compile and their drawings upload on entering the bar instead of on first stepping into the toilet.
+  **Verified in the browser:** first frame inside the toilet 123 ms before → 9.4 ms after (no new
+  programs or textures on entry); frames drawn on each canvas's edges reach every corner of every wall
+  from inside (free-camera renders), the door shows through its notch, the panel shades the doorway.
 - 2026-10-23 Stickers: 👤 → Pegatina picks one of 12 code-drawn stickers; right click → 🎨 Pegatina sticks it
   where you aimed (3.5 reach, not on doors/cars); one per person (a browser key), replaced by your next,
   10 s cooldown, 24 h. **Verified with two clients:** stuck on the bathroom partition (normal +x, upright)
