@@ -37,10 +37,6 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       shoved on their screen too. Does it feel right (`PUSH_*`, `SLIDE_FRICTION` in `DrivingSync.js`)?
 - [ ] **Toilet light** stays in the bathroom: with it on, nothing warm on the bar's walls or ceiling
       around the cubicle (also above the toilet, over the cubicle's ceiling), from inside or outside it.
-- [ ] **Stickers** (2026-10-23). 👤 → Pegatina: pick one. Right click a wall, the floor, a table → 🎨
-      Pegatina: it sticks there (a friend sees it, with a hiss); again within 10 s: "espera"; a new one
-      replaces your old one; a door or a car: refused. Too big/small (`SIZE` 0.7 in `StickerSync.js`)?
-      Reach OK (3.5)? Readable on dark walls? Funny enough, or more designs?
 - [ ] **Four graffiti walls** in the bathroom (2026-10-23): the partition, above the toilet, right of the
       mirror, left of the door. F at each: right wall in the panel, drawing lands right-side up and not
       mirrored; a friend sees it. Panels in good spots (not over a fixture)?
