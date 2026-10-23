@@ -2,6 +2,22 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-23: leaderboards, profiles, races)
+- 2026-10-23 Races (plan step 6, plan done): the ring road is a circuit with a META gantry; every lap
+  is timed for the weekly board; G by the line opens/joins a race (grid, 3-2-1 lights, 3 laps,
+  winner announced). **Verified in the browser** (two clients, laps simulated by moving the car): a
+  19.5 s lap recorded and announced, a plaza shortcut gave no lap, both cars gridded and held with W
+  down until green, 3 laps → finish announced and `races` +1 saved, getting out left the race and it
+  closed.
+- 2026-10-23 Profiles on click (plan step 5): click an avatar → name, character, accessories, where they
+  are, this week's ranking and coins; 👋 Saludar and challenge buttons; the bartender has his own card.
+  Fixed: clicking a panel button also clicked whatever was behind it. **Verified in the browser** (two
+  clients): the real raycast click opened Manolo's card; the other client's panel showed its ranking
+  (darts 118, slots 18) and coins; Saludar played the cheer and posted the emote.
+- 2026-10-23 Weekly leaderboards (plan step 4): darts, futbolín, slots, laps and races per week, saved
+  to `data/leaderboards.json`, shown on a board on each gallery. **Verified in the browser:** slots
+  spins (best win 18) and a darts turn (118) land on the board and in the file; board picture.
+
 ## Done (2026-10-23: upper floor, bartender, soundscape)
 - 2026-10-23 Soundscape (plan step 3): birds by day, crickets at night, a murmur outside busy bars.
   **Verified in the browser** (levels): day outside birds 0.18 / inside 0.022; night outside crickets

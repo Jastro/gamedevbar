@@ -1,12 +1,11 @@
 # Handover
 
 ## Start here
-2026-10-22 (night). Done and pushed: light through open doors, Spain weather outside with each player's
-local clock, and the right-click radial menu with seven gestures (plan in `Docs/Plans done/`). Before
-that: futbolín, the tragaperras, Madrid time/weather and the bar games batch. 2026-10-23: a round of
-fixes (seated pose everywhere, gesture hands, bar layout against the back wall, meme tragaperras), the
-hub plaza, drivable cars (and the Uber Suicida), light per space through open doors. Next: Borja's checks in
-`Docs/PendingUserChecks.md`; the forum embed waits for the Mediavida add-on admin.
+2026-10-23 (evening). Done and pushed: the whole upper-floor plan (`Docs/Plans done/`): gallery,
+stairs and terrace in each bar, the bartender, the soundscape, weekly leaderboards, profiles on
+click and races on the ring road; then Borja's notes on stairs/terrace/bartender. Next: Borja's
+checks in `Docs/PendingUserChecks.md` (races and profiles need two windows); Jastro's volume for
+`/app/data` (Open questions); the forum embed waits for the Mediavida add-on admin.
 
 2026-10-20. Two bars (Gamedev, Desarrollo) across a street with synced doors, muffled music, push-to-talk
 proximity voice chat with mic settings, and a modular client/server layout (PRs Jastro/gamedevbar#10-#12 merged).
@@ -19,20 +18,16 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
-- 2026-10-23 Races (plan step 6, plan done): the ring road is a circuit with a META gantry; every lap
-  is timed for the weekly board; G by the line opens/joins a race (grid, 3-2-1 lights, 3 laps,
-  winner announced). **Verified in the browser** (two clients, laps simulated by moving the car): a
-  19.5 s lap recorded and announced, a plaza shortcut gave no lap, both cars gridded and held with W
-  down until green, 3 laps → finish announced and `races` +1 saved, getting out left the race and it
-  closed.
-- 2026-10-23 Profiles on click (plan step 5): click an avatar → name, character, accessories, where they
-  are, this week's ranking and coins; 👋 Saludar and challenge buttons; the bartender has his own card.
-  Fixed: clicking a panel button also clicked whatever was behind it. **Verified in the browser** (two
-  clients): the real raycast click opened Manolo's card; the other client's panel showed its ranking
-  (darts 118, slots 18) and coins; Saludar played the cheer and posted the emote.
-- 2026-10-23 Weekly leaderboards (plan step 4): darts, futbolín, slots, laps and races per week, saved
-  to `data/leaderboards.json`, shown on a board on each gallery. **Verified in the browser:** slots
-  spins (best win 18) and a darts turn (118) land on the board and in the file; board picture.
+- 2026-10-23 Borja's notes on the upper floor: stairs moved left of the door (by the bathroom), wider
+  (1.9), solid handrail; terrace bigger (13 × 4, two tables); fixed the terrace floor z-fighting the
+  wall above the entrance (the wall now stops under the slab); bartender 1.35× on a 0.5 deck behind
+  the counter. **Verified in the browser:** walked up/down the stairs in Gamedev and rotated
+  Desarrollo, handrail stops you from the stairs and from the floor, terrace to its new edge, F
+  finds the terrace chairs; pictures of stairs, terrace from outside and the bartender over the
+  counter.
+- 2026-10-23 Plan steps 4-6: weekly leaderboards (board on each gallery, `data/leaderboards.json`),
+  profiles on click, races on the ring road (timed laps, G races). Details in
+  [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Plan steps 1-3: an upper gallery with stairs and a terrace in each bar, a bartender
   (Manolo / Paco), the soundscape. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Hanging lamps and a disco ball in each bar, windows on every building, car nitro, roofs
@@ -70,6 +65,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   WS hardening, repo docs, rooms/street/doors/occlusion. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 
 ## Decisions to review
+- **Bartender's deck** (0.5 high behind the counter) is a platform: players can still go behind the
+  bar by jumping onto it. If they shouldn't go there at all: a blocker at the counter's ends.
 - **Stickers are flat squares, not projected decals:** on edges and curved things they overhang. They
   live in server memory (a deploy wipes them). The 12 designs are ours, in the memes' spirit.
 - **Uber Suicida:** seat 0 drives; it lost its collider (walk through it, like the other cars). If it

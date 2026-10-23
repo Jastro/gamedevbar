@@ -8,11 +8,19 @@ import { BAR_COUNTER_Z, BACK_BAR_Z } from './RoomLayout';
 // says something. Where he is is a function of the server clock and the
 // bar, so everyone sees him in the same place; a drink served in his bar
 // gets a "¡Marchando!".
-const LANE_Z = (BAR_COUNTER_Z + BACK_BAR_Z) / 2;
-const LANE_X = { min: -9, max: 8 };
+// He stands on a raised deck behind the counter (the counter is 1.3 high and
+// the avatars are short), filling the gap between counter (x -6..6, 2 deep)
+// and back shelf (0.5 deep); players can jump up onto it too.
+const DECK = { halfWidth: 6, minZ: BACK_BAR_Z + 0.25, maxZ: BAR_COUNTER_Z - 1, height: 0.5 };
+const LANE_Z = (DECK.minZ + DECK.maxZ) / 2;
+const LANE_X = { min: -5.3, max: 5.3 };
 const SEGMENT = 9000;     // ms: walk somewhere, then wait there
 const WALK_SPEED = 1.4;   // units/s
 const TALK_CHANCE = 0.35; // per stop
+// Bigger than any player (their size slider stops at 1.15), so he shows well
+// over the counter; his center goes up with it, feet on the deck.
+const SCALE = 1.35;
+const CENTER_Y = DECK.height + SCALE;
 const NAMES = { gamedev: 'Manolo 🍺', desarrollo: 'Paco 🍺' };
 const MODELS = { gamedev: 'pj4', desarrollo: 'pj2' };
 const LINES = [
@@ -46,11 +54,26 @@ export class Bartender {
         this.seed = [...room.id].reduce((sum, c) => sum + c.charCodeAt(0), 0);
         this.lastSegment = null;
         this.worldPoint = new THREE.Vector3();
-        this.npc = new RemotePlayer(`npc:bartender:${room.id}`, room.toWorld(0, 1, LANE_Z), game);
+        this.createDeck();
+        this.npc = new RemotePlayer(`npc:bartender:${room.id}`, room.toWorld(0, CENTER_Y, LANE_Z), game);
+        this.npc.mesh.scale.setScalar(SCALE);
         this.npc.setModel(MODELS[room.id] ?? 'pj4').then(() => {
             this.npc.setUsername(NAMES[room.id] ?? 'El camarero');
             this.npc.setAppearance({ ...this.npc.appearance, face: 'mustache' });
         });
+    }
+
+    createDeck() {
+        const { halfWidth, minZ, maxZ, height } = DECK;
+        const deck = new THREE.Mesh(
+            new THREE.BoxGeometry(halfWidth * 2, height, maxZ - minZ),
+            new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.85 })
+        );
+        deck.position.set(0, height / 2, (minZ + maxZ) / 2);
+        deck.receiveShadow = true;
+        this.room.add(deck);
+        deck.updateMatrixWorld(true);
+        this.game.world.collisionManager.addBoxPlatform(deck);
     }
 
     bind() {
@@ -81,7 +104,7 @@ export class Bartender {
         const walkTime = Math.abs(to - from) / WALK_SPEED;
         const walking = elapsed < walkTime;
         const x = walking ? from + (to - from) * (elapsed / walkTime) : to;
-        this.npc.targetPosition.copy(this.room.toWorld(x, 1, LANE_Z));
+        this.npc.targetPosition.copy(this.room.toWorld(x, CENTER_Y, LANE_Z));
         // Facing his way while walking, then the customers (+z, room-local).
         const localYaw = walking ? (to > from ? Math.PI / 2 : -Math.PI / 2) : 0;
         this.npc.targetRotation = localYaw + this.room.root.rotation.y;

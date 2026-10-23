@@ -296,12 +296,15 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 ## Upper floor and terrace
 
 - **Gallery** (`src/world/UpperFloor.js`, `RoomLayout.GALLERY`): along each bar's front wall, floor at 5
-  (z 6.5 → 9.9, full width), three tables with chairs. Under it everything fits (bathroom, clock,
+  (z 6.5 → 9.9, full width), three tables with chairs (clear of the landing and the doorway). Under it everything fits (bathroom, clock,
   who's-here board at 70%, darts); the front-wall paintings hang up there at its eye level.
-- **Stairs**: x 2.4 → 8.4 at z 5.2 → 6.45, then a landing (x 8.4 → 10) onto the gallery. Railings on the
-  gallery's edge, round the landing, along the stairs' open side.
+- **Stairs**: left of the entrance, where the floor is free: the foot at x -2.2 by the door, rising to
+  x -8.2 (z 4.55 → 6.45, 1.9 wide), then a landing (x -9.9 → -8.2) beside the bathroom's front corner
+  onto the gallery. Railings on the gallery's edge and round the landing; the stairs' handrail is
+  solid from the floor up (no stepping off the side, no walking into it from below).
 - **Terrace**: a doorway in the front wall above the entrance (x ±1, y 5 → 7.4) onto a balcony outside
-  (x ±4, out to z 12.6) with railings, a table and two plants, looking over the plaza and fountain.
+  (x ±6.5, out to z 14) with railings, two tables and two plants, looking over the plaza and fountain.
+  The wall above the entrance stops at the slab's underside (its top level with the deck z-fought it).
   Outside light and rain; F reaches its chairs from the terrace (their `userData.outside`).
 - **Collision** (`CollisionManager`): `floor` slabs (gallery, landing, terrace) you stand on and walk
   under (they block a body whose center is over them, between the slab's bottom and top); a `ramp`
@@ -343,8 +346,9 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 ## Bartender
 
 - `src/world/Bartender.js`: one behind each counter (Manolo in Gamedev, Paco in Desarrollo, a moustache),
-  a RemotePlayer the game drives (not in `players`, no network). Every 9 s he walks (1.4/s) to another
-  stop in the lane between the counter and the back shelf, faces the customers and, a third of the
+  a RemotePlayer the game drives (not in `players`, no network), 1.35× a player's size, on a 0.5 high
+  wooden deck behind the counter (a platform: players can jump onto it) so he shows over the 1.3
+  counter. Every 9 s he walks (1.4/s) to another stop along the deck (x ±5.3), faces the customers and, a third of the
   time, says a line. Stops and lines come from the server clock and the bar, so everyone sees the same
   thing. A drink served to someone in his bar: "¡Marchando!".
 

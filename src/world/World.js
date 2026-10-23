@@ -173,9 +173,12 @@ export class World {
         const front = { x: 0, z: -1 };
         addWall(leftWidth, WALL_HEIGHT, WALL_THICKNESS, -ROOM_HALF_WIDTH + leftWidth / 2, halfHeight, ROOM_HALF_DEPTH, front);
         addWall(rightWidth, WALL_HEIGHT, WALL_THICKNESS, ROOM_HALF_WIDTH - rightWidth / 2, halfHeight, ROOM_HALF_DEPTH, front);
-        // Above the entrance: the wall up to the gallery, the terrace doorway, and over it.
+        // Above the entrance: the wall up to the gallery's underside (its slab
+        // fills the doorway's threshold; a wall top level with the floor
+        // z-fought it), the terrace doorway, and over it.
         const doorwayTop = GALLERY.top + TERRACE_DOOR.height;
-        addWall(FRONT_DOOR.width, GALLERY.top - FRONT_DOOR.height, WALL_THICKNESS, FRONT_DOOR.x, (FRONT_DOOR.height + GALLERY.top) / 2, ROOM_HALF_DEPTH, front);
+        const sill = GALLERY.top - GALLERY.thickness;
+        addWall(FRONT_DOOR.width, sill - FRONT_DOOR.height, WALL_THICKNESS, FRONT_DOOR.x, (FRONT_DOOR.height + sill) / 2, ROOM_HALF_DEPTH, front);
         addWall(FRONT_DOOR.width, WALL_HEIGHT - doorwayTop, WALL_THICKNESS, FRONT_DOOR.x, (doorwayTop + WALL_HEIGHT) / 2, ROOM_HALF_DEPTH, front);
 
         room.roof = createRoof(room, wallMaterial, outside, this.finishMaterial('plaster'));

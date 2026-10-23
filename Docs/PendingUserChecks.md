@@ -59,11 +59,13 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Soundscape** (2026-10-23). Outside by day: birds; at night: crickets (much fainter inside). With
       people in a bar, a murmur outside its door. Pleasant or annoying? Levels in `VOLUME`
       (`src/audio/Soundscape.js`).
-- [ ] **Bartender** (Manolo / Paco behind the counter). Walks, stops, talks now and then; order a drink:
+- [ ] **Bartender** (Manolo / Paco behind the counter, bigger, on a deck). Head and shoulders over the
+      counter from a stool? Walks, stops, talks now and then; order a drink:
       "¡Marchando!". Too chatty / too quiet (`TALK_CHANCE`, `LINES` in `src/world/Bartender.js`)?
-- [ ] **Upper floor and terrace** (2026-10-23). In each bar: up the stairs (right of the door, along
-      the room) to the gallery, sit at a table up there, through the doorway over the entrance onto the
-      terrace: the view of the plaza and fountain? Walk under the gallery (door, bathroom, darts):
+- [ ] **Upper floor and terrace** (2026-10-23). In each bar: up the stairs (left of the door, rising
+      toward the bathroom, wider, solid handrail) to the gallery, sit at a table up there, through the doorway over the entrance onto the
+      bigger terrace (two tables): the view of the plaza and fountain? No flicker where the terrace
+      floor meets the wall (from below, outside)? Walk under the gallery (door, bathroom, darts):
       nothing in the way, the camera doesn't get stuck? A friend sees you up there.
 - [ ] **Lamps, disco ball, windows** (2026-10-23). Inside: two green hanging lamps, lit with the normal
       light (switch it off: they go dark); is their light on the tables nice (`LAMP_LIGHT` in
