@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { DEFAULT_LIGHTS } from '../world/LightSwitches';
-import { ROOM_HALF_WIDTH, ROOM_HALF_DEPTH } from '../world/RoomLayout';
+import { ROOM_HALF_WIDTH, ROOM_HALF_DEPTH, WALL_HEIGHT } from '../world/RoomLayout';
 import { BATHROOM_BOUNDS, LAMP_RANGE, WALL_HEIGHT as BATHROOM_HEIGHT } from '../world/Bathroom';
 import { regionUniforms, installRegionLights, REGION_MAX } from './RegionLights';
 
@@ -128,6 +128,8 @@ export class RoomLighting {
                 yaw: room.root.rotation.y,
                 halfX: ROOM_HALF_WIDTH,
                 halfZ: ROOM_HALF_DEPTH,
+                // Up to the top of the walls: the roof above takes the sky's light.
+                maxY: WALL_HEIGHT,
                 light: this.switchLight(environment.getLights(room.id))
             });
         });

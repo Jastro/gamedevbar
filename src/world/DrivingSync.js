@@ -7,6 +7,8 @@ import { lerpAngle } from '../entities/Player';
 
 // Drivable cars (server: server/features/driving.js). F next to one to drive:
 // W/S speed up and brake (then reverse), A/D steer, F or Esc to get out.
+// F next to one someone drives takes the seat beside them (just riding
+// along; F or Esc to get out).
 // The driver's client runs the car (simple bicycle model) and sends its pose;
 // everyone else eases toward it. Cars crash into walls, lamp posts, the
 // fountain and the map's edge, can't go into a bar, and pass through people.
@@ -46,6 +48,7 @@ const SLIDE_FRICTION = 2.5; // 1/s: how fast a shoved car stops sliding (a full-
 const MAX_KICK_SEND = 20; // the server's limit for a kick's speed
 const MAX_PUSH_SEND = 1.5; // the server's limit for one push message
 const HINT = 'W/S: acelerar / frenar · A/D: girar · F o Esc: bajar';
+const RIDE_HINT = 'De copiloto · F o Esc: bajar';
 
 // Parked along the ring road, beside road k's junction, pointing along it.
 function parkingSpot(road, side) {
@@ -60,12 +63,13 @@ export class DrivingSync {
         this.game = game;
         this.cars = new Map(); // id -> { car, driver, name, speed, steer, target }
         this.driving = null;   // our car's id
+        this.riding = null;    // the car we ride in as passenger
         this.keys = {};
         this.lastSent = 0;
         this.pushes = new Map(); // carId -> { dx, dz, kick } shoved since the last send
         this.lastPushSent = 0;
         window.addEventListener('keydown', (event) => {
-            if (!this.driving || this.game.chatActive) return;
+            if ((!this.driving && !this.riding) || this.game.chatActive) return;
             this.keys[event.code] = true;
             if ((event.key.toLowerCase() === 'f' || event.key === 'Escape') && !event.repeat) this.leave();
         });
@@ -106,7 +110,9 @@ export class DrivingSync {
             entry.speed = Number(data.speed) || 0;
             entry.steer = Number(data.steer) || 0;
         });
-        network.on('driveBusy', (data) => this.say(`🚗 Ya lo conduce ${data.name ?? 'alguien'}.`));
+        network.on('driveBusy', (data) => this.say(data.seat === 'passenger'
+            ? `🚗 ${data.name ?? 'Alguien'} ya va de copiloto.`
+            : `🚗 Ya lo conduce ${data.name ?? 'alguien'}.`));
         // Someone drove into our car.
         network.on('drivePushed', (data) => {
             const entry = this.cars.get(data.carId);
@@ -126,12 +132,15 @@ export class DrivingSync {
         this.game.ui.chat?.addMessage({ type: 'system', message });
     }
 
-    applyState({ carId, driver, name, x, z, yaw }, snap) {
+    applyState({ carId, driver, name, passenger, passengerName, x, z, yaw }, snap) {
         const entry = this.cars.get(carId);
         if (!entry) return;
         const previousDriver = entry.driver;
+        const previousPassenger = entry.passenger;
         entry.driver = driver ?? null;
         entry.name = name ?? null;
+        entry.passenger = passenger ?? null;
+        entry.passengerName = passengerName ?? null;
         if (typeof x === 'number' && entry.driver !== this.localId) {
             entry.target = { x, z, yaw };
             if (snap) {
@@ -140,27 +149,47 @@ export class DrivingSync {
             }
         }
         if (!entry.driver) entry.speed = 0;
-        // Whoever stopped driving it gets their own pose back.
-        if (previousDriver && previousDriver !== entry.driver && previousDriver !== this.localId) {
-            const player = this.game.players.players.get(previousDriver);
+        // Whoever got out gets their own pose back.
+        [[previousDriver, entry.driver], [previousPassenger, entry.passenger]].forEach(([before, now]) => {
+            if (!before || before === now || before === this.localId || before === entry.driver || before === entry.passenger) return;
+            const player = this.game.players.players.get(before);
             if (player?.drivingCar === carId) {
                 player.drivingCar = null;
                 player.seatPose = null;
             }
-        }
+        });
         if (entry.driver === this.localId && this.driving !== carId) this.enter(carId);
         else if (this.driving === carId && entry.driver !== this.localId) this.exit();
+        if (entry.passenger === this.localId && this.riding !== carId) this.ride(carId);
+        else if (this.riding === carId && entry.passenger !== this.localId) this.exitRide();
     }
 
-    // From the interaction.
+    // From the interaction: drive it, or ride along with whoever drives it.
     request(car) {
         const entry = this.cars.get(car.id);
         if (!entry || this.game.playMode) return;
-        if (entry.driver && this.game.players.players.has(entry.driver)) {
+        const online = (id) => Boolean(id) && this.game.players.players.has(id);
+        if (!online(entry.driver)) {
+            this.game.network.send('driveStart', { carId: car.id, x: car.position.x, z: car.position.z, yaw: car.yaw });
+        } else if (car === this.uber) {
             this.say(`🚗 Ya lo conduce ${entry.name ?? 'alguien'}.`);
-            return;
+        } else if (online(entry.passenger)) {
+            this.say(`🚗 Va lleno: ${entry.name ?? 'alguien'} y ${entry.passengerName ?? 'alguien'}.`);
+        } else {
+            this.game.network.send('driveRide', { carId: car.id });
         }
-        this.game.network.send('driveStart', { carId: car.id, x: car.position.x, z: car.position.z, yaw: car.yaw });
+    }
+
+    // Into a car seat, as driver or passenger: no walking, gestures or clicks.
+    board(hint) {
+        const player = this.game.players.localPlayer;
+        this.game.gestureSync?.stop();
+        player.stopMoving?.();
+        player.keysPressed = {};
+        player.driving = true; // the seated pose (BathroomSync)
+        this.keys = {};
+        this.playMode = { hint };
+        this.game.playMode = this.playMode;
     }
 
     enter(carId) {
@@ -171,15 +200,33 @@ export class DrivingSync {
         }
         // In the Uber you stay in its driver's seat.
         if (player.isSitting && player.seat !== this.uberDriverSeat) player.standUp();
-        this.game.gestureSync?.stop();
-        player.stopMoving?.();
-        player.keysPressed = {};
-        player.driving = true;
         this.driving = carId;
-        this.keys = {};
-        this.playMode = { hint: HINT };
-        this.game.playMode = this.playMode;
+        this.board(HINT);
         this.say('🚗 W/S para acelerar y frenar, A/D para girar. F para bajar.');
+    }
+
+    ride(carId) {
+        const player = this.game.players.localPlayer;
+        if (!player || this.game.playMode) {
+            this.game.network.send('driveStop', {});
+            return;
+        }
+        if (player.isSitting) player.standUp();
+        this.riding = carId;
+        this.board(RIDE_HINT);
+        this.say(`🚗 De copiloto con ${this.cars.get(carId)?.name ?? 'alguien'}. F para bajar.`);
+    }
+
+    exitRide() {
+        const entry = this.cars.get(this.riding);
+        const player = this.game.players.localPlayer;
+        this.riding = null;
+        if (player) {
+            player.driving = false;
+            if (entry) player.position.copy(this.exitSpot(entry.car, -1));
+        }
+        if (this.game.playMode === this.playMode) this.game.playMode = null;
+        this.playMode = null;
     }
 
     exit() {
@@ -206,14 +253,19 @@ export class DrivingSync {
     }
 
     leave() {
-        if (!this.driving) return;
-        this.game.network.send('driveStop', {});
-        this.exit();
+        if (this.driving) {
+            this.game.network.send('driveStop', {});
+            this.exit();
+        } else if (this.riding) {
+            this.game.network.send('driveStop', {});
+            this.exitRide();
+        }
     }
 
-    // Out the driver's side, else the other side, else behind.
-    exitSpot(car) {
-        const candidates = [[2, 0], [-2, 0], [0, -3.2], [0, 3.2]];
+    // Out your own side (side 1: the driver's, -1: the passenger's), else
+    // the other side, else behind.
+    exitSpot(car, side = 1) {
+        const candidates = [[2 * side, 0], [-2 * side, 0], [0, -3.2], [0, 3.2]];
         const collisions = this.game.world.collisionManager;
         for (const [x, z] of candidates) {
             const spot = car.group.localToWorld(new THREE.Vector3(x, 0, z)).setY(1);
@@ -581,20 +633,24 @@ export class DrivingSync {
                 return;
             }
 
-            // The driver sits in the seat, seated, facing the road.
-            const player = entry.driver ? players.get(entry.driver) : null;
-            if (!player) return;
-            const seat = entry.car.driverSeat();
-            player.position.copy(seat);
-            player.rotation = entry.car.yaw;
-            player.mesh.position.copy(seat);
-            player.mesh.rotation.y = entry.car.yaw;
-            if (player !== this.game.players.localPlayer) {
-                player.targetPosition?.copy(seat);
-                player.targetRotation = entry.car.yaw;
-                player.seatPose = 'sit';
-                player.drivingCar = id;
-            }
+            // Driver and passenger sit in their seats, facing the road.
+            const driver = entry.driver ? players.get(entry.driver) : null;
+            if (driver) this.seatPlayer(driver, entry.car.driverSeat(), entry.car.yaw, id);
+            const passenger = entry.passenger ? players.get(entry.passenger) : null;
+            if (passenger) this.seatPlayer(passenger, entry.car.passengerSeat(), entry.car.yaw, id);
         });
+    }
+
+    seatPlayer(player, seat, yaw, carId) {
+        player.position.copy(seat);
+        player.rotation = yaw;
+        player.mesh.position.copy(seat);
+        player.mesh.rotation.y = yaw;
+        if (player !== this.game.players.localPlayer) {
+            player.targetPosition?.copy(seat);
+            player.targetRotation = yaw;
+            player.seatPose = 'sit';
+            player.drivingCar = carId;
+        }
     }
 }

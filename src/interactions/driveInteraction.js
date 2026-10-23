@@ -1,4 +1,5 @@
-// The drivable cars: click or F next to one to drive it (DrivingSync).
+// The drivable cars: click or F next to one to drive it, or to ride along
+// beside whoever drives it (DrivingSync).
 const REACH = 3.5;
 
 export function createDriveInteraction(game) {
@@ -18,7 +19,9 @@ export function createDriveInteraction(game) {
         },
         hint(object) {
             const entry = game.drivingSync.cars.get(object.userData.car.id);
-            return entry?.driver ? `Lo conduce ${entry.name ?? 'alguien'}` : 'Conducir';
+            if (!entry?.driver) return 'Conducir';
+            if (entry.passenger) return `Va lleno (${entry.name ?? 'alguien'} y ${entry.passengerName ?? 'alguien'})`;
+            return `Subir de copiloto (conduce ${entry.name ?? 'alguien'})`;
         }
     };
 }

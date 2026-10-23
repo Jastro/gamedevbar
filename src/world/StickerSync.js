@@ -12,7 +12,7 @@ import { playSynth } from '../audio/synth';
 // floors and tables; it takes the light of the space it's in.
 const REACH = 3.5;          // from the avatar's head to the spot
 const HEAD_HEIGHT = 0.6;    // above the player's position
-const SIZE = 0.7;
+const SIZE = 1.4;
 const SURFACE_OFFSET = 0.012;
 const COOLDOWN = 10000;     // ms (the server's too)
 const UNSTICKABLE = new Set(['door', 'bathroomDoor', 'drivableCar', 'car']);

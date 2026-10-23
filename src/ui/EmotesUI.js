@@ -2,9 +2,9 @@ import { emotesList } from './emotes.js';
 
 const EDGE_MARGIN = 8; // px kept between the panel and the window edge
 
-// The emote picker: opened from the 😊 button (above it) or with a right
-// click on the 3D view (at the cursor). The panel lives on <body> with fixed
-// positioning so it can open anywhere. Future reactions go here too.
+// The emote picker: right click on the 3D view → 😀 Emojis opens it at the
+// cursor. The panel lives on <body> with fixed positioning so it can open
+// anywhere. Future reactions go here too.
 export class EmotesUI {
     constructor(chatInput, onEmoteSelect) {
         this.chatInput = chatInput;
@@ -15,12 +15,6 @@ export class EmotesUI {
     }
 
     createEmotesPanel() {
-        this.emoteButton = document.createElement('button');
-        this.emoteButton.id = 'emote-button';
-        this.emoteButton.innerHTML = '😊';
-        this.emoteButton.style.zIndex = '1002';
-        this.chatInput.parentElement.appendChild(this.emoteButton);
-
         // Crear panel de emotes
         this.emotesPanel = document.createElement('div');
         this.emotesPanel.id = 'emotes-panel';
@@ -47,23 +41,13 @@ export class EmotesUI {
     }
 
     setupEventListeners() {
-        this.emoteButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (this.isOpen) {
-                this.closePanel();
-                return;
-            }
-            const button = this.emoteButton.getBoundingClientRect();
-            this.openAt(button.right, button.top - EDGE_MARGIN, 'above');
-        });
-
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isOpen) this.closePanel();
         });
 
         // Cerrar panel al hacer click fuera
         document.addEventListener('click', (e) => {
-            if (!this.emotesPanel.contains(e.target) && !this.emoteButton.contains(e.target)) {
+            if (!this.emotesPanel.contains(e.target)) {
                 this.closePanel();
             }
         });

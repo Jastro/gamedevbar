@@ -49,7 +49,8 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `powderSnort` | `roomId` | 3 s cooldown; line gone → `bathroomRefused {reason: 'empty'}`; else empty it for 45 s → `bathroomEvent snort` + `bathroomState` |
 | `driveStart` | `carId` (`car1`-`car8`, `uber`: sent by whoever sits in its seat 0), `x`, `z`, `yaw` (its parking spot, used if nobody moved it yet) | joined players, one car each; taken → `driveBusy {name}`; else → `driveState` to all |
 | `driveUpdate` | `carId`, `x`, `z`, `yaw`, `speed`, `steer` | the driver only, ≥ 30 ms apart, clamped → relayed to others |
-| `driveStop` | – | your car is free (stays where it is) → `driveState` |
+| `driveRide` | `carId` (an open-top car someone drives) | one passenger per car, not while you're in another car; taken → `driveBusy {name, seat: 'passenger'}`; else → `driveState` |
+| `driveStop` | – | out of whichever seat you're in (a car you drove stays where it is) → `driveState` |
 | `drivePush` | `carId` (not your own), `x`, `z`, `yaw` (where it is now), `dx`, `dz` (shoved since the last one), `vx`, `vz` (the kick) | joined players, ≥ 30 ms apart per car. Parked: pose ≤ 1.5 from the stored one → stored, `driveUpdate` to others. Driven: `drivePushed {carId, dx, dz, vx, vz}` to its driver |
 | `lightsToggle` | `roomId`, `light` (`normal` \| `low` \| `disco`) | flip it for that room → `lightsState` to all |
 | `virconSignal` | `roomId`, `targetId`, `signal` (`{description}`, `{candidate}` or `{refused}`, always with `peerId`; ≤ voice size cap) | spectating WebRTC signaling; relayed as `virconSignal {roomId, fromId, signal}` only if the room's cabinet is watchable and sender or target is its player; an offer that can't be relayed gets `{refused, peerId}` back (as if from the target) |
@@ -110,7 +111,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `foosballState` | `roomId`, `ball` [x, z, vx, vz], `rods` (8 offsets), `kicks` (8 × 0/1), `score`, `phase`, `timer`, `winner`, `events` (`kick`/`hit`/`goal`/`win`) | 20/s while active: draw the table |
 | `foosballFull` | `roomId`, `team` | chat line |
 | `playerGesture` / `playerGestureStop` | `userId` (+ `gesture`) | play / end that player's gesture |
-| `driveState` | `carId`, `driver` (or null), `name`, `x`, `z`, `yaw`, `speed`, `steer` | who drives it; the local player gets in or out |
+| `driveState` | `carId`, `driver` (or null), `name`, `passenger` (or null), `passengerName`, `x`, `z`, `yaw`, `speed`, `steer` | who drives it and who rides in it; the local player gets in or out |
 | `driveStates` | `cars` (array of `driveState` bodies, only cars that were driven) | join snapshot |
 | `driveUpdate` | as sent | ease that car to the pose (parked cars too: someone pushed it) |
 | `drivePushed` | `carId`, `dx`, `dz`, `vx`, `vz` | your car was hit: move it by the shove (if free), slide it with the kick |

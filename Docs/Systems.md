@@ -59,6 +59,10 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
 
 ## Drivable cars
 
+- **Passenger:** F next to an open-top car someone drives takes the seat beside them (`driveRide`): you
+  ride along seated, F or Esc gets you out on your side (else wherever is free). One passenger per
+  car; they stay in if the driver gets out, but can't board a car nobody drives. Not the Uber (its
+  five seats are its own).
 - **Eight open-top cars** (`src/world/DrivableCar.js`: red, blue, yellow, green, orange, purple, white,
   cyan) parked along the ring road beside the road junctions (`CARS` in `DrivingSync.js`). F next to one to drive: W/S speed up and brake (then reverse,
   max 14 forward / 5 back), A/D steer, F or Esc to get out (on the driver's side, else the other side
@@ -224,7 +228,8 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   on join. A failed request keeps the last state (clear sky before the first answer).
 - **Time** is Madrid's, from the server clock (`Weather.madridTime`). `daylight()` goes 0 → 1 through a
   45-min twilight around sunrise/sunset.
-- **Sky** (`src/world/Weather.js`, the scene background, seen from everywhere since there are no roofs):
+- **Sky** (`src/world/Weather.js`, the scene background, seen from inside the bars too: the bar you're in
+  hides its roof):
   night navy → twilight orange → blue, greyer with clouds, white during lightning.
 - **Outside only:** `RoomLighting` lights the outdoors from the sky (`Weather.outdoorLight`: dim blue at
   night, dimmer with clouds/rain, a flash for lightning). The lamp posts light up at night. Rain and
@@ -241,6 +246,10 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   Las Palmas, anything else Madrid; until any answer, Spain's. A forum embed will need
   `allow="geolocation"` on its iframe.
 - Inside the bars nothing changes: their lights follow their switches.
+- **Roofs** (`src/world/Roof.js`): a terracotta gable roof on each bar (tiled slopes with eaves, gable
+  ends in the walls' color, ridge cap, chimney). `World.update` hides the roof of the bar the local
+  player is in, so the inside keeps its open view. No shadows; above the walls (y > 8) counts as
+  outside for the light per space, so roofs take the sky's light.
 
 ## Tragaperras (video-game meme slot machine)
 
@@ -281,7 +290,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Placing:** right click → 🎨 Pegatina sticks the sticker picked in 👤 → Pegatina where the right click
   aimed (`StickerSync.aim`: a raycast from the camera; the first visible solid mesh that isn't an avatar).
   Within 3.5 of your avatar's head. Not on doors, the bathroom door or cars (`UNSTICKABLE`: they move).
-- **The sticker:** a flat 0.7 square a hair off the surface (polygon offset, no depth write, no raycast),
+- **The sticker:** a flat 1.4 square a hair off the surface (polygon offset, no depth write, no raycast),
   upright on walls; on floors and tables its top points away from the camera, so it reads for whoever
   stuck it. A lit material, so it takes the light of its space. A spray hiss for everyone near.
 - **Rules** (`server/features/stickers.js`): one per person, a new one replaces your previous one, at

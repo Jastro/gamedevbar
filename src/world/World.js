@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CollisionManager } from './CollisionManager';
 import { Room } from './Room';
 import { Outdoors } from './Outdoors';
+import { createRoof } from './Roof';
 import {
     ROOMS,
     ROOM_HALF_WIDTH,
@@ -140,6 +141,8 @@ export class World {
         addWall(leftWidth, WALL_HEIGHT, WALL_THICKNESS, -ROOM_HALF_WIDTH + leftWidth / 2, halfHeight, ROOM_HALF_DEPTH);
         addWall(rightWidth, WALL_HEIGHT, WALL_THICKNESS, ROOM_HALF_WIDTH - rightWidth / 2, halfHeight, ROOM_HALF_DEPTH);
         addWall(FRONT_DOOR.width, lintelHeight, WALL_THICKNESS, FRONT_DOOR.x, FRONT_DOOR.height + lintelHeight / 2, ROOM_HALF_DEPTH);
+
+        room.roof = createRoof(room, wallMaterial);
     }
 
     createBarArea(room) {
@@ -190,8 +193,14 @@ export class World {
 
     // Colliders are static and measured once (CollisionManager), so there's
     // nothing to refresh per frame.
-    update(deltaTime) {
+    // playerPosition: the local player's, whose bar shows no roof (inside,
+    // the view stays open to the sky).
+    update(deltaTime, playerPosition) {
         this.outdoors?.update(deltaTime);
+        const here = playerPosition ? this.getRoomAt(playerPosition) : null;
+        this.rooms.forEach(room => {
+            if (room.roof) room.roof.visible = room !== here;
+        });
     }
 
     checkCollision(position, radius) {

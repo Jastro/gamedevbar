@@ -151,12 +151,14 @@
       transform: translateY(1px);
     }
 
+    /* The chat input sits under the chat log (bottom left, same width). The
+       round buttons (mic, settings, character, controls) are its children
+       but fixed to the bottom right, in a row of equal buttons. */
     #chat-container {
       position: fixed;
       bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 600px;
+      left: 20px;
+      width: 482px; /* the chat log's 450 + its padding and border */
       z-index: 1001;
       display: flex;
       align-items: center;
@@ -290,95 +292,33 @@
       animation: fadeIn 0.2s ease forwards;
     }
 
-    #emote-button {
-      position: absolute;
-      right: -60px;
-      bottom: 0;
-      width: 45px;
-      height: 45px;
-      border: none;
-      border-radius: 12px;
-      background: rgba(220, 90, 11, 0.9);
-      color: white;
-      font-size: 22px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-      z-index: 1002;
-    }
-
-    #voice-button {
-      position: absolute;
-      right: -115px;
-      bottom: 0;
-      width: 45px;
-      height: 45px;
-      border: none;
-      border-radius: 12px;
-      background: rgba(40, 40, 40, 0.9);
-      color: white;
-      font-size: 22px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-      z-index: 1002;
-      touch-action: none;
-      user-select: none;
-      transition: all 0.15s ease;
-    }
-
-    #voice-settings-button {
-      position: absolute;
-      right: -162px;
-      bottom: 4px;
-      width: 38px;
-      height: 38px;
-      border: none;
-      border-radius: 10px;
-      background: rgba(40, 40, 40, 0.9);
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-      z-index: 1002;
-      transition: all 0.15s ease;
-    }
-
-    #customize-button {
-      position: absolute;
-      right: -205px;
-      bottom: 4px;
-      width: 38px;
-      height: 38px;
-      border: none;
-      border-radius: 10px;
-      background: rgba(40, 40, 40, 0.9);
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-      z-index: 1002;
-      transition: all 0.15s ease;
-    }
-
+    #voice-button,
+    #voice-settings-button,
+    #customize-button,
     #help-button {
-      position: absolute;
-      right: -248px;
-      bottom: 4px;
-      width: 38px;
-      height: 38px;
+      position: fixed;
+      bottom: 20px;
+      width: 48px;
+      height: 48px;
+      padding: 0;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       background: rgba(40, 40, 40, 0.9);
       color: white;
-      font-size: 18px;
+      font-size: 22px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
       z-index: 1002;
       transition: all 0.15s ease;
     }
+
+    #voice-button { right: 188px; touch-action: none; user-select: none; }
+    #voice-settings-button { right: 132px; }
+    #customize-button { right: 76px; }
+    #help-button { right: 20px; }
 
     #help-button:hover,
     #customize-button:hover,
@@ -388,9 +328,9 @@
     }
 
     #voice-settings {
-      position: absolute;
-      bottom: 60px;
-      right: -170px;
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
       width: 300px;
       max-height: calc(100vh - 120px);
       overflow-y: auto;
@@ -873,7 +813,7 @@
     }
 
     #controls-panel {
-      width: min(440px, calc(100% - 32px));
+      width: min(880px, calc(100% - 32px));
     }
 
     .controls-section {
@@ -1075,12 +1015,6 @@
       background: #d93025;
       box-shadow: 0 0 0 4px rgba(217, 48, 37, 0.35), 0 0 20px rgba(217, 48, 37, 0.6);
       transform: scale(1.08);
-    }
-
-    #emote-button:hover {
-      background: rgba(220, 90, 11, 1);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(220, 90, 11, 0.3);
     }
 
     #emotes-panel {
@@ -1316,7 +1250,7 @@
       }
 
       #chat-container {
-        width: 550px;
+        width: 452px;
       }
     }
 
@@ -1329,7 +1263,8 @@
       }
 
       #chat-container {
-        width: 450px;
+        left: 15px;
+        width: 412px;
       }
 
       .chat-message {
@@ -1338,22 +1273,13 @@
       }
     }
 
-    /* Below ~900px the round buttons (emotes, mic, settings, customize) no
-       longer fit to the right of the chat input: they sit in a row above it,
-       right-aligned, and the chat log moves up to make room. */
+    /* Narrow windows: the settings panel never wider than the window. */
     @media (max-width: 900px) {
-      #emote-button { right: 0; bottom: 55px; }
-      #voice-button { right: 52px; bottom: 55px; }
-      #voice-settings-button { right: 104px; bottom: 59px; }
-      #customize-button { right: 149px; bottom: 59px; }
-      #help-button { right: 194px; bottom: 59px; }
       #voice-settings {
-        right: 0;
-        bottom: 110px;
+        right: 10px;
         max-width: calc(100vw - 20px);
         max-height: calc(100vh - 140px);
       }
-      #chat-box { bottom: 125px; }
     }
 
     @media (max-width: 768px) {
@@ -1372,7 +1298,8 @@
       }
 
       #chat-container {
-        width: 400px;
+        left: 10px;
+        width: 352px;
       }
 
 
@@ -1406,8 +1333,16 @@
       }
 
       #chat-container {
+        left: 10px;
         width: calc(100% - 20px);
       }
+
+      /* Phones: the buttons go in a row above the full-width input. */
+      #voice-button,
+      #voice-settings-button,
+      #customize-button,
+      #help-button { bottom: 72px; }
+      #voice-settings { bottom: 130px; }
 
       #chat-input {
         padding: 10px 15px;

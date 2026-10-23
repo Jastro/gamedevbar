@@ -14,7 +14,7 @@ const WALK_ANIMATION_SPEED = 0.4; // units/s above which the walk animation play
 const JUMP_SPEED = 10;            // units/s
 const GRAVITY = -33;              // units/s²
 const STANDING_HEIGHT = 1;        // position.y above the ground (the collision box is 2 tall)
-const SEAT_HEIGHT = 1.4;          // position.y above a seat's origin (bar stools)
+const SEAT_HEIGHT = 1.55;         // position.y above a seat's origin (bar stools)
 const PLAYER_RADIUS = 0.4;        // half the collision box (0.5 caught on door frames)
 const MAX_STEP = 0.15;            // longest collision-checked step, so nothing is skipped
 // Walking straight into a door frame's edge: if a sideways shift this small

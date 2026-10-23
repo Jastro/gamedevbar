@@ -1,6 +1,6 @@
 import { FloatingPanel } from './FloatingPanel';
 
-// ❔ button next to 👤: every control in one panel. Keep this list in sync
+// ❔ button (bottom right): every control in one panel. Keep this list in sync
 // when a key changes (Camera.js, LocalPlayer.js, InteractionSystem.js,
 // VoiceUI.js, VirconUI.js).
 const SECTIONS = [
@@ -15,7 +15,7 @@ const SECTIONS = [
             ['B', 'Beber'],
             ['Karaoke (F en el micro o salta al escenario)', 'Tu voz llega a todo el bar; la letra, en el proyector'],
             ['Futbolín (F en un lado)', 'W/S o ↑/↓: mover las barras · Espacio o clic: chutar · Esc: salir'],
-            ['Coches (F junto a uno)', 'W/S: acelerar / frenar · A/D: girar · F o Esc: bajar'],
+            ['Coches (F junto a uno)', 'Conducir: W/S acelerar / frenar · A/D girar · F o Esc bajar. Si ya lo conduce alguien: de copiloto'],
             ['Tragaperras (F)', 'Tirar de la palanca: 10 🪙 por tirada'],
             ['Dardos (F en la línea amarilla)', 'Ratón: apuntar · Clic o Espacio: lanzar · Esc: salir'],
             ['Q / E', 'Girar la cámara'],
@@ -23,7 +23,7 @@ const SECTIONS = [
             ['Rueda', 'Acercar / alejar'],
             ['Clic en la rueda + arrastrar', 'Mover la cámara'],
             ['R', 'Centrar la cámara'],
-            ['Clic derecho', 'Menú: emojis o animaciones (baile, flexiones, beso, brindar…)'],
+            ['Clic derecho', 'Menú: emojis, animaciones (baile, flexiones, beso, brindar…) o pegar tu pegatina (elígela en 👤)'],
             ['V (mantener)', 'Hablar por micrófono (en ⚙️: micrófono abierto)'],
             ['Enter', 'Escribir en el chat (Enter envía, /me para acciones)'],
             ['Esc', 'Cerrar paneles y emojis']

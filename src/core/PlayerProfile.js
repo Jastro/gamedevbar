@@ -12,6 +12,7 @@ const PROMPT_KEY = 'customizePromptSeen';
 const APPEARANCE_KEY = 'playerAppearance';
 const STICKER_KEY = 'sticker';
 const STICKER_OWNER_KEY = 'stickerOwnerKey';
+const MOUSE_CAPTURE_KEY = 'captureMouse';
 
 function read(key) {
     try {
@@ -82,6 +83,15 @@ export function stickerOwnerKey() {
         write(STICKER_OWNER_KEY, key);
     }
     return key;
+}
+
+// ⚙️ → Ratón: lock the pointer while dragging the camera (Camera.js).
+export function loadMouseCapture() {
+    return read(MOUSE_CAPTURE_KEY) === '1';
+}
+
+export function saveMouseCapture(enabled) {
+    write(MOUSE_CAPTURE_KEY, enabled ? '1' : '0');
 }
 
 export function hasSeenCustomizePrompt() {

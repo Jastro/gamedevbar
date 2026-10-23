@@ -368,7 +368,7 @@ export class Game {
         const playerPosition = this.players.localPlayer?.position;
 
         this.players.update(deltaTime);
-        this.world.update(deltaTime);
+        this.world.update(deltaTime, playerPosition);
         this.soccerGame.update(deltaTime);
         this.environment.update(deltaTime, playerPosition);
         this.environment.updateDormancy(this.players.players.values());

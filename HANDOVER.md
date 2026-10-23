@@ -19,26 +19,18 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
-- 2026-10-23 Whole-wall graffiti, no toilet hitch: the four drawable panels now cover each wall floor
-  to ceiling (the door's wall with the doorway cut out, shaded on the canvas); the bathrooms' shaders
-  compile and their drawings upload on entering the bar instead of on first stepping into the toilet.
-  **Verified in the browser:** first frame inside the toilet 123 ms before → 9.4 ms after (no new
-  programs or textures on entry); frames drawn on each canvas's edges reach every corner of every wall
-  from inside (free-camera renders), the door shows through its notch, the panel shades the doorway.
-- 2026-10-23 Stickers: 👤 → Pegatina picks one of 12 code-drawn stickers; right click → 🎨 Pegatina sticks it
-  where you aimed (3.5 reach, not on doors/cars); one per person (a browser key), replaced by your next,
-  10 s cooldown, 24 h. **Verified with two clients:** stuck on the bathroom partition (normal +x, upright)
-  and seen by both; after a page reload it came back from the snapshot; a floor one (another design)
-  replaced it on both clients, upright from the camera; a second within 10 s: refused by the client and,
-  sent directly, by the server (wait 5.1 s), old one kept; the door is refused; the radial menu shows
-  Pegatina; the 👤 tab shows the 12 with the choice selected; sticker sheet screenshot.
-- 2026-10-23 Toilet light patch, four graffiti walls, stickers in the backlog: a space now has a height
-  (the bathroom ends at its ceiling), so the bar's walls above the cubicle no longer take its lamp and
-  light; a drawable panel on each of the cubicle's four walls (`graffitiDraw` now carries `wallId`);
-  the sticker/spray system is specced under *Next*. **Verified in the browser:** rendering the bar's
-  walls above the cubicle with the toilet light on vs off: 0 pixels differ (100,504 with the old
-  unlimited height, so the test catches it); a "Γ" drawn top-left on each of the four walls shows
-  top-left and unmirrored from inside (free-camera renders) and reached the second client.
+- 2026-10-23 Passenger seat, roofs, bottom bar: F next to a car someone drives rides along beside them
+  (`driveRide`); terracotta gable roofs on the bars (hidden for the bar you're in); chat input bottom
+  left lined up with the log, 🎙️ ⚙️ 👤 ❔ bottom right all 48 px, no 😊 button; ❔ panel 880 wide;
+  ⚙️ → Ratón: pointer lock while dragging the camera; stools sit at 1.55; stickers 1.4.
+  **Verified in the browser (two clients):** passenger boards ("Subir de copiloto" hint), sits on the
+  passenger seat (0 off) on both clients while the car drives, F gets out (on the free side), poses
+  cleared on both; roofs seen from the plaza and from above, hidden inside; input and log both
+  20 px / 452 px; buttons at the bottom right, 48 px each; the settings checkbox sets the camera and
+  is saved; stool sitting height 1.55. **Not verified:** the pointer lock itself (needs a real mouse).
+- 2026-10-23 Stickers (12 code-drawn, right click → 🎨 Pegatina, one per person, 24 h), the toilet light
+  ends at its ceiling, whole-wall bathroom graffiti, no hitch stepping into the toilet. Details in
+  [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Cars push each other (shove + slide), the toilet lamp as a bathroom-only shader light.
   Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Uber Suicida drivable, light per space through doors, ring-road lamps, quieter fountain,
@@ -67,6 +59,9 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   WS hardening, repo docs, rooms/street/doors/occlusion. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 
 ## Decisions to review
+- **Mouse capture = pointer lock while dragging** (right or middle button on the 3D view): browsers
+  can't keep a visible cursor inside the window. Always-on lock (FPS style) would break clicking UI.
+- **Roof hidden for the bar you're in** (not a ceiling): inside stays as it was.
 - **Stickers are flat squares, not projected decals:** on edges and curved things they overhang. They
   live in server memory (a deploy wipes them). The 12 designs are ours, in the memes' spirit.
 - **Uber Suicida:** seat 0 drives; it lost its collider (walk through it, like the other cars). If it
