@@ -246,6 +246,16 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   Las Palmas, anything else Madrid; until any answer, Spain's. A forum embed will need
   `allow="geolocation"` on its iframe.
 - Inside the bars nothing changes: their lights follow their switches.
+- **Wall finishes** (`src/world/WallTextures.js`, per room in `RoomLayout.ROOMS`: `exterior`,
+  `interior`): drawn in code, mapped in meters (`World.mapWallFaces`), so the pattern keeps its size
+  on any wall. Gamedev outside: half-timbering (`timber`, a 4 × 4 m frame); Desarrollo outside:
+  whitewash with an ochre base (`whitewash`); inside both: wood wainscot to 1.2 m and cream plaster
+  (`wainscot`). Wall ends and tops stay plain cream; the roof's gable ends continue the outside
+  finish. `level.json`'s own copies of the walls are removed (they sat on top of World's).
+- **Closed buildings** (`src/world/ClosedBuilding.js`): slots 2-5 (`RoomLayout.FREE_SLOTS`) hold a bar's
+  shell in the old plain cream with a roof, solid walls (people, cars and the camera stay out), a
+  shut door and a big yellow "PRÓXIMA APERTURA" sign (lit a little so it reads at night). Nothing
+  inside; when a new bar opens there, it becomes a Room.
 - **Roofs** (`src/world/Roof.js`): a terracotta gable roof on each bar (tiled slopes with eaves, gable
   ends in the walls' color, ridge cap, chimney). `World.update` hides the roof of the bar the local
   player is in, so the inside keeps its open view. No shadows; above the walls (y > 8) counts as

@@ -3,6 +3,8 @@ import { CollisionManager } from './CollisionManager';
 import { Room } from './Room';
 import { Outdoors } from './Outdoors';
 import { createRoof } from './Roof';
+import { wallFinish } from './WallTextures';
+import { createClosedBuilding } from './ClosedBuilding';
 import {
     ROOMS,
     ROOM_HALF_WIDTH,
@@ -10,6 +12,7 @@ import {
     WALL_HEIGHT,
     WALL_THICKNESS,
     FRONT_DOOR,
+    FREE_SLOTS,
     BAR_COUNTER_Z,
     BACK_BAR_Z
 } from './RoomLayout';
@@ -37,6 +40,13 @@ export class World {
             this.createWalls(room);
             this.createBarArea(room);
         });
+
+        // The empty slots: closed buildings, coming soon.
+        FREE_SLOTS.forEach(slot => createClosedBuilding(this.scene, slot, {
+            collisionManager: this.collisionManager,
+            cameraOccluders: this.cameraOccluders,
+            wallMaterial: this.plainWallMaterial()
+        }));
 
         // The plaza, roads and the wall around the map (RoomLayout's hub).
         this.outdoors = new Outdoors(this.scene, this.collisionManager);
@@ -103,15 +113,37 @@ export class World {
         room.add(floor);
     }
 
-    createWalls(room) {
-        const wallMaterial = new THREE.MeshToonMaterial({
+    // The walls' plain cream: their ends and tops, and the closed buildings.
+    plainWallMaterial() {
+        this.plainWall ??= new THREE.MeshToonMaterial({
             color: 0xf0e6d2,
             roughness: 0.7,
             gradientMap: this.toonGradient
         });
+        return this.plainWall;
+    }
 
-        const addWall = (width, height, depth, x, y, z) => {
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), wallMaterial);
+    // A wall finish (WallTextures) as a material, or null.
+    finishMaterial(style) {
+        const finish = wallFinish(style);
+        if (!finish) return null;
+        this.finishMaterials ??= new Map();
+        if (!this.finishMaterials.has(style)) {
+            this.finishMaterials.set(style, new THREE.MeshToonMaterial({ map: finish.texture, gradientMap: this.toonGradient }));
+        }
+        return { finish, material: this.finishMaterials.get(style) };
+    }
+
+    createWalls(room) {
+        const wallMaterial = this.plainWallMaterial();
+        const inside = this.finishMaterial(room.definition.interior);
+        const outside = this.finishMaterial(room.definition.exterior);
+
+        // inward: the room-local direction the wall's inner face looks.
+        const addWall = (width, height, depth, x, y, z, inward) => {
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const materials = mapWallFaces(geometry, { x, y, z }, inward, inside, outside, wallMaterial);
+            const wall = new THREE.Mesh(geometry, materials);
             wall.position.set(x, y, z);
             wall.castShadow = true;
             wall.receiveShadow = true;
@@ -124,12 +156,10 @@ export class World {
         const fullWidth = ROOM_HALF_WIDTH * 2;
         const halfHeight = WALL_HEIGHT / 2;
 
-        // Pared trasera
-        addWall(fullWidth, WALL_HEIGHT, WALL_THICKNESS, 0, halfHeight, -ROOM_HALF_DEPTH);
-
-        // Paredes laterales
-        addWall(WALL_THICKNESS, WALL_HEIGHT, ROOM_HALF_DEPTH * 2, -ROOM_HALF_WIDTH, halfHeight, 0);
-        addWall(WALL_THICKNESS, WALL_HEIGHT, ROOM_HALF_DEPTH * 2, ROOM_HALF_WIDTH, halfHeight, 0);
+        // Back wall, side walls.
+        addWall(fullWidth, WALL_HEIGHT, WALL_THICKNESS, 0, halfHeight, -ROOM_HALF_DEPTH, { x: 0, z: 1 });
+        addWall(WALL_THICKNESS, WALL_HEIGHT, ROOM_HALF_DEPTH * 2, -ROOM_HALF_WIDTH, halfHeight, 0, { x: 1, z: 0 });
+        addWall(WALL_THICKNESS, WALL_HEIGHT, ROOM_HALF_DEPTH * 2, ROOM_HALF_WIDTH, halfHeight, 0, { x: -1, z: 0 });
 
         // Front wall, split around the entrance: left piece, right piece, lintel.
         const doorLeft = FRONT_DOOR.x - FRONT_DOOR.width / 2;
@@ -138,11 +168,12 @@ export class World {
         const rightWidth = ROOM_HALF_WIDTH - doorRight;
         const lintelHeight = WALL_HEIGHT - FRONT_DOOR.height;
 
-        addWall(leftWidth, WALL_HEIGHT, WALL_THICKNESS, -ROOM_HALF_WIDTH + leftWidth / 2, halfHeight, ROOM_HALF_DEPTH);
-        addWall(rightWidth, WALL_HEIGHT, WALL_THICKNESS, ROOM_HALF_WIDTH - rightWidth / 2, halfHeight, ROOM_HALF_DEPTH);
-        addWall(FRONT_DOOR.width, lintelHeight, WALL_THICKNESS, FRONT_DOOR.x, FRONT_DOOR.height + lintelHeight / 2, ROOM_HALF_DEPTH);
+        const front = { x: 0, z: -1 };
+        addWall(leftWidth, WALL_HEIGHT, WALL_THICKNESS, -ROOM_HALF_WIDTH + leftWidth / 2, halfHeight, ROOM_HALF_DEPTH, front);
+        addWall(rightWidth, WALL_HEIGHT, WALL_THICKNESS, ROOM_HALF_WIDTH - rightWidth / 2, halfHeight, ROOM_HALF_DEPTH, front);
+        addWall(FRONT_DOOR.width, lintelHeight, WALL_THICKNESS, FRONT_DOOR.x, FRONT_DOOR.height + lintelHeight / 2, ROOM_HALF_DEPTH, front);
 
-        room.roof = createRoof(room, wallMaterial);
+        room.roof = createRoof(room, wallMaterial, outside);
     }
 
     createBarArea(room) {
@@ -210,4 +241,34 @@ export class World {
     getGroundHeight(position, radius) {
         return this.collisionManager.getGroundHeight(position, radius);
     }
+}
+
+// A box wall's materials per face (+x, -x, +y, -y, +z, -z): the inside finish
+// on the face looking `inward`, the outside one on the opposite face, plain
+// on the ends and top. The finished faces get UVs in meters (along the wall
+// to the right of whoever faces it, and up from the floor), so a pattern
+// keeps its size and lines up from wall to wall.
+function mapWallFaces(geometry, offset, inward, inside, outside, plain) {
+    const position = geometry.attributes.position;
+    const normal = geometry.attributes.normal;
+    const uv = geometry.attributes.uv;
+    for (let i = 0; i < position.count; i++) {
+        const nx = normal.getX(i);
+        const nz = normal.getZ(i);
+        const facing = nx * inward.x + nz * inward.z;
+        const side = facing > 0.5 ? inside : facing < -0.5 ? outside : null;
+        if (!side) continue;
+        const x = position.getX(i) + offset.x;
+        const y = position.getY(i) + offset.y;
+        const z = position.getZ(i) + offset.z;
+        const along = Math.abs(nz) > 0.5 ? x * Math.sign(nz) : -z * Math.sign(nx);
+        uv.setXY(i, along / side.finish.width, y / side.finish.height);
+    }
+    return [[1, 0], [-1, 0], null, null, [0, 1], [0, -1]].map(direction => {
+        if (!direction) return plain;
+        const facing = direction[0] * inward.x + direction[1] * inward.z;
+        if (facing > 0.5) return inside?.material ?? plain;
+        if (facing < -0.5) return outside?.material ?? plain;
+        return plain;
+    });
 }

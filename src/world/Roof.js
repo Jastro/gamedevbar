@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { ROOM_HALF_WIDTH, ROOM_HALF_DEPTH, WALL_HEIGHT, WALL_THICKNESS } from './RoomLayout';
 
 // A terracotta gable roof on each bar (room-local): two tiled slopes with
-// eaves, the ridge along the bar's length, the gable ends closed in the
-// walls' color, a ridge cap and a brick chimney. Only for looking at from
+// eaves, the ridge along the bar's length, the gable ends closed like the
+// outside walls (their finish, if any), a ridge cap and a brick chimney. Only for looking at from
 // outside: World hides the roof of the bar you're in, so the inside keeps
 // its open view. It casts no shadow (the bar's light inside is its own).
 const OVERHANG = 0.8;
@@ -12,7 +12,8 @@ const TILE_THICKNESS = 0.25;
 const TILE_COLOR = 0xb5532f;
 const CHIMNEY = { x: 8, z: -4, size: 1.1 };
 
-export function createRoof(room, wallMaterial) {
+// outside: the walls' outside finish ({ material, finish }, World) or null.
+export function createRoof(room, wallMaterial, outside = null) {
     const group = new THREE.Group();
     group.name = 'Roof';
     const tiles = new THREE.MeshStandardMaterial({ map: getTileTexture(), color: TILE_COLOR, roughness: 0.85 });
@@ -38,10 +39,17 @@ export function createRoof(room, wallMaterial) {
         new THREE.Vector2(0, RISE)
     ]);
     const gableGeometry = new THREE.ExtrudeGeometry(gable, { depth: WALL_THICKNESS, bevelEnabled: false });
+    if (outside) {
+        // The shape's UVs are in meters; continue the walls' pattern upward.
+        const uv = gableGeometry.attributes.uv;
+        for (let i = 0; i < uv.count; i++) {
+            uv.setXY(i, uv.getX(i) / outside.finish.width, (uv.getY(i) + WALL_HEIGHT) / outside.finish.height);
+        }
+    }
     // Shape x → room z, extrusion → room x.
     gableGeometry.rotateY(Math.PI / 2);
     [-1, 1].forEach(side => {
-        const end = new THREE.Mesh(gableGeometry, wallMaterial);
+        const end = new THREE.Mesh(gableGeometry, outside?.material ?? wallMaterial);
         end.position.set(side * ROOM_HALF_WIDTH - WALL_THICKNESS / 2, WALL_HEIGHT, 0);
         group.add(end);
     });

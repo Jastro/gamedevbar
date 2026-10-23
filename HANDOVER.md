@@ -19,6 +19,13 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 Wall finishes and closed buildings: Borja picked E6 (half-timbered) for Gamedev's outside,
+  E2 (whitewash, ochre base) for Desarrollo's and I1 (wood wainscot, cream plaster) inside both, drawn
+  in code and mapped in meters; level.json's duplicate walls removed. Slots 2-5 got closed buildings
+  (plain shell, roof, shut door, "PRÓXIMA APERTURA" sign). **Verified in the browser:** overview of
+  the six buildings around the plaza; close-ups of both facades, a closed building and the inside
+  wainscot; shaders compile; each closed building's front wall blocks, its doorstep is free and it
+  isn't a room.
 - 2026-10-23 Passenger seat, roofs, bottom bar: F next to a car someone drives rides along beside them
   (`driveRide`); terracotta gable roofs on the bars (hidden for the bar you're in); chat input bottom
   left lined up with the log, 🎙️ ⚙️ 👤 ❔ bottom right all 48 px, no 😊 button; ❔ panel 880 wide;
@@ -140,4 +147,4 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   variations) wait for them. They must keep the rig (CORE/Body/Head + floating hands/feet with finger
   bones, clips Grounded/Idle/Jump/Sprint/Walk) for accessories, the seated pose and the gestures.
 - Bathroom and lights still accept any room id up to 32 (like darts did): switch them to `isRoomId`.
-- Remove the remaining duplicated geometry (level.json vs World: floor and walls).
+- Remove the remaining duplicated geometry: level.json's floor still lies under World's (its walls are gone).

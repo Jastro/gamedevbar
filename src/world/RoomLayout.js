@@ -58,7 +58,7 @@ export function bearing(angle) {
 
 // A bar in slot k: its center out along that bearing, turned so its front
 // wall (local +z) faces the middle.
-function slotPlacement(slot) {
+export function slotPlacement(slot) {
     const angle = slotAngle(slot);
     const direction = bearing(angle);
     const distance = PLAZA_RADIUS + ROOM_HALF_DEPTH;
@@ -79,6 +79,9 @@ export const ROOMS = [
         barSign: 'Gamedev MV',
         paintings: true,
         radioStation: 'rock-fm', // until someone changes it (src/audio/radioStations.js)
+        // Wall finishes (src/world/WallTextures.js).
+        exterior: 'timber',
+        interior: 'wainscot',
         slot: 0
     },
     {
@@ -88,10 +91,16 @@ export const ROOMS = [
         barSign: 'Desarrollo MV',
         paintings: false,
         radioStation: 'megastar',
+        exterior: 'whitewash',
+        interior: 'wainscot',
         // Gamedev's neighbor around the plaza (a short walk, door to door).
         slot: 1
     }
 ].map(room => ({ ...room, ...slotPlacement(room.slot) }));
+
+// The other slots hold closed buildings for now (src/world/ClosedBuilding.js).
+export const FREE_SLOTS = Array.from({ length: SLOT_COUNT }, (_, slot) => slot)
+    .filter(slot => !ROOMS.some(room => room.slot === slot));
 
 export const DEFAULT_ROOM_ID = 'gamedev';
 

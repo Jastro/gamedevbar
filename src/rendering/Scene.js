@@ -26,9 +26,9 @@ export class Scene {
             });
             lights.forEach(light => this.scene.add(light));
 
-            // The front wall is rebuilt with a doorway by World.
-            const frontWall = template.getObjectByName('FrontWall');
-            if (frontWall) frontWall.removeFromParent();
+            // World builds the walls (the front one with a doorway, all of
+            // them with their finishes); these copies sat right on top of them.
+            ['FrontWall', 'BackWall', 'LeftWall', 'RightWall'].forEach(name => template.getObjectByName(name)?.removeFromParent());
             // An old, empty "Bathroom" (an invisible toilet seat next to the
             // Vircon32); the real one is src/world/Bathroom.js.
             const oldBathroom = template.getObjectByName('Bathroom');

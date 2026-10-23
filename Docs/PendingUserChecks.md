@@ -37,6 +37,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       shoved on their screen too. Does it feel right (`PUSH_*`, `SLIDE_FRICTION` in `DrivingSync.js`)?
 - [ ] **Toilet light** stays in the bathroom: with it on, nothing warm on the bar's walls or ceiling
       around the cubicle (also above the toilet, over the cubicle's ceiling), from inside or outside it.
+- [ ] **Wall finishes and closed buildings** (2026-10-23). Gamedev outside half-timbered, Desarrollo
+      whitewashed with the ochre base, both inside with the wood wainscot. Pattern size right
+      (`width`/`height` per style in `src/world/WallTextures.js`)? The four other buildings: shut door
+      and "PRÓXIMA APERTURA" sign, readable from the plaza (also at night)?
 - [ ] **Passenger seat** (2026-10-23). A friend drives a car; F next to it: "Subir de copiloto", you sit
       beside them and ride along; F gets you out. Looks right on both screens?
 - [ ] **Roofs.** From the plaza and the ring road: do the roofs look nice (color, pitch `RISE`, eaves
