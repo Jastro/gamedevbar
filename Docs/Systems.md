@@ -295,6 +295,14 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   down keeps you on the stairs (`LocalPlayer.STEP_DOWN`). F skips things 3.5+ above or below you.
 - Gallery and terrace slabs are camera occluders.
 
+## Bartender
+
+- `src/world/Bartender.js`: one behind each counter (Manolo in Gamedev, Paco in Desarrollo, a moustache),
+  a RemotePlayer the game drives (not in `players`, no network). Every 9 s he walks (1.4/s) to another
+  stop in the lane between the counter and the back shelf, faces the customers and, a third of the
+  time, says a line. Stops and lines come from the server clock and the bar, so everyone sees the same
+  thing. A drink served to someone in his bar: "¡Marchando!".
+
 ## Tragaperras (video-game meme slot machine)
 
 - **Where:** against each bar's left wall (`src/world/SlotMachine.js`, room-local (-14.35, 0, 2.6)). F or

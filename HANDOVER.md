@@ -19,6 +19,9 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 Bartender (plan step 2): Manolo / Paco walk behind the counters on a shared clock-driven
+  schedule, talk now and then, "¡Marchando!" when someone in the bar is served. **Verified in the
+  browser:** two bartenders, walking between stops in the lane (z -7.65), name tag and speech bubble.
 - 2026-10-23 Upper floor (plan `Docs/Plans to be done/2026-10-23 Upper floor, bartender, ...`, step 1 of
   6): a gallery along each bar's front wall at 5 m with stairs, tables and a doorway onto a terrace over
   the entrance facing the fountain; new `floor` and `ramp` colliders. **Verified in the browser:**

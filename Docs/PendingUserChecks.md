@@ -47,6 +47,8 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       in `src/world/Roof.js`)? Inside: a sloped wooden ceiling; lit like the bar at night and by day?
 - [ ] **New bottom bar.** Chat input bottom left under the chat log; 🎙️ ⚙️ 👤 ❔ bottom right, all the
       same size; no 😊 button (emojis: right click). ❔ panel twice as wide. Also on a small window.
+- [ ] **Bartender** (Manolo / Paco behind the counter). Walks, stops, talks now and then; order a drink:
+      "¡Marchando!". Too chatty / too quiet (`TALK_CHANCE`, `LINES` in `src/world/Bartender.js`)?
 - [ ] **Upper floor and terrace** (2026-10-23). In each bar: up the stairs (right of the door, along
       the room) to the gallery, sit at a table up there, through the doorway over the entrance onto the
       terrace: the view of the plaza and fountain? Walk under the gallery (door, bathroom, darts):
