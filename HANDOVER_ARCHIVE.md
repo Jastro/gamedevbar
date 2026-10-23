@@ -2,6 +2,20 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-23: Uber Suicida, light per space)
+- 2026-10-23 Uber Suicida, light per space, lamps: the black car is the Uber Suicida and drives from its
+  first seat (car `'uber'` in driving; passengers ride along; smoke ride unchanged); every lit material
+  takes the light of the space each pixel is in (`RegionLights.js`), replacing the door lights and the
+  outdoor dimming; every lamp glows on the ground, 6 real lights follow you, 18 new lamps along the ring
+  road; quieter fizz/splat fountain loop; no hover highlight while playing, driving or seated; futbolín
+  at x -9.5, turned 90°. **Bug fixed in existing code:** a car overlapping something (a door shut on
+  it) could never move again; it now hops to the nearest free spot. **Verified in the browser:**
+  shader uniforms equal the scene lights in your own space; from the street at night the open bar looks
+  lit and goes dark with its switch; from inside, the street looks like night, and by (faked) day
+  bright through a dark bar; two clients: driver in seat 0 drives the Uber, the passenger stays on its
+  seat (0 off) through 6 s of circling and the smoke, both teleported, wheel released; car1 not green
+  while driven; futbolín stand spots free; lamp row screenshot; fountain buffer peaks 0.24.
+
 ## Done (2026-10-23: the hub, drivable cars)
 - 2026-10-23 Drivable cars and the fountain: four open-top cars on the ring road (F to drive, W/S/A/D,
   F or Esc to get out), a quiet engine hum, crashes against walls/lamps/fountain/edge, never into a

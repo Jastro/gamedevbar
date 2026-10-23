@@ -26,6 +26,7 @@ import { DEFAULT_ROOM_ID } from './RoomLayout';
 // Empty rooms stop their streams after this long (see updateDormancy).
 const EMPTY_ROOM_DELAY = 30000; // ms
 const DORMANCY_INTERVAL = 1000; // ms between checks
+const EAR_HEIGHT = 0.6; // above the player's position: about the head
 
 export class Environment {
     constructor(scene, world, serverClock, audioSettings) {
@@ -110,10 +111,34 @@ export class Environment {
         });
     }
 
+    // Where sounds are heard from: the player's head for distance (the
+    // camera may be far behind), the camera's turn for left and right. Every
+    // AudioListener hangs from it (they all drive the one shared context).
+    get ear() {
+        if (!this.earObject) {
+            this.earObject = new THREE.Object3D();
+            this.earObject.name = 'Ear';
+            this.world.scene.add(this.earObject);
+        }
+        return this.earObject;
+    }
+
+    updateEar(playerPosition) {
+        if (!this.earCamera) return;
+        if (playerPosition) {
+            this.ear.position.copy(playerPosition);
+            this.ear.position.y += EAR_HEIGHT;
+        } else {
+            this.earCamera.getWorldPosition(this.ear.position);
+        }
+        this.earCamera.getWorldQuaternion(this.ear.quaternion);
+    }
+
     initializeAudio(camera) {
         if (this.audioListener) return;
+        this.earCamera = camera;
         this.audioListener = new THREE.AudioListener();
-        camera.add(this.audioListener);
+        this.ear.add(this.audioListener);
         this.rooms.forEach(({ radio }) => radio.initializeAudio(this.audioListener, this.audioSettings));
     }
 
@@ -139,6 +164,7 @@ export class Environment {
     }
 
     update(deltaTime, listenerPosition) {
+        this.updateEar(listenerPosition);
         this.car?.update(deltaTime);
         this.doors.forEach(door => door.update(deltaTime));
         if (listenerPosition) this.updateAudioOcclusion(listenerPosition);

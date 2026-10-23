@@ -9,14 +9,20 @@ import { lerpAngle } from '../entities/Player';
 // W/S speed up and brake (then reverse), A/D steer, F or Esc to get out.
 // The driver's client runs the car (simple bicycle model) and sends its pose;
 // everyone else eases toward it. Cars crash into walls, lamp posts, the
-// fountain and the map's edge, can't go into a bar, and pass through people.
+// fountain, the map's edge and each other, can't go into a bar, and pass
+// through people.
 // The Uber Suicida (Car.js, id 'uber') is driven from its driver's seat:
 // sitting there (CarSync) takes the wheel, and its passengers ride along.
+// road: parked by that road's junction; side: just past it (1) or before it (-1).
 const CARS = [
-    { id: 'car1', color: 0xd32f2f, road: 0 },
-    { id: 'car2', color: 0x1e63d6, road: 2 },
-    { id: 'car3', color: 0xf9c80e, road: 3 },
-    { id: 'car4', color: 0x2e9e3a, road: 5 }
+    { id: 'car1', color: 0xd32f2f, road: 0, side: 1 },
+    { id: 'car2', color: 0x1e63d6, road: 2, side: 1 },
+    { id: 'car3', color: 0xf9c80e, road: 3, side: 1 },
+    { id: 'car4', color: 0x2e9e3a, road: 5, side: 1 },
+    { id: 'car5', color: 0xff7a1a, road: 1, side: 1 },
+    { id: 'car6', color: 0x8e44ad, road: 4, side: 1 },
+    { id: 'car7', color: 0xf2f2f2, road: 3, side: -1 },
+    { id: 'car8', color: 0x1fb5c9, road: 0, side: -1 }
 ];
 const MAX_FORWARD = 14;   // units/s
 const MAX_REVERSE = 5;
@@ -30,11 +36,12 @@ const SEND_INTERVAL = 50; // ms
 const FOLLOW_RATE = 12;   // 1/s for other people's cars
 const CAMERA_FOLLOW = 2;  // 1/s: the camera swings behind a moving car
 const UNSTICK_REACH = 3;  // how far a stuck car may hop to get free
+const CAR_CHECK_RANGE = 6; // other cars further than this can't touch
 const HINT = 'W/S: acelerar / frenar · A/D: girar · F o Esc: bajar';
 
-// Parked along the ring road, just past road k's junction, pointing along it.
-function parkingSpot(road) {
-    const angle = roadAngle(road) + 0.12;
+// Parked along the ring road, beside road k's junction, pointing along it.
+function parkingSpot(road, side) {
+    const angle = roadAngle(road) + 0.12 * side;
     const position = hubPoint(angle, (RING_ROAD.inner + RING_ROAD.outer) / 2 + 1.8);
     // Tangent to the ring (counterclockwise from above).
     return { position, yaw: Math.atan2(-Math.cos(angle), Math.sin(angle)) };
@@ -63,9 +70,9 @@ export class DrivingSync {
     // After the world exists.
     create() {
         const scene = this.game.scene.getScene();
-        CARS.forEach(({ id, color, road }) => {
+        CARS.forEach(({ id, color, road, side }) => {
             const car = new DrivableCar(scene, id, color);
-            const spot = parkingSpot(road);
+            const spot = parkingSpot(road, side);
             car.create(spot.position, spot.yaw);
             this.cars.set(id, { car, driver: null, name: null, speed: 0, steer: 0, target: null });
         });
@@ -195,6 +202,27 @@ export class DrivingSync {
             collisions.checkCollision(point, car.halfWidth) || this.game.world.getRoomAt(point));
     }
 
+    // How deep two cars overlap (0: apart), with their sample points as circles.
+    carOverlap(car, x, z, yaw, other) {
+        const mine = car.samplePoints(x, z, yaw);
+        const theirs = other.samplePoints(other.position.x, other.position.z, other.yaw);
+        const reach = car.halfWidth + other.halfWidth;
+        let overlap = 0;
+        mine.forEach(a => theirs.forEach(b => { overlap = Math.max(overlap, reach - Math.hypot(a.x - b.x, a.z - b.z)); }));
+        return overlap;
+    }
+
+    // Would this step drive into another car? Cars already touching (another
+    // driver's pose arrives a little late) may still pull apart.
+    hitsCar(car, x, z, yaw, nextX, nextZ, nextYaw) {
+        for (const { car: other } of this.cars.values()) {
+            if (other === car || Math.hypot(other.position.x - nextX, other.position.z - nextZ) > CAR_CHECK_RANGE) continue;
+            const next = this.carOverlap(car, nextX, nextZ, nextYaw, other);
+            if (next > 0 && next > this.carOverlap(car, x, z, yaw, other) + 1e-4) return true;
+        }
+        return false;
+    }
+
     // A car already touching something (a door shut on it) could never move
     // again: it hops to the nearest free spot around it.
     unstick(car) {
@@ -240,7 +268,7 @@ export class DrivingSync {
             const nextYaw = yaw + (speed / WHEELBASE) * Math.tan(entry.steer * MAX_STEER) * step;
             const nextX = x + Math.sin(nextYaw) * speed * step;
             const nextZ = z + Math.cos(nextYaw) * speed * step;
-            if (this.blocked(car, nextX, nextZ, nextYaw)) {
+            if (this.blocked(car, nextX, nextZ, nextYaw) || this.hitsCar(car, x, z, yaw, nextX, nextZ, nextYaw)) {
                 if (Math.abs(speed) > 3) {
                     const listener = this.game.environment.audioListener;
                     if (listener) playSynth(listener, car.group, new THREE.Vector3(0, 0.6, Math.sign(speed) * 2), 'dart', 6);

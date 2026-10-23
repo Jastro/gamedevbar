@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { ROOMS, ROOM_HALF_WIDTH, ROOM_HALF_DEPTH } from './RoomLayout';
 import { playSynth } from '../audio/synth';
+import { regionUniforms, clipToOutdoors, LAMP_MAX } from '../rendering/RegionLights';
 
 // Real time and weather in Madrid (server: server/features/weather.js).
 // The sky follows the real sun (sunrise/sunset from the forecast, with a
@@ -22,11 +23,10 @@ const PRECIPITATION_TOP = 14;
 // Rain and snow fill a box this big (half width) around the camera, wrapping
 // as it moves, so the whole map can have weather with a few thousand drops.
 const PRECIPITATION_HALF = 24;
-// Light count is costly (every material), so a few real lights move to the
-// lamps nearest the player; every lamp also casts a glow on the ground.
-const LAMP_LIGHTS = 6;
-const LAMP_REASSIGN = 0.5; // s
+// The lamps' light is computed in the lit materials (RegionLights: every
+// lamp, outside only); each also casts a soft glow on the ground.
 const LAMP_GLOW = { radius: 6, opacity: 0.45 };
+const LAMP_COLOR = new THREE.Color(0xffd590);
 const LAMP_HEIGHT = 5;
 const LAMP_INTENSITY = 14;
 const LAMP_DISTANCE = 26;
@@ -138,6 +138,7 @@ export class Weather {
             map: getGlowTexture(), color: 0xffd590, transparent: true, opacity: 0,
             blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2
         });
+        clipToOutdoors(this.glowMaterial);
         const glowGeometry = new THREE.CircleGeometry(LAMP_GLOW.radius, 32).rotateX(-Math.PI / 2);
         this.lampSpots.forEach(({ x, z }) => {
             const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, LAMP_HEIGHT, 10), pole);
@@ -152,23 +153,10 @@ export class Weather {
             glow.raycast = () => {};
             this.lampGroup.add(glow);
         });
-        this.lampLights = Array.from({ length: LAMP_LIGHTS }, () => {
-            const light = new THREE.PointLight(0xffd590, 0, LAMP_DISTANCE, 1);
-            scene.add(light);
-            return light;
-        });
-        this.lampReassign = 0;
-    }
-
-    // The real lights go to the lamps nearest the player.
-    placeLampLights(dt) {
-        this.lampReassign -= dt;
-        if (this.lampReassign > 0) return;
-        this.lampReassign = LAMP_REASSIGN;
-        const from = this.game.players.localPlayer?.position ?? this.game.camera.getCamera().position;
-        const nearest = [...this.lampSpots]
-            .sort((a, b) => Math.hypot(a.x - from.x, a.z - from.z) - Math.hypot(b.x - from.x, b.z - from.z));
-        this.lampLights.forEach((light, i) => light.position.set(nearest[i].x, LAMP_HEIGHT, nearest[i].z));
+        const lamps = this.lampSpots.slice(0, LAMP_MAX);
+        lamps.forEach(({ x, z }, i) => regionUniforms.lampPositions.value[i].set(x, LAMP_HEIGHT, z));
+        regionUniforms.lampCount.value = lamps.length;
+        regionUniforms.lampRange.value = LAMP_DISTANCE;
     }
 
     createRain(scene) {
@@ -276,8 +264,7 @@ export class Weather {
 
         // Lamps.
         const night = 1 - day;
-        this.placeLampLights(dt);
-        this.lampLights.forEach(light => { light.intensity = LAMP_INTENSITY * night; });
+        regionUniforms.lampColor.value.copy(LAMP_COLOR).multiplyScalar(LAMP_INTENSITY * night);
         this.bulbMaterial.emissiveIntensity = 1.5 * night;
         this.glowMaterial.opacity = LAMP_GLOW.opacity * night;
         this.glowMaterial.visible = night > 0.02;

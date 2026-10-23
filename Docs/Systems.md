@@ -59,16 +59,17 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
 
 ## Drivable cars
 
-- **Four open-top cars** (`src/world/DrivableCar.js`: red, blue, yellow, green) parked along the ring
-  road, just past roads 0, 2, 3 and 5. F next to one to drive: W/S speed up and brake (then reverse,
+- **Eight open-top cars** (`src/world/DrivableCar.js`: red, blue, yellow, green, orange, purple, white,
+  cyan) parked along the ring road beside the road junctions (`CARS` in `DrivingSync.js`). F next to one to drive: W/S speed up and brake (then reverse,
   max 14 forward / 5 back), A/D steer, F or Esc to get out (on the driver's side, else the other side
   or behind, wherever is free). A low engine hum (an oscillator through a low-pass, pitch with speed)
   while someone drives it, a thunk on a crash.
 - **The driver's client runs the car** (`DrivingSync`): a bicycle model (wheelbase 2.5), stepped in
   0.25 pieces; three points along its length are checked against the colliders (walls, lamp posts,
   the fountain, the edge wall) and against the bars' footprints, so it never gets into a bar. A crash
-  bounces it back at a quarter speed. Cars don't collide with people (they drive through them) or
-  with each other. A car that already overlaps something (a door shut on it) hops to the nearest
+  bounces it back at a quarter speed. Cars don't collide with people (they drive through them). A car
+  stops against any other car, parked or driven (`hitsCar`: sample points as circles), but two that
+  already touch (a remote pose arrives late) may still pull apart. A car that already overlaps something (a door shut on it) hops to the nearest
   free spot within 3 (`DrivingSync.unstick`), or it could never move again.
 - **Sync** (`server/features/driving.js`): one driver per car; the pose goes out 20 times a second,
   the server keeps the last one (a car stays where it was left, also for late joiners) and relays it;
@@ -217,8 +218,9 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   only outside the bars: drops fill a 48×48 box around the camera that wraps as it moves, and any drop
   inside a bar is hidden (`Weather.insideBar`); fog only while you're outside. Lamp posts stand beside
   each road a little out from the plaza and along the ring road's outer edge (18). Every lamp casts a
-  soft additive glow on the ground; six real lights (a fixed count, so nothing recompiles) move to the
-  lamps nearest you every 0.5 s (`Weather.placeLampLights`). Rain has a looping hiss, quieter inside.
+  soft additive glow on the ground (not drawn inside a bar: `clipToOutdoors`). Their light is not
+  three.js lights (each would cost every lit material): `RegionLights` lights outside pixels from every
+  lamp (up to 32) in the material shader, so all lamps light at once and none reach into a bar. Rain has a looping hiss, quieter inside.
 - **Clock:** above the door inside each bar (`WallClock.js`): *your* local time (browser) and *your*
   weather (`LocalWeather.js`): the browser asks once for your location, rounded to ~10 km, kept a day,
   and fetched from Open-Meteo straight from your browser ("Tu zona"). Denied: the Canary timezone gets
@@ -302,8 +304,8 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   outside, and uses that space's ambient and directional light instead of the scene's. A point 0.05 in
   front of the surface decides, so a wall's inner face takes the bar's light and its outer face the
   sky's. `RoomLighting.updateRegions` fills the uniforms each frame (each space fades on its own, the
-  outside snaps for lightning). Up to 12 spaces (`REGION_MAX`). Point lights (disco, lamps, the
-  bathroom lamp) are not split by space.
+  outside snaps for lightning). Up to 12 spaces (`REGION_MAX`). Point lights (disco, the bathroom
+  lamp) are not split by space.
 
 ## Empty rooms
 
@@ -391,7 +393,9 @@ Offline (no WS) the client toggles locally.
 
 ## Audio
 
-One `AudioListener` on the camera (`Environment.initializeAudio`). Each room's radio (and each remote voice)
+One `AudioListener` on the ear (`Environment.ear`, `initializeAudio`): an object at the player's head
+(distance is measured from your avatar, not the camera) turned like the camera (left/right follow the
+view). Snake's and Pong's listeners hang from it too: all listeners drive the one shared audio context. Each room's radio (and each remote voice)
 is a `PositionalAudio` with an `OcclusionChain` (*low-pass filter → gain*, `src/audio/Occlusion.js`) whose
 level `Environment.getOcclusionLevel(sourceRoom, listenerRoom)` picks every frame:
 
@@ -420,7 +424,7 @@ CORS headers**, or Web Audio gets silence. The list was checked with curl on 202
 that goes quiet. Dropped live streams reconnect after 5 s.
 
 **Inaudible radios stop downloading.** Every 250 ms each radio estimates what this player would hear:
-the panner's inverse distance falloff (from the camera's `AudioListener`) × the wall/door occlusion gain
+the panner's inverse distance falloff (from the ear's `AudioListener`) × the wall/door occlusion gain
 × radio volume × the player's radio slider (0 when *Silenciar para mí*). Below 0.01 (-40 dB) for 3 s,
 the stream is unloaded. The first check decides at once, so the other bar's radio never starts if you
 can't hear it. When it's audible again, it reconnects at the live point. Typical values: own bar ~0.05,

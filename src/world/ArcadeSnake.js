@@ -97,9 +97,7 @@ export class ArcadeSnake {
 
     setupSounds() {
         const listener = new THREE.AudioListener();
-        if (window.game?.camera) {
-            window.game.camera.getCamera().add(listener);
-        }
+        (window.game?.environment?.ear ?? window.game?.camera?.getCamera())?.add(listener);
         // Its own listener, so the Arcade volume slider is its master gain.
         const settings = window.game?.audioSettings;
         listener.setMasterVolume(settings?.get('arcade') ?? 1);

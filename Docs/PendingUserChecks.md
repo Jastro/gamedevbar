@@ -29,9 +29,13 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       F or Esc to get out). With a friend in the back, drive around: they ride along in their seat, and
       after the 5 s countdown the smoke and teleport still happen (also mid-drive). Not green while you
       drive it.
-- [ ] **Lamps at night.** Every lamp should light the ground (a soft glow; the six nearest you also
-      light people and walls), plus the new row along the outside of the ring road. Glow too strong /
-      weak (`LAMP_GLOW` in `Weather.js`)? Any pop when the real lights move to other lamps as you walk?
+- [ ] **Lamps at night** (redone 2026-10-23). Every lamp lights the ground, people and cars, with no
+      popping as you walk; the lamps next to a bar (e.g. outside Gamedev's left wall) no longer light
+      its inside. Frame rate at night outside OK?
+- [ ] **More cars and car crashes.** Eight cars on the ring road now. Drive into a parked or a friend's
+      car: you stop against it (it doesn't get pushed), and can back off.
+- [ ] **Sound distance from your avatar.** Pull the camera far back (or zoom out) next to the radio or
+      the fountain: the volume follows where your avatar stands, left/right still follows the view.
 - [ ] **The plaza** (2026-10-23). Walk around: the plaza, the six small roads, the ring road, the wall at
       the edge, the lamps. Desarrollo is now Gamedev's neighbor (slot 1). Is the plaza too big for two bars
       for now? Walls and furniture in Desarrollo (turned 60°) should block exactly like in Gamedev.

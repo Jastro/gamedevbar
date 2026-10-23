@@ -19,18 +19,16 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
-- 2026-10-23 Uber Suicida, light per space, lamps: the black car is the Uber Suicida and drives from its
-  first seat (car `'uber'` in driving; passengers ride along; smoke ride unchanged); every lit material
-  takes the light of the space each pixel is in (`RegionLights.js`), replacing the door lights and the
-  outdoor dimming; every lamp glows on the ground, 6 real lights follow you, 18 new lamps along the ring
-  road; quieter fizz/splat fountain loop; no hover highlight while playing, driving or seated; futbolín
-  at x -9.5, turned 90°. **Bug fixed in existing code:** a car overlapping something (a door shut on
-  it) could never move again; it now hops to the nearest free spot. **Verified in the browser:**
-  shader uniforms equal the scene lights in your own space; from the street at night the open bar looks
-  lit and goes dark with its switch; from inside, the street looks like night, and by (faked) day
-  bright through a dark bar; two clients: driver in seat 0 drives the Uber, the passenger stays on its
-  seat (0 off) through 6 s of circling and the smoke, both teleported, wheel released; car1 not green
-  while driven; futbolín stand spots free; lamp row screenshot; fountain buffer peaks 0.24.
+- 2026-10-23 Lamps in the shader, more cars, sound from the avatar: every lamp now lights outside pixels
+  from the lit-material shader (`RegionLights`, up to 32), so no cap, no popping and no light inside the
+  bars (the ground glow is clipped too); four more cars (car5-car8) and cars stop against each other;
+  all audio listeners hang from an ear at the player's head turned like the camera. **Verified in the
+  browser:** shaders compile (17 programs, none broken), 24 lamps in the uniforms; inside Gamedev next
+  to the lamp 1.1 from its wall: no warm patch; outside: the road lit around each lamp; car8 driven
+  into car1 stops at 0 overlap without moving it, then backs off; the audio context's listener sits
+  at the player's head (camera 4.4 away).
+- 2026-10-23 Uber Suicida drivable, light per space through doors, ring-road lamps, quieter fountain,
+  futbolín turned. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 The hub (round plaza, 6 bar slots, roads, ring road, colliders in their own frame), then
   four drivable cars and the fountain. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Two rounds of fixes: seated pose on every seat, gesture hands aimed by finger direction,
@@ -75,8 +73,10 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   should still block people: a collider moved with it.
 - **Light per space is per pixel** (world position + a nudge along the normal), only for ambient and
   directional light; point lights (disco, lamps, bathroom lamp) still reach through walls as before.
-- **Lamps:** 6 real lights moved to the nearest lamps + a ground glow on all 24, instead of 24 lights
-  (cost on every material). If lights popping is visible: fade them, or more lights.
+- **Lamps are shader light, outside only:** a person standing in a doorway is lit by them on their
+  outside half only. Lamps don't cast shadows (they never did).
+- **Cars don't push each other:** they stop on contact. Pushing parked cars would need the server to
+  own their poses.
 - **Fountain volume 0.15** (about 20 dB under the old hiss), a different sound (fizz + splats + plips).
 - Hub (2026-10-23):
   - **Desarrollo is Gamedev's neighbor (slot 1)**, not across the plaza (slot 3): a 10 s walk door to door
