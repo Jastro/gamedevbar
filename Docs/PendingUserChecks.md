@@ -32,8 +32,11 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Lamps at night** (redone 2026-10-23). Every lamp lights the ground, people and cars, with no
       popping as you walk; the lamps next to a bar (e.g. outside Gamedev's left wall) no longer light
       its inside. Frame rate at night outside OK?
-- [ ] **More cars and car crashes.** Eight cars on the ring road now. Drive into a parked or a friend's
-      car: you stop against it (it doesn't get pushed), and can back off.
+- [ ] **Car crashes push** (2026-10-23). Ram a parked car: it slides off (~4 m at full speed) and you
+      slow down; keep pushing it slowly; pin it against a wall (you stop). Ram a friend's car: it gets
+      shoved on their screen too. Does it feel right (`PUSH_*`, `SLIDE_FRICTION` in `DrivingSync.js`)?
+- [ ] **Toilet light** stays in the bathroom: with it on, nothing warm on the bar's walls or ceiling
+      around the cubicle, from inside or outside it.
 - [ ] **Sound distance from your avatar.** Pull the camera far back (or zoom out) next to the radio or
       the fountain: the volume follows where your avatar stands, left/right still follows the view.
 - [ ] **The plaza** (2026-10-23). Walk around: the plaza, the six small roads, the ring road, the wall at

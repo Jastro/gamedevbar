@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { DEFAULT_LIGHTS } from '../world/LightSwitches';
 import { ROOM_HALF_WIDTH, ROOM_HALF_DEPTH } from '../world/RoomLayout';
-import { BATHROOM_BOUNDS } from '../world/Bathroom';
+import { BATHROOM_BOUNDS, LAMP_RANGE } from '../world/Bathroom';
 import { regionUniforms, installRegionLights, REGION_MAX } from './RegionLights';
 
 // Turns each bar's light switches into lighting. The scene has one ambient
@@ -39,6 +39,8 @@ const BATHROOM_REGION = {
 };
 const LEVEL_COLORS = Object.fromEntries(Object.entries(LEVELS).map(([name, level]) => [name, new THREE.Color(level.ambientColor)]));
 const scratch = new THREE.Vector3();
+const ZERO = new THREE.Vector3();
+const BLACK = new THREE.Color(0, 0, 0);
 
 export class RoomLighting {
     constructor(game) {
@@ -112,7 +114,8 @@ export class RoomLighting {
                     yaw: room.root.rotation.y,
                     halfX: BATHROOM_REGION.halfX,
                     halfZ: BATHROOM_REGION.halfZ,
-                    light: this.switchLight({ normal: bathroom.state.lightOn, low: false })
+                    light: this.switchLight({ normal: bathroom.state.lightOn, low: false }),
+                    lamp: bathroom.lampLight
                 });
             }
         });
@@ -135,7 +138,10 @@ export class RoomLighting {
             regionUniforms.regionHalf.value[i].set(region.halfX, region.halfZ);
             regionUniforms.regionAmbient.value[i].copy(light.ambient);
             regionUniforms.regionDirectional.value[i].copy(light.directional);
+            regionUniforms.regionLampPosition.value[i].copy(region.lamp?.position ?? ZERO);
+            regionUniforms.regionLampColor.value[i].copy(region.lamp?.color ?? BLACK);
         }
+        regionUniforms.regionLampRange.value = LAMP_RANGE;
         const sky = this.game.weather?.outdoorLight();
         const outdoorTarget = sky
             ? this.levelLight(sky, sky.color)

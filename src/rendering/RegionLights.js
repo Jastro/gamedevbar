@@ -7,10 +7,11 @@ import * as THREE from 'three';
 // space it is in (the bars and their bathrooms are rotated boxes, anything
 // else is outside) and uses that space's ambient and directional light
 // instead. RoomLighting fills the uniforms every frame.
-// The street lamps are lit here too (Weather fills them): only outside
-// pixels get their light (no bleeding into the bars), and since they're
-// not three.js lights, all of them light at once without the per-light cost
-// on every material.
+// Lamps are lit here too: the street lamps (Weather fills them) only light
+// outside pixels, and a space may have one lamp of its own (the bathrooms'),
+// lighting only that space. Nothing bleeds through walls or ceilings, and
+// since they're not three.js lights, all of them light at once without the
+// per-light cost on every material.
 export const REGION_MAX = 12;
 export const LAMP_MAX = 32;
 
@@ -21,6 +22,10 @@ export const regionUniforms = {
     regionHalf: { value: Array.from({ length: REGION_MAX }, () => new THREE.Vector2()) },
     regionAmbient: { value: Array.from({ length: REGION_MAX }, () => new THREE.Color()) },
     regionDirectional: { value: Array.from({ length: REGION_MAX }, () => new THREE.Color()) },
+    // A space's own lamp (world position; color × intensity, black: none).
+    regionLampPosition: { value: Array.from({ length: REGION_MAX }, () => new THREE.Vector3()) },
+    regionLampColor: { value: Array.from({ length: REGION_MAX }, () => new THREE.Color(0, 0, 0)) },
+    regionLampRange: { value: 7 },
     outdoorAmbient: { value: new THREE.Color() },
     outdoorDirectional: { value: new THREE.Color() },
     lampCount: { value: 0 },
@@ -49,6 +54,9 @@ uniform vec4 regionBoxes[ REGION_MAX ];
 uniform vec2 regionHalf[ REGION_MAX ];
 uniform vec3 regionAmbient[ REGION_MAX ];
 uniform vec3 regionDirectional[ REGION_MAX ];
+uniform vec3 regionLampPosition[ REGION_MAX ];
+uniform vec3 regionLampColor[ REGION_MAX ];
+uniform float regionLampRange;
 uniform vec3 outdoorAmbient;
 uniform vec3 outdoorDirectional;
 uniform int lampCount;
@@ -59,9 +67,11 @@ varying vec3 vRegionWorld;
 
 // The first region containing p (bathrooms come before their bar), else
 // outside; returns whether p is outside.
-bool regionLightAt( vec3 p, out vec3 ambient, out vec3 directional ) {
+bool regionLightAt( vec3 p, out vec3 ambient, out vec3 directional, out vec3 lampPosition, out vec3 lampLightColor ) {
 	ambient = outdoorAmbient;
 	directional = outdoorDirectional;
+	lampPosition = vec3( 0.0 );
+	lampLightColor = vec3( 0.0 );
 	for ( int i = 0; i < REGION_MAX; i ++ ) {
 		if ( i >= regionCount ) break;
 		vec4 box = regionBoxes[ i ];
@@ -70,6 +80,8 @@ bool regionLightAt( vec3 p, out vec3 ambient, out vec3 directional ) {
 		if ( abs( local.x ) <= regionHalf[ i ].x && abs( local.y ) <= regionHalf[ i ].y ) {
 			ambient = regionAmbient[ i ];
 			directional = regionDirectional[ i ];
+			lampPosition = regionLampPosition[ i ];
+			lampLightColor = regionLampColor[ i ];
 			return false;
 		}
 	}
@@ -82,13 +94,27 @@ bool regionLightAt( vec3 p, out vec3 ambient, out vec3 directional ) {
 const FRAGMENT_LIGHTS = `
 vec3 regionAmbientLight;
 vec3 regionDirectionalLight;
-bool regionOutdoor = regionLightAt( vRegionWorld + inverseTransformDirection( normal, viewMatrix ) * 0.05, regionAmbientLight, regionDirectionalLight );
+vec3 regionLampAt;
+vec3 regionLampLight;
+bool regionOutdoor = regionLightAt( vRegionWorld + inverseTransformDirection( normal, viewMatrix ) * 0.05, regionAmbientLight, regionDirectionalLight, regionLampAt, regionLampLight );
 ` + THREE.ShaderChunk.lights_fragment_begin
     .replace('getAmbientLightIrradiance( ambientLightColor )', 'getAmbientLightIrradiance( regionAmbientLight )')
     .replace('getDirectionalLightInfo( directionalLight, directLight );',
         'getDirectionalLightInfo( directionalLight, directLight );\n\t\tdirectLight.color = regionDirectionalLight;') + `
-// Street lamps: point lights (decay 1, like three's), outside only.
+// Lamps: point lights (decay 1, like three's). The space's own lamp:
 #if defined( RE_Direct )
+if ( max( regionLampLight.r, max( regionLampLight.g, regionLampLight.b ) ) > 0.0 ) {
+	vec3 toLamp = ( viewMatrix * vec4( regionLampAt, 1.0 ) ).xyz - geometryPosition;
+	float lampDistance = length( toLamp );
+	if ( lampDistance < regionLampRange ) {
+		IncidentLight lampLight;
+		lampLight.direction = toLamp / lampDistance;
+		lampLight.color = regionLampLight * getDistanceAttenuation( lampDistance, regionLampRange, 1.0 );
+		lampLight.visible = true;
+		RE_Direct( lampLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight );
+	}
+}
+// The street lamps, outside only.
 if ( regionOutdoor && max( lampColor.r, max( lampColor.g, lampColor.b ) ) > 0.0 ) {
 	for ( int i = 0; i < LAMP_MAX; i ++ ) {
 		if ( i >= lampCount ) break;
@@ -134,7 +160,9 @@ export function clipToOutdoors(material) {
         shader.fragmentShader = shader.fragmentShader.replace('void main() {', `void main() {
 	vec3 regionUnusedAmbient;
 	vec3 regionUnusedDirectional;
-	if ( !regionLightAt( vRegionWorld, regionUnusedAmbient, regionUnusedDirectional ) ) discard;`);
+	vec3 regionUnusedLamp;
+	vec3 regionUnusedLampLight;
+	if ( !regionLightAt( vRegionWorld, regionUnusedAmbient, regionUnusedDirectional, regionUnusedLamp, regionUnusedLampLight ) ) discard;`);
     };
     material.customProgramCacheKey = () => 'region-outdoors';
 }

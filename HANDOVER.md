@@ -19,14 +19,16 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
-- 2026-10-23 Lamps in the shader, more cars, sound from the avatar: every lamp now lights outside pixels
-  from the lit-material shader (`RegionLights`, up to 32), so no cap, no popping and no light inside the
-  bars (the ground glow is clipped too); four more cars (car5-car8) and cars stop against each other;
-  all audio listeners hang from an ear at the player's head turned like the camera. **Verified in the
-  browser:** shaders compile (17 programs, none broken), 24 lamps in the uniforms; inside Gamedev next
-  to the lamp 1.1 from its wall: no warm patch; outside: the road lit around each lamp; car8 driven
-  into car1 stops at 0 overlap without moving it, then backs off; the audio context's listener sits
-  at the player's head (camera 4.4 away).
+- 2026-10-23 Cars push each other, toilet light kept in: a hit shoves the other car and kicks it into a
+  slide (85% of your speed along the hit, friction stops it), you lose speed; parked cars are slid by
+  the pusher's client (`drivePush`), driven ones by their driver (`drivePushed`). The bathroom lamp is
+  a bathroom-only shader light (no three.js light left there). **Verified with two clients:** car8
+  rammed parked car1 at 7.5: car1 slid 4.0 and stopped, car8 dropped to 3.4; the other client shows
+  car1 0.03 from the same spot; car8 rammed car1 driven by the other client: car1 moved 2.6 on its
+  driver's screen, matching the pusher's view within 0.2; bathroom lit inside, no warm patch on its
+  outside, only the 3 disco point lights left in the scene.
+- 2026-10-23 Street lamps in the shader (all lit, outside only), eight cars that collide, sound distance
+  from the avatar. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Uber Suicida drivable, light per space through doors, ring-road lamps, quieter fountain,
   futbolín turned. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 The hub (round plaza, 6 bar slots, roads, ring road, colliders in their own frame), then
@@ -75,8 +77,9 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   directional light; point lights (disco, lamps, bathroom lamp) still reach through walls as before.
 - **Lamps are shader light, outside only:** a person standing in a doorway is lit by them on their
   outside half only. Lamps don't cast shadows (they never did).
-- **Cars don't push each other:** they stop on contact. Pushing parked cars would need the server to
-  own their poses.
+- **Car pushing is client-side:** the pusher's client slides parked cars and reports where they end up;
+  two people shoving the same parked car at once may make it jitter. Cars don't spin when hit
+  off-center, they only slide.
 - **Fountain volume 0.15** (about 20 dB under the old hiss), a different sound (fizz + splats + plips).
 - Hub (2026-10-23):
   - **Desarrollo is Gamedev's neighbor (slot 1)**, not across the plaza (slot 3): a 10 s walk door to door

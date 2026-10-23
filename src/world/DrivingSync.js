@@ -9,8 +9,10 @@ import { lerpAngle } from '../entities/Player';
 // W/S speed up and brake (then reverse), A/D steer, F or Esc to get out.
 // The driver's client runs the car (simple bicycle model) and sends its pose;
 // everyone else eases toward it. Cars crash into walls, lamp posts, the
-// fountain, the map's edge and each other, can't go into a bar, and pass
-// through people.
+// fountain and the map's edge, can't go into a bar, and pass through people.
+// Driving into another car shoves it and hands it most of your speed along
+// the hit (it slides off, slowing down), you lose that much (drivePush);
+// one that can't move (it's against a wall) stops you like a wall.
 // The Uber Suicida (Car.js, id 'uber') is driven from its driver's seat:
 // sitting there (CarSync) takes the wheel, and its passengers ride along.
 // road: parked by that road's junction; side: just past it (1) or before it (-1).
@@ -37,6 +39,12 @@ const FOLLOW_RATE = 12;   // 1/s for other people's cars
 const CAMERA_FOLLOW = 2;  // 1/s: the camera swings behind a moving car
 const UNSTICK_REACH = 3;  // how far a stuck car may hop to get free
 const CAR_CHECK_RANGE = 6; // other cars further than this can't touch
+const PUSH_DRAG = 2;      // 1/s: pushing a car slows you (to ~3.5 at full throttle)
+const PUSH_TRANSFER = 0.85; // share of your speed along the hit the other car gets
+const PUSH_RECOIL = 0.7;  // and how much of that you lose
+const SLIDE_FRICTION = 2.5; // 1/s: how fast a shoved car stops sliding (a full-speed hit: ~4)
+const MAX_KICK_SEND = 20; // the server's limit for a kick's speed
+const MAX_PUSH_SEND = 1.5; // the server's limit for one push message
 const HINT = 'W/S: acelerar / frenar · A/D: girar · F o Esc: bajar';
 
 // Parked along the ring road, beside road k's junction, pointing along it.
@@ -54,6 +62,8 @@ export class DrivingSync {
         this.driving = null;   // our car's id
         this.keys = {};
         this.lastSent = 0;
+        this.pushes = new Map(); // carId -> { dx, dz, kick } shoved since the last send
+        this.lastPushSent = 0;
         window.addEventListener('keydown', (event) => {
             if (!this.driving || this.game.chatActive) return;
             this.keys[event.code] = true;
@@ -97,6 +107,19 @@ export class DrivingSync {
             entry.steer = Number(data.steer) || 0;
         });
         network.on('driveBusy', (data) => this.say(`🚗 Ya lo conduce ${data.name ?? 'alguien'}.`));
+        // Someone drove into our car.
+        network.on('drivePushed', (data) => {
+            const entry = this.cars.get(data.carId);
+            if (!entry || this.driving !== data.carId) return;
+            const dx = Number(data.dx) || 0;
+            const dz = Number(data.dz) || 0;
+            const { car } = entry;
+            if (!this.blocked(car, car.position.x + dx, car.position.z + dz, car.yaw)) {
+                car.group.position.x += dx;
+                car.group.position.z += dz;
+            }
+            this.addSlide(entry, { x: Number(data.vx) || 0, z: Number(data.vz) || 0 });
+        });
     }
 
     say(message) {
@@ -163,7 +186,11 @@ export class DrivingSync {
         const entry = this.cars.get(this.driving);
         const player = this.game.players.localPlayer;
         this.driving = null;
-        if (entry) entry.speed = 0;
+        if (entry) {
+            entry.speed = 0;
+            // Parked where we left it (it follows `target` from now on).
+            entry.target = { x: entry.car.position.x, z: entry.car.position.z, yaw: entry.car.yaw };
+        }
         if (player) {
             player.driving = false;
             if (entry?.car === this.uber) {
@@ -212,11 +239,149 @@ export class DrivingSync {
         return overlap;
     }
 
-    // Would this step drive into another car? Cars already touching (another
-    // driver's pose arrives a little late) may still pull apart.
-    hitsCar(car, x, z, yaw, nextX, nextZ, nextYaw) {
-        for (const { car: other } of this.cars.values()) {
+    // The two closest sample points of two cars (a on `car` at this pose, b on
+    // `other`) and how deep they overlap.
+    contact(car, x, z, yaw, other) {
+        const mine = car.samplePoints(x, z, yaw);
+        const theirs = other.samplePoints(other.position.x, other.position.z, other.yaw);
+        const reach = car.halfWidth + other.halfWidth;
+        let best = { overlap: -Infinity, a: null, b: null };
+        mine.forEach(a => theirs.forEach(b => {
+            const overlap = reach - Math.hypot(a.x - b.x, a.z - b.z);
+            if (overlap > best.overlap) best = { overlap, a, b };
+        }));
+        return best;
+    }
+
+    // This step drives into other cars (moving at `velocity`): shove each out
+    // of the way along the contact and kick it into a slide. Null when one
+    // can't move (against a wall or another car): then it's a crash. Else
+    // { pushed, handed: the speed handed over }.
+    pushCars(car, x, z, yaw, nextX, nextZ, nextYaw, velocity) {
+        const shoves = [];
+        for (const [id, entry] of this.cars) {
+            const other = entry.car;
             if (other === car || Math.hypot(other.position.x - nextX, other.position.z - nextZ) > CAR_CHECK_RANGE) continue;
+            const next = this.contact(car, nextX, nextZ, nextYaw, other);
+            // Only when getting deeper in (cars already touching may pull apart).
+            if (next.overlap <= 0 || next.overlap <= this.carOverlap(car, x, z, yaw, other) + 1e-4) continue;
+            let nx = next.b.x - next.a.x;
+            let nz = next.b.z - next.a.z;
+            const length = Math.hypot(nx, nz);
+            if (length < 1e-4) {
+                nx = nextX - x;
+                nz = nextZ - z;
+            }
+            const size = Math.hypot(nx, nz) || 1;
+            const normal = { x: nx / size, z: nz / size };
+            const depth = next.overlap + 0.01;
+            const shove = { x: normal.x * depth, z: normal.z * depth };
+            const { x: ox, z: oz } = other.position;
+            if (this.blocked(other, ox + shove.x, oz + shove.z, other.yaw)
+                || this.hitsCar(other, ox, oz, other.yaw, ox + shove.x, oz + shove.z, other.yaw, car)) return null;
+            const along = Math.max(0, velocity.x * normal.x + velocity.z * normal.z) * PUSH_TRANSFER;
+            shoves.push({ id, entry, shove, kick: { x: normal.x * along, z: normal.z * along } });
+        }
+        let handed = 0;
+        shoves.forEach(({ id, entry, shove, kick }) => { handed += this.shove(id, entry, shove, kick); });
+        return { pushed: shoves.length > 0, handed };
+    }
+
+    // Moves another car here at once and kicks it into a slide; the server
+    // hears about it at the next send. Returns the speed it gained.
+    shove(id, entry, shove, kick) {
+        entry.car.group.position.x += shove.x;
+        entry.car.group.position.z += shove.z;
+        if (entry.target) {
+            entry.target.x += shove.x;
+            entry.target.z += shove.z;
+        }
+        const gained = this.addSlide(entry, kick);
+        const total = this.pushes.get(id) ?? { dx: 0, dz: 0, kick: null };
+        total.dx += shove.x;
+        total.dz += shove.z;
+        if (gained > 0) total.kick = kick;
+        this.pushes.set(id, total);
+        return gained;
+    }
+
+    // Raises a car's slide along `kick` to at least the kick's speed (hits
+    // don't stack up while you keep pushing). Returns the speed it gained.
+    addSlide(entry, kick) {
+        const size = Math.hypot(kick.x, kick.z);
+        if (size < 0.05) return 0;
+        const slide = entry.slide ?? { x: 0, z: 0 };
+        const extra = size - (slide.x * kick.x + slide.z * kick.z) / size;
+        if (extra <= 0) return 0;
+        slide.x += (kick.x / size) * extra;
+        slide.z += (kick.z / size) * extra;
+        entry.slide = slide;
+        return extra;
+    }
+
+    // Shoved cars slide on, slowing down, and stop at whatever they hit.
+    // Parked ones are ours to report; a car someone drives only slides here
+    // until their own pose (with the kick in it) arrives.
+    updateSlides(dt) {
+        this.cars.forEach((entry, id) => {
+            const { slide, car } = entry;
+            if (!slide) return;
+            const parked = !entry.driver;
+            const steps = Math.max(1, Math.ceil((Math.hypot(slide.x, slide.z) * dt) / 0.25));
+            for (let i = 0; i < steps; i++) {
+                const dx = (slide.x * dt) / steps;
+                const dz = (slide.z * dt) / steps;
+                const { x, z } = car.position;
+                if (this.blocked(car, x + dx, z + dz, car.yaw) || this.hitsCar(car, x, z, car.yaw, x + dx, z + dz, car.yaw)) {
+                    entry.slide = null;
+                    return;
+                }
+                car.group.position.x += dx;
+                car.group.position.z += dz;
+                if (entry.target) {
+                    entry.target.x += dx;
+                    entry.target.z += dz;
+                }
+                if (parked) {
+                    const total = this.pushes.get(id) ?? { dx: 0, dz: 0, kick: null };
+                    total.dx += dx;
+                    total.dz += dz;
+                    this.pushes.set(id, total);
+                }
+            }
+            const keep = Math.exp(-SLIDE_FRICTION * dt);
+            slide.x *= keep;
+            slide.z *= keep;
+            if (Math.hypot(slide.x, slide.z) < 0.1) entry.slide = null;
+        });
+    }
+
+    // Parked cars: where they ended up. Driven ones: the shove and the kick,
+    // for their driver.
+    sendPushes() {
+        const now = performance.now();
+        if (this.pushes.size === 0 || now - this.lastPushSent < SEND_INTERVAL) return;
+        this.lastPushSent = now;
+        const clamp = (value, limit) => THREE.MathUtils.clamp(value, -limit, limit);
+        const round = (value) => Math.round(value * 1000) / 1000;
+        this.pushes.forEach((total, id) => {
+            const { car } = this.cars.get(id);
+            this.game.network.send('drivePush', {
+                carId: id,
+                x: round(car.position.x), z: round(car.position.z), yaw: round(car.yaw),
+                dx: round(clamp(total.dx, MAX_PUSH_SEND)), dz: round(clamp(total.dz, MAX_PUSH_SEND)),
+                vx: round(clamp(total.kick?.x ?? 0, MAX_KICK_SEND)), vz: round(clamp(total.kick?.z ?? 0, MAX_KICK_SEND))
+            });
+        });
+        this.pushes.clear();
+    }
+
+    // Would this step drive into another car (other than `ignore`)? Cars
+    // already touching (another driver's pose arrives a little late) may
+    // still pull apart.
+    hitsCar(car, x, z, yaw, nextX, nextZ, nextYaw, ignore = null) {
+        for (const { car: other } of this.cars.values()) {
+            if (other === car || other === ignore || Math.hypot(other.position.x - nextX, other.position.z - nextZ) > CAR_CHECK_RANGE) continue;
             const next = this.carOverlap(car, nextX, nextZ, nextYaw, other);
             if (next > 0 && next > this.carOverlap(car, x, z, yaw, other) + 1e-4) return true;
         }
@@ -264,11 +429,19 @@ export class DrivingSync {
         const step = dt / steps;
         let { x, z } = car.position;
         let yaw = car.yaw;
+        let pushing = false;
         for (let i = 0; i < steps; i++) {
             const nextYaw = yaw + (speed / WHEELBASE) * Math.tan(entry.steer * MAX_STEER) * step;
             const nextX = x + Math.sin(nextYaw) * speed * step;
             const nextZ = z + Math.cos(nextYaw) * speed * step;
-            if (this.blocked(car, nextX, nextZ, nextYaw) || this.hitsCar(car, x, z, yaw, nextX, nextZ, nextYaw)) {
+            const velocity = { x: Math.sin(nextYaw) * speed, z: Math.cos(nextYaw) * speed };
+            const pushed = this.blocked(car, nextX, nextZ, nextYaw) ? null : this.pushCars(car, x, z, yaw, nextX, nextZ, nextYaw, velocity);
+            if (pushed?.pushed) {
+                pushing = true;
+                speed -= Math.sign(speed) * Math.min(Math.abs(speed), pushed.handed * PUSH_RECOIL);
+                speed *= Math.exp(-PUSH_DRAG * step);
+            }
+            if (pushed === null) {
                 if (Math.abs(speed) > 3) {
                     const listener = this.game.environment.audioListener;
                     if (listener) playSynth(listener, car.group, new THREE.Vector3(0, 0.6, Math.sign(speed) * 2), 'dart', 6);
@@ -280,6 +453,12 @@ export class DrivingSync {
             z = nextZ;
             yaw = nextYaw;
         }
+        // A thunk as we hit a car (not while we keep pushing it).
+        if (pushing && !entry.pushing && Math.abs(entry.speed) > 3) {
+            const listener = this.game.environment.audioListener;
+            if (listener) playSynth(listener, car.group, new THREE.Vector3(0, 0.6, Math.sign(speed) * 2), 'dart', 4);
+        }
+        entry.pushing = pushing;
         entry.speed = speed;
         car.group.position.set(x, 0, z);
         car.group.rotation.y = yaw;
@@ -389,9 +568,12 @@ export class DrivingSync {
         const dt = Math.min(deltaTime, 0.1);
         const players = this.game.players.players;
         this.updateUberDriver();
+        this.updateSlides(dt);
+        this.sendPushes();
         this.cars.forEach((entry, id) => {
             if (id === this.driving) this.drive(entry, dt);
-            else if (entry.driver) this.follow(entry, dt);
+            // Parked ones too: someone may be pushing them.
+            else if (entry.driver || entry.target) this.follow(entry, dt);
             entry.car.animate(dt, entry.speed, entry.steer);
             this.updateEngine(entry);
             if (entry.car === this.uber) {

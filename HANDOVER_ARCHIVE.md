@@ -2,6 +2,16 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-23: shader lamps, more cars, sound from the avatar)
+- 2026-10-23 Lamps in the shader, more cars, sound from the avatar: every lamp now lights outside pixels
+  from the lit-material shader (`RegionLights`, up to 32), so no cap, no popping and no light inside the
+  bars (the ground glow is clipped too); four more cars (car5-car8) and cars stop against each other;
+  all audio listeners hang from an ear at the player's head turned like the camera. **Verified in the
+  browser:** shaders compile (17 programs, none broken), 24 lamps in the uniforms; inside Gamedev next
+  to the lamp 1.1 from its wall: no warm patch; outside: the road lit around each lamp; car8 driven
+  into car1 stops at 0 overlap without moving it, then backs off; the audio context's listener sits
+  at the player's head (camera 4.4 away).
+
 ## Done (2026-10-23: Uber Suicida, light per space)
 - 2026-10-23 Uber Suicida, light per space, lamps: the black car is the Uber Suicida and drives from its
   first seat (car `'uber'` in driving; passengers ride along; smoke ride unchanged); every lit material

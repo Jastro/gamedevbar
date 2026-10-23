@@ -27,6 +27,8 @@ const PAPER = { y: 0.85, z: TOILET.z + 0.75 };
 const SWITCH = { x: -10.4, y: 1.5, z: 5 + WALL_THICKNESS / 2 + 0.02 };
 const LAMP = { x: -12.5, y: 3.0, z: 7.5 };
 const LAMP_INTENSITY = 6;
+const LAMP_COLOR = new THREE.Color(0xfff2d8);
+export const LAMP_RANGE = 7;
 const FLUSH_TIME = 1.4; // s for the bowl to empty
 const SPRAY_TIME = 1.2; // s of spray particles
 const FART_SOUNDS = [1, 2, 3, 4].map(n => `/assets/sound/cacota${n}.mp3`);
@@ -331,9 +333,15 @@ export class Bathroom {
         const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 10), this.lampMaterial);
         lamp.position.set(LAMP.x, LAMP.y, LAMP.z);
         this.group.add(lamp);
-        this.light = new THREE.PointLight(0xfff2d8, LAMP_INTENSITY, 7, 1);
-        this.light.position.set(LAMP.x, LAMP.y - 0.2, LAMP.z);
-        this.group.add(this.light);
+    }
+
+    // Its lamp's light, drawn by RegionLights inside the bathroom only (a
+    // three.js light would shine through the partitions and the ceiling).
+    get lampLight() {
+        return {
+            position: this.worldPoint(LAMP.x, LAMP.y - 0.2, LAMP.z),
+            color: LAMP_COLOR.clone().multiplyScalar(this.state.lightOn ? LAMP_INTENSITY : 0)
+        };
     }
 
     // Green haze plus a few flies around the toilet, while it stinks.
@@ -384,7 +392,6 @@ export class Bathroom {
         this.latchKnob.material.color.setHex(latched ? 0xc62828 : 0x2e7d32);
         this.latchKnob.position.x = latched ? 0.1 : 0;
         this.switchRocker.material.color.setHex(this.state.lightOn ? 0x7fff7f : 0x553333);
-        this.updateLamp();
         this.lampMaterial.emissiveIntensity = this.state.lightOn ? 1 : 0;
         // A flush animation empties the bowl itself.
         if (this.flushTime === null || this.state.mess) {
@@ -409,18 +416,11 @@ export class Bathroom {
     }
 
     // Whether the local player is in here: the mirror (an extra render of the
-    // scene) and the lamp (it would light the bar through the partition)
-    // only matter then. The lamp's intensity changes, never its visibility,
-    // so the scene's light count stays the same.
+    // scene) only matters then.
     setLocalInside(inside) {
         if (inside === this.localInside) return;
         this.localInside = inside;
         this.mirror.visible = inside;
-        this.updateLamp();
-    }
-
-    updateLamp() {
-        this.light.intensity = this.state.lightOn && this.localInside ? LAMP_INTENSITY : 0;
     }
 
     // In the door gap (where a closing door's blocker would be), with the

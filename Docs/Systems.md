@@ -67,9 +67,16 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
 - **The driver's client runs the car** (`DrivingSync`): a bicycle model (wheelbase 2.5), stepped in
   0.25 pieces; three points along its length are checked against the colliders (walls, lamp posts,
   the fountain, the edge wall) and against the bars' footprints, so it never gets into a bar. A crash
-  bounces it back at a quarter speed. Cars don't collide with people (they drive through them). A car
-  stops against any other car, parked or driven (`hitsCar`: sample points as circles), but two that
-  already touch (a remote pose arrives late) may still pull apart. A car that already overlaps something (a door shut on it) hops to the nearest
+  bounces it back at a quarter speed. Cars don't collide with people (they drive through them).
+- **Car hits:** driving into another car shoves it out of the way along the contact and kicks it
+  with 85% of your speed along the hit (`pushCars`, sample points as circles); you lose 70% of what
+  you gave, and a car you keep pushing slows you to ~3.5. The shoved car slides on, slowing
+  (`SLIDE_FRICTION`, ~4 m after a full-speed hit), and stops at whatever it meets. A car that can't
+  move (against a wall or another car) stops you like a wall. Parked cars are slid by the pusher's
+  client, which reports where they are (`drivePush`, also after you get out); a car someone drives
+  gets the shove and the kick relayed to its driver (`drivePushed`). Cars already touching (a late
+  remote pose) may pull apart.
+- A car that already overlaps something (a door shut on it) hops to the nearest
   free spot within 3 (`DrivingSync.unstick`), or it could never move again.
 - **Sync** (`server/features/driving.js`): one driver per car; the pose goes out 20 times a second,
   the server keeps the last one (a car stays where it was left, also for late joiners) and relays it;
@@ -124,7 +131,9 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   lean in (the `snort` gesture), and the line is gone for everyone for 45 s (`powderEmptyUntil`).
 - **Toilet paper** on a holder on the side wall next to the toilet.
 - **Light:** the cubicle's own lamp and switch. While you're inside, `RoomLighting` follows that switch
-  instead of the bar's (on = normal, off = dark, no disco).
+  instead of the bar's (on = normal, off = dark, no disco). The lamp is a bathroom-only light in the
+  shaders (`Bathroom.lampLight` → `RegionLights`), not a three.js light, so it never shines through
+  the partitions or the ceiling into the bar, and it shows for everyone looking in.
 - **Dirty hands:** using the toilet dirties them. Outside any bathroom, a dirty-handed player gets rising
   green smell lines at the hands and a "🤢 No se ha lavado las manos" tag (`src/entities/Shame.js`), until
   they wash or 10 min pass.
@@ -304,8 +313,8 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   outside, and uses that space's ambient and directional light instead of the scene's. A point 0.05 in
   front of the surface decides, so a wall's inner face takes the bar's light and its outer face the
   sky's. `RoomLighting.updateRegions` fills the uniforms each frame (each space fades on its own, the
-  outside snaps for lightning). Up to 12 spaces (`REGION_MAX`). Point lights (disco, the bathroom
-  lamp) are not split by space.
+  outside snaps for lightning). Up to 12 spaces (`REGION_MAX`). A space may have one lamp of its own,
+  lighting only that space (the bathrooms'). The disco lights are three.js lights, not split by space.
 
 ## Empty rooms
 
