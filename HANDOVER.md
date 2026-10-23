@@ -19,20 +19,14 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
-- 2026-10-23 Lamps, disco ball, windows: two pendant lamps per bar light it (only that bar) with the
-  normal light; a disco ball in the middle spins and throws colored specks with disco on; the
-  projector hangs 4 in front of its screen with its pole up to the ceiling; the roof's inner gables
-  take the walls' plaster; fake windows (green shutters, sills) on every building. **Verified in the
-  browser:** shaders compile, 4 lamps in the uniforms (region 2 for Gamedev), lamps and ball from
-  inside, disco on with specks on walls/floor/ceiling, all facades with windows, the projector pole;
-  fixed the outside gable showing the whitewash's base band.
-- 2026-10-23 Nitro, ceilings, Gamedev whitewashed, faster walking: Shift while driving is nitro (top 22,
-  flames, whoosh and roar, wider view, synced); the roofs show from inside as a sloped wooden ceiling
-  lit by the bar (tiles lit as outside); Gamedev's outside is whitewashed like Desarrollo's; walk 3.7,
-  run 6.5; the mouse capture option is removed (it didn't work for Borja). **Verified in the browser
-  (two clients):** with Shift the car reaches 22 in 1.4 s with flames, roar and a 87° view, the other
-  client shows the flames; letting go turns them off; flame close-up (no outlines); inside views by
-  night and day (same light), outside view; ⚙️ shows only Volumen and Micrófono.
+- 2026-10-23 Upper floor (plan `Docs/Plans to be done/2026-10-23 Upper floor, bartender, ...`, step 1 of
+  6): a gallery along each bar's front wall at 5 m with stairs, tables and a doorway onto a terrace over
+  the entrance facing the fountain; new `floor` and `ramp` colliders. **Verified in the browser:**
+  walked up the stairs (height rises with the treads), onto the landing and the gallery, along it,
+  through the doorway onto the terrace (outside), stopped by its railings, F on a terrace chair; the
+  same stairs in Desarrollo (rotated); walking under the gallery is free; pictures inside and out.
+- 2026-10-23 Hanging lamps and a disco ball in each bar, windows on every building, car nitro, roofs
+  as ceilings inside, faster walking. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Wall finishes (whitewash outside, wood wainscot inside), closed buildings in slots 2-5,
   passenger seat, roofs, new bottom bar. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Stickers (12 code-drawn, right click → 🎨 Pegatina, one per person, 24 h), the toilet light

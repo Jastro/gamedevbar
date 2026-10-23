@@ -19,6 +19,7 @@ import { Door, DOOR_INTERACT_DISTANCE } from './Door';
 import { Projector } from './Projector';
 import { PresenceBoard } from './PresenceBoard';
 import { CeilingFixtures } from './CeilingFixtures';
+import { UpperFloor } from './UpperFloor';
 import { VirconCabinet, CABINETS } from './VirconCabinet';
 import { DEFAULT_ROOM_ID } from './RoomLayout';
 
@@ -63,6 +64,7 @@ export class Environment {
                 pokebonk: new VirconCabinet(room, this.world.collisionManager, CABINETS.pokebonk),
                 lightSwitches: new LightSwitches(room),
                 fixtures: new CeilingFixtures(room),
+                upperFloor: null, // after the furniture (it adds tables up there)
                 bathroom: new Bathroom(room, this.world.collisionManager, this.world)
             };
 
@@ -86,6 +88,8 @@ export class Environment {
             contents.pokebonk.create();
             contents.lightSwitches.create();
             contents.fixtures.create();
+            contents.upperFloor = new UpperFloor(room, this.world, contents.furniture);
+            contents.upperFloor.create();
             contents.bathroom.create();
             contents.graffiti = WALLS.map((_, index) => new GraffitiWall(contents.bathroom, index));
             contents.graffiti.forEach(wall => wall.create());

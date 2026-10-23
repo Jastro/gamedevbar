@@ -26,10 +26,11 @@ export class Furniture {
         });
     }
 
-    createTableSet(x, z) {
+    // y: the floor it stands on (the gallery, the terrace). Returns the chairs.
+    createTableSet(x, z, y = 0, chairCount = 4) {
         // Crear mesa
         const tableGroup = new THREE.Group();
-        tableGroup.position.set(x, 0, z);
+        tableGroup.position.set(x, y, z);
         const tableGeometry = new THREE.CylinderGeometry(TABLE_RADIUS, TABLE_RADIUS, 0.05, 16);
         const tableMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
         const table = new THREE.Mesh(tableGeometry, tableMaterial);
@@ -53,12 +54,10 @@ export class Furniture {
             { x: 0, z: -1, angle: 0 }
         ];
 
-        chairPositions.forEach(pos => {
-            this.createChair(x + pos.x, z + pos.z, pos.angle, { x, z });
-        });
+        return chairPositions.slice(0, chairCount).map(pos => this.createChair(x + pos.x, z + pos.z, pos.angle, { x, z }, y));
     }
 
-    createChair(x, z, angle, tableCenter) {
+    createChair(x, z, angle, tableCenter, y = 0) {
         const chairGroup = new THREE.Group();
 
         // Asiento
@@ -89,7 +88,7 @@ export class Furniture {
             chairGroup.add(leg);
         });
 
-        chairGroup.position.set(x, 0, z);
+        chairGroup.position.set(x, y, z);
         chairGroup.rotation.y = angle;
 
         // Hover highlight is per mesh (InteractionSystem.setHighlight).
@@ -106,5 +105,6 @@ export class Furniture {
 
         this.scene.add(chairGroup);
         this.seats.set(chairGroup.id, chairGroup);
+        return chairGroup;
     }
 }

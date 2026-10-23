@@ -47,6 +47,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       in `src/world/Roof.js`)? Inside: a sloped wooden ceiling; lit like the bar at night and by day?
 - [ ] **New bottom bar.** Chat input bottom left under the chat log; 🎙️ ⚙️ 👤 ❔ bottom right, all the
       same size; no 😊 button (emojis: right click). ❔ panel twice as wide. Also on a small window.
+- [ ] **Upper floor and terrace** (2026-10-23). In each bar: up the stairs (right of the door, along
+      the room) to the gallery, sit at a table up there, through the doorway over the entrance onto the
+      terrace: the view of the plaza and fountain? Walk under the gallery (door, bathroom, darts):
+      nothing in the way, the camera doesn't get stuck? A friend sees you up there.
 - [ ] **Lamps, disco ball, windows** (2026-10-23). Inside: two green hanging lamps, lit with the normal
       light (switch it off: they go dark); is their light on the tables nice (`LAMP_LIGHT` in
       `src/world/CeilingFixtures.js`)? Disco on: the ball spins and throws colored specks round the

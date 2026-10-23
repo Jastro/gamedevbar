@@ -2,6 +2,8 @@ import * as THREE from 'three';
 
 // Q and E rotate the camera, so interacting is F.
 export const INTERACT_KEY = 'f';
+// Things on another floor (the gallery 4 above) are out of F reach.
+const MAX_LEVEL_DIFFERENCE = 3.5;
 const INTERACTABLES_REFRESH = 2000; // ms
 const FACING_BASE = 0.4; // see findNearby's score
 const scratch = new THREE.Vector3();
@@ -123,7 +125,11 @@ export class InteractionSystem {
         for (const object of this.getInteractables()) {
             const interaction = this.interactions.get(object.userData.type);
             if (!interaction?.range || interaction.findNearby) continue;
-            if (world.getRoomForObject(object) !== here) continue;
+            // Terrace furniture belongs to a bar but stands outside.
+            const space = object.userData.outside ? null : world.getRoomForObject(object);
+            if (space !== here) continue;
+            // Not through the gallery's floor (above or below you).
+            if (Math.abs(object.getWorldPosition(scratch).y - position.y) > MAX_LEVEL_DIFFERENCE) continue;
             // E.g. bathroom fixtures: only from inside the cubicle.
             if (interaction.canReach && !interaction.canReach(object, position)) continue;
             if (horizontalDistance(position, object.getWorldPosition(scratch)) <= interaction.range) {

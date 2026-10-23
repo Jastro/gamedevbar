@@ -19,8 +19,10 @@ export class PresenceBoard {
     create() {
         this.group = new THREE.Group();
         this.group.name = 'PresenceBoard';
-        this.group.position.set(7, 3.8, 9.9);
+        // Under the gallery (its slab starts at 4.7): 70% size, down to 1.8–4.6.
+        this.group.position.set(7, 3.2, 9.9);
         this.group.rotation.y = Math.PI; // face into the room
+        this.group.scale.setScalar(0.7);
 
         const frame = new THREE.Mesh(
             new THREE.BoxGeometry(6.5, 4, 0.2),

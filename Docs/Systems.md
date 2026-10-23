@@ -278,6 +278,23 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
     color, and 110 colored specks land where its reflections would hit the walls, floor and ceiling.
   - The projector box hangs 4 in front of its screen, its pole up to the ceiling.
 
+## Upper floor and terrace
+
+- **Gallery** (`src/world/UpperFloor.js`, `RoomLayout.GALLERY`): along each bar's front wall, floor at 5
+  (z 6.5 → 9.9, full width), three tables with chairs. Under it everything fits (bathroom, clock,
+  who's-here board at 70%, darts); the front-wall paintings hang up there at its eye level.
+- **Stairs**: x 2.4 → 8.4 at z 5.2 → 6.45, then a landing (x 8.4 → 10) onto the gallery. Railings on the
+  gallery's edge, round the landing, along the stairs' open side.
+- **Terrace**: a doorway in the front wall above the entrance (x ±1, y 5 → 7.4) onto a balcony outside
+  (x ±4, out to z 12.6) with railings, a table and two plants, looking over the plaza and fountain.
+  Outside light and rain; F reaches its chairs from the terrace (their `userData.outside`).
+- **Collision** (`CollisionManager`): `floor` slabs (gallery, landing, terrace) you stand on and walk
+  under (they block a body whose center is over them, between the slab's bottom and top); a `ramp`
+  for the stairs (ground rises along it; it blocks walking into its sides below the treads). Blockers
+  no longer block someone standing fully above them (the entrance door, under the doorway). Walking
+  down keeps you on the stairs (`LocalPlayer.STEP_DOWN`). F skips things 3.5+ above or below you.
+- Gallery and terrace slabs are camera occluders.
+
 ## Tragaperras (video-game meme slot machine)
 
 - **Where:** against each bar's left wall (`src/world/SlotMachine.js`, room-local (-14.35, 0, 2.6)). F or

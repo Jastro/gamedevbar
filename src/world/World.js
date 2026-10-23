@@ -14,6 +14,8 @@ import {
     WALL_THICKNESS,
     FRONT_DOOR,
     FREE_SLOTS,
+    GALLERY,
+    TERRACE_DOOR,
     BAR_COUNTER_Z,
     BACK_BAR_Z
 } from './RoomLayout';
@@ -167,12 +169,14 @@ export class World {
         const doorRight = FRONT_DOOR.x + FRONT_DOOR.width / 2;
         const leftWidth = doorLeft + ROOM_HALF_WIDTH;
         const rightWidth = ROOM_HALF_WIDTH - doorRight;
-        const lintelHeight = WALL_HEIGHT - FRONT_DOOR.height;
 
         const front = { x: 0, z: -1 };
         addWall(leftWidth, WALL_HEIGHT, WALL_THICKNESS, -ROOM_HALF_WIDTH + leftWidth / 2, halfHeight, ROOM_HALF_DEPTH, front);
         addWall(rightWidth, WALL_HEIGHT, WALL_THICKNESS, ROOM_HALF_WIDTH - rightWidth / 2, halfHeight, ROOM_HALF_DEPTH, front);
-        addWall(FRONT_DOOR.width, lintelHeight, WALL_THICKNESS, FRONT_DOOR.x, FRONT_DOOR.height + lintelHeight / 2, ROOM_HALF_DEPTH, front);
+        // Above the entrance: the wall up to the gallery, the terrace doorway, and over it.
+        const doorwayTop = GALLERY.top + TERRACE_DOOR.height;
+        addWall(FRONT_DOOR.width, GALLERY.top - FRONT_DOOR.height, WALL_THICKNESS, FRONT_DOOR.x, (FRONT_DOOR.height + GALLERY.top) / 2, ROOM_HALF_DEPTH, front);
+        addWall(FRONT_DOOR.width, WALL_HEIGHT - doorwayTop, WALL_THICKNESS, FRONT_DOOR.x, (doorwayTop + WALL_HEIGHT) / 2, ROOM_HALF_DEPTH, front);
 
         room.roof = createRoof(room, wallMaterial, outside, this.finishMaterial('plaster'));
         // Two rows of windows round the outside; on the front, either side of the door.

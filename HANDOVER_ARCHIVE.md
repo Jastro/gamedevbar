@@ -2,6 +2,22 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-23: lamps, disco ball, windows, nitro)
+- 2026-10-23 Lamps, disco ball, windows: two pendant lamps per bar light it (only that bar) with the
+  normal light; a disco ball in the middle spins and throws colored specks with disco on; the
+  projector hangs 4 in front of its screen with its pole up to the ceiling; the roof's inner gables
+  take the walls' plaster; fake windows (green shutters, sills) on every building. **Verified in the
+  browser:** shaders compile, 4 lamps in the uniforms (region 2 for Gamedev), lamps and ball from
+  inside, disco on with specks on walls/floor/ceiling, all facades with windows, the projector pole;
+  fixed the outside gable showing the whitewash's base band.
+- 2026-10-23 Nitro, ceilings, Gamedev whitewashed, faster walking: Shift while driving is nitro (top 22,
+  flames, whoosh and roar, wider view, synced); the roofs show from inside as a sloped wooden ceiling
+  lit by the bar (tiles lit as outside); Gamedev's outside is whitewashed like Desarrollo's; walk 3.7,
+  run 6.5; the mouse capture option is removed (it didn't work for Borja). **Verified in the browser
+  (two clients):** with Shift the car reaches 22 in 1.4 s with flames, roar and a 87° view, the other
+  client shows the flames; letting go turns them off; flame close-up (no outlines); inside views by
+  night and day (same light), outside view; ⚙️ shows only Volumen and Micrófono.
+
 ## Done (2026-10-23: walls, closed buildings, passenger, roofs)
 - 2026-10-23 Wall finishes and closed buildings: Borja picked E6 (half-timbered) for Gamedev's outside,
   E2 (whitewash, ochre base) for Desarrollo's and I1 (wood wainscot, cream plaster) inside both, drawn

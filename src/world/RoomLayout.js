@@ -11,6 +11,11 @@
 export const ROOM_HALF_WIDTH = 15;   // local x extent
 export const ROOM_HALF_DEPTH = 10;   // local z extent (front wall at +z)
 export const WALL_HEIGHT = 8;
+// The upper gallery along the front wall (UpperFloor.js): its floor's top,
+// thickness and inner edge (it runs from there to the front wall).
+export const GALLERY = { top: 5, thickness: 0.3, edgeZ: 6.5 };
+// The doorway from the gallery to the terrace, in the front wall above the entrance.
+export const TERRACE_DOOR = { width: 2, height: 2.4 };
 export const WALL_THICKNESS = 0.2;
 
 // Entrance cut into the front wall, in room-local coordinates (centered).

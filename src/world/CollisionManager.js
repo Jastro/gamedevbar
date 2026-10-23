@@ -2,11 +2,17 @@ import * as THREE from 'three';
 
 // What the player can't walk through. Two kinds:
 // - blockers (walls, bar, fences, cabinets, doors): block from their bottom
-//   up, with no top, so jumping can't carry you over one and drop you inside
-//   it; one entirely above your head (a door's lintel) doesn't block;
+//   up to their top; one entirely above your head (a door's lintel) or
+//   entirely under your feet (the entrance door, seen from the gallery
+//   above it) doesn't block;
 // - platforms (tables, the bar counter): a top you can jump onto and stand
 //   on; they block only while your feet are below that top. Tables are
-//   round (addPlatform), the counter is a box (addBoxPlatform).
+//   round (addPlatform), the counter is a box (addBoxPlatform);
+// - floors (addFloor: the upper gallery, the terrace): a raised slab you
+//   stand on and can walk underneath; it only blocks a body overlapping it;
+// - ramps (addRamp: stairs): a sloped walkable surface rising along the
+//   box's local +x; it never blocks from above, and blocks walking into it
+//   from the side (or under it) below its surface.
 // Everything is static (doors toggle `enabled` instead of moving their
 // blocker), so each shape is measured once, on the first check, when the
 // room groups are in place.
@@ -24,6 +30,8 @@ const PLAYER_HEIGHT = 2;
 const PLATFORM_EDGE = 0.15;
 // Falling feet are caught by a platform top this far above them.
 const LANDING_SNAP = 0.15;
+// A ramp blocks feet more than this below its surface (its sides).
+const RAMP_SIDE = 0.35;
 
 export class CollisionManager {
     constructor() {
@@ -73,6 +81,31 @@ export class CollisionManager {
         return collider;
     }
 
+    // A raised slab: the mesh's box, standable on top, open underneath.
+    addFloor(mesh) {
+        const collider = this.addCollider(mesh, 'floor');
+        const measure = collider.update;
+        collider.update = () => {
+            measure();
+            collider.top = collider.box.max.y;
+            collider.bottom = collider.box.min.y;
+        };
+        return collider;
+    }
+
+    // Stairs: the mesh's box, its surface rising from the box's bottom at
+    // local min x to its top at local max x.
+    addRamp(mesh) {
+        const collider = this.addCollider(mesh, 'ramp');
+        const measure = collider.update;
+        collider.update = () => {
+            measure();
+            collider.top = collider.box.max.y;
+            collider.bottom = collider.box.min.y;
+        };
+        return collider;
+    }
+
     // A box-shaped platform: the mesh's bounding box, top included.
     addBoxPlatform(mesh) {
         const collider = this.addCollider(mesh, 'platform');
@@ -94,6 +127,17 @@ export class CollisionManager {
         for (const collider of this.colliders) {
             if (!collider.enabled) continue;
             collider.ensureMeasured();
+            if (collider.type === 'floor') {
+                // By the center only: stairs reach the slab's height right at
+                // its edge, where the body's front already overlaps it.
+                if (feet < collider.top - STEP_TOLERANCE && head > collider.bottom && overlapsXZ(position, 0, collider)) return true;
+                continue;
+            }
+            if (collider.type === 'ramp') {
+                if (!overlapsXZ(position, radius, collider)) continue;
+                if (feet < rampHeight(position, collider) - RAMP_SIDE) return true;
+                continue;
+            }
             if (collider.type === 'platform') {
                 if (feet >= collider.top - STEP_TOLERANCE) continue;
                 if (collider.shape === 'box') {
@@ -101,7 +145,7 @@ export class CollisionManager {
                 } else if (centerDistance(position, collider) < collider.radius + radius) {
                     return true;
                 }
-            } else if (collider.box.min.y < head && overlapsXZ(position, radius, collider)) {
+            } else if (collider.box.min.y < head && collider.box.max.y > feet + STEP_TOLERANCE && overlapsXZ(position, radius, collider)) {
                 return true;
             }
         }
@@ -114,10 +158,18 @@ export class CollisionManager {
         const feet = position.y - 1;
         let ground = 0;
         for (const collider of this.colliders) {
-            if (collider.type !== 'platform' || !collider.enabled) continue;
+            if (!collider.enabled) continue;
+            if (collider.type === 'ramp') {
+                collider.ensureMeasured();
+                if (!overlapsXZ(position, 0, collider)) continue;
+                const height = rampHeight(position, collider);
+                if (height <= feet + LANDING_SNAP && height > ground) ground = height;
+                continue;
+            }
+            if (collider.type !== 'platform' && collider.type !== 'floor') continue;
             collider.ensureMeasured();
             if (collider.top > feet + LANDING_SNAP || collider.top <= ground) continue;
-            const under = collider.shape === 'box'
+            const under = collider.shape === 'box' || collider.type === 'floor'
                 ? overlapsXZ(position, PLATFORM_EDGE, collider)
                 : centerDistance(position, collider) < collider.radius + PLATFORM_EDGE;
             if (under) ground = collider.top;
@@ -165,6 +217,15 @@ function overlapsXZ(position, radius, collider) {
     const rz = radius / collider.scaleZ;
     return point.x + rx > local.min.x && point.x - rx < local.max.x
         && point.z + rz > local.min.z && point.z - rz < local.max.z;
+}
+
+// A ramp's surface height (world y) under a position: bottom at the box's
+// local min x, top at its max x.
+function rampHeight(position, collider) {
+    const point = scratchPoint.copy(position).applyMatrix4(collider.inverse);
+    const { min, max } = collider.local;
+    const along = THREE.MathUtils.clamp((point.x - min.x) / (max.x - min.x), 0, 1);
+    return collider.bottom + along * (collider.top - collider.bottom);
 }
 
 // Horizontal distance from the player's center to a platform's center

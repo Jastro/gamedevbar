@@ -17,6 +17,7 @@ const STANDING_HEIGHT = 1;        // position.y above the ground (the collision 
 const SEAT_HEIGHT = 1.55;         // position.y above a seat's origin (bar stools)
 const PLAYER_RADIUS = 0.4;        // half the collision box (0.5 caught on door frames)
 const MAX_STEP = 0.15;            // longest collision-checked step, so nothing is skipped
+const STEP_DOWN = 0.35;           // walking down stairs keeps you on them (no tiny falls)
 // Walking straight into a door frame's edge: if a sideways shift this small
 // would clear it, the player is eased toward the opening instead of stopping.
 const CORNER_PROBES = [0.15, 0.3, 0.45];
@@ -245,7 +246,7 @@ export class LocalPlayer extends Player {
         if (onGround && this.keysPressed[' '] && !this.game.chatActive) {
             this.isJumping = true;
             this.verticalSpeed = JUMP_SPEED;
-        } else if (onGround) {
+        } else if (onGround || (!this.isJumping && feet - ground < STEP_DOWN)) {
             this.position.y = ground + STANDING_HEIGHT;
             return;
         }
