@@ -26,6 +26,7 @@ import { DartsSync } from '../bar/DartsSync';
 import { GraffitiSync } from '../world/GraffitiSync';
 import { StickerSync } from '../world/StickerSync';
 import { Bartender } from '../world/Bartender';
+import { Soundscape } from '../audio/Soundscape';
 import { Weather } from '../world/Weather';
 import { LocalWeather } from '../world/LocalWeather';
 import { GestureSync } from '../entities/GestureSync';
@@ -224,6 +225,8 @@ export class Game {
         this.drivingSync.create();
         // One behind each bar's counter.
         this.bartenders = [...this.world.rooms.values()].map(room => new Bartender(this, room));
+        // Birds, crickets and the murmur of full bars (starts with the audio).
+        this.soundscape = new Soundscape(this);
         this.lighting.init();
         this.radioSync.applyDefaults();
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
@@ -388,6 +391,7 @@ export class Game {
         updateGestureEffects(deltaTime);
         this.drivingSync.update(deltaTime);
         this.bartenders?.forEach(bartender => bartender.update(deltaTime));
+        this.soundscape?.update(deltaTime);
         const clockLabel = this.localWeather.label(this.weather);
         this.environment.rooms.forEach(({ clock }) => clock.update(clockLabel));
         this.voice.update(playerPosition);

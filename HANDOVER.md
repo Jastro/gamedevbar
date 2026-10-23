@@ -19,6 +19,9 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 Soundscape (plan step 3): birds by day, crickets at night, a murmur outside busy bars.
+  **Verified in the browser** (levels): day outside birds 0.18 / inside 0.022; night outside crickets
+  0.12 / inside 0.014; 4 people in Gamedev → murmur 0.27 outside its door, 0 once inside.
 - 2026-10-23 Bartender (plan step 2): Manolo / Paco walk behind the counters on a shared clock-driven
   schedule, talk now and then, "¡Marchando!" when someone in the bar is served. **Verified in the
   browser:** two bartenders, walking between stops in the lane (z -7.65), name tag and speech bubble.

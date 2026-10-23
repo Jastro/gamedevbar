@@ -295,6 +295,13 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   down keeps you on the stairs (`LocalPlayer.STEP_DOWN`). F skips things 3.5+ above or below you.
 - Gallery and terrace slabs are camera occluders.
 
+## Soundscape
+
+- `src/audio/Soundscape.js`, all synthesized (8 s loops): birds (chirp bursts) by day and two crickets
+  at night, non-positional, full outside and at 12% inside a bar, birds at a quarter in the rain;
+  each bar has a murmur of voices just outside its door (positional) that grows with the people
+  inside (full at 6) and is silent for the bar you're in. Fades at 1.5/s; starts with the audio.
+
 ## Bartender
 
 - `src/world/Bartender.js`: one behind each counter (Manolo in Gamedev, Paco in Desarrollo, a moustache),
