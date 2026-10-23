@@ -25,7 +25,7 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
 ## Controls and movement
 
 - **Keys** (the full list is in the ❔ panel, `src/ui/ControlsHelpUI.js`; keep it in sync):
-  - WASD walk (Shift runs, 5.5 vs 3.2 units/s), Space jump, F interact (`INTERACT_KEY` in
+  - WASD walk (Shift runs, 6.5 vs 3.7 units/s), Space jump, F interact (`INTERACT_KEY` in
     `InteractionSystem.js`). F picks the best interactable over every type: near and in front of you
     (custom `findNearby` for doors and the Vircon32, otherwise each type's `range`);
   - Q/E rotate the camera, right-drag rotates, a right click (moving under 5 px) opens the emojis at the
@@ -59,6 +59,10 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
 
 ## Drivable cars
 
+- **Nitro:** Shift while accelerating, like sprinting, as long as you hold it: top speed 22 (14
+  without), quicker acceleration; letting go eases back down. Flames out of both exhausts, a whoosh
+  as it kicks in and a roaring loop while it lasts, and the driver's view widens 12°. `driveUpdate`
+  carries `nitro`, so everyone sees and hears it.
 - **Passenger:** F next to an open-top car someone drives takes the seat beside them (`driveRide`): you
   ride along seated, F or Esc gets you out on your side (else wherever is free). One passenger per
   car; they stay in if the driver gets out, but can't board a car nobody drives. Not the Uber (its
@@ -228,8 +232,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   on join. A failed request keeps the last state (clear sky before the first answer).
 - **Time** is Madrid's, from the server clock (`Weather.madridTime`). `daylight()` goes 0 → 1 through a
   45-min twilight around sunrise/sunset.
-- **Sky** (`src/world/Weather.js`, the scene background, seen from inside the bars too: the bar you're in
-  hides its roof):
+- **Sky** (`src/world/Weather.js`, the scene background):
   night navy → twilight orange → blue, greyer with clouds, white during lightning.
 - **Outside only:** `RoomLighting` lights the outdoors from the sky (`Weather.outdoorLight`: dim blue at
   night, dimmer with clouds/rain, a flash for lightning). The lamp posts light up at night. Rain and
@@ -248,8 +251,8 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - Inside the bars nothing changes: their lights follow their switches.
 - **Wall finishes** (`src/world/WallTextures.js`, per room in `RoomLayout.ROOMS`: `exterior`,
   `interior`): drawn in code, mapped in meters (`World.mapWallFaces`), so the pattern keeps its size
-  on any wall. Gamedev outside: half-timbering (`timber`, a 4 × 4 m frame); Desarrollo outside:
-  whitewash with an ochre base (`whitewash`); inside both: wood wainscot to 1.2 m and cream plaster
+  on any wall. Both bars outside: whitewash with an ochre base (`whitewash`; `timber`, half-timbering,
+  is there too, unused); inside both: wood wainscot to 1.2 m and cream plaster
   (`wainscot`). Wall ends and tops stay plain cream; the roof's gable ends continue the outside
   finish. `level.json`'s own copies of the walls are removed (they sat on top of World's).
 - **Closed buildings** (`src/world/ClosedBuilding.js`): slots 2-5 (`RoomLayout.FREE_SLOTS`) hold a bar's
@@ -257,9 +260,10 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   shut door and a big yellow "PRÓXIMA APERTURA" sign (lit a little so it reads at night). Nothing
   inside; when a new bar opens there, it becomes a Room.
 - **Roofs** (`src/world/Roof.js`): a terracotta gable roof on each bar (tiled slopes with eaves, gable
-  ends in the walls' color, ridge cap, chimney). `World.update` hides the roof of the bar the local
-  player is in, so the inside keeps its open view. No shadows; above the walls (y > 8) counts as
-  outside for the light per space, so roofs take the sky's light.
+  ends like the outside walls, ridge cap, chimney). From inside: a sloped wooden ceiling, plaster gable
+  ends; the camera stays under it (the slopes are camera occluders). The bar's light space reaches up
+  to `ROOF_TOP`, so the ceiling takes the bar's light; the tiles, cap and chimney are lit as outside
+  (`litAsOutside` in `RegionLights.js`: a define that skips the space test). No shadows.
 
 ## Tragaperras (video-game meme slot machine)
 

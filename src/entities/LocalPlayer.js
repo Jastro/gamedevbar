@@ -3,8 +3,8 @@ import * as THREE from 'three';
 import { BAR_COUNTER_Z } from '../world/RoomLayout';
 
 // Movement tuning, per second (the old per-frame values at 60 fps).
-const WALK_SPEED = 3.2;           // units/s
-const RUN_SPEED = 5.5;            // units/s with Shift held
+const WALK_SPEED = 3.7;           // units/s
+const RUN_SPEED = 6.5;            // units/s with Shift held
 const ACCELERATION = 12;          // 1/s: how fast the velocity reaches the input
 const DECELERATION = 16;          // 1/s: how fast it stops when keys are released
 const STOP_SPEED = 0.05;          // units/s below which a released player stops

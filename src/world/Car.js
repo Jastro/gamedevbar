@@ -168,6 +168,11 @@ export class Car {
         return BODY.width / 2;
     }
 
+    // The back bumper, along the car (group frame: +z forward).
+    get rearZ() {
+        return -BODY.length / 2;
+    }
+
     animate() {}
 
     distanceTo(worldPosition) {

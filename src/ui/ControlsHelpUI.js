@@ -15,7 +15,7 @@ const SECTIONS = [
             ['B', 'Beber'],
             ['Karaoke (F en el micro o salta al escenario)', 'Tu voz llega a todo el bar; la letra, en el proyector'],
             ['Futbolín (F en un lado)', 'W/S o ↑/↓: mover las barras · Espacio o clic: chutar · Esc: salir'],
-            ['Coches (F junto a uno)', 'Conducir: W/S acelerar / frenar · A/D girar · F o Esc bajar. Si ya lo conduce alguien: de copiloto'],
+            ['Coches (F junto a uno)', 'Conducir: W/S acelerar / frenar · A/D girar · Mayús nitro · F o Esc bajar. Si ya lo conduce alguien: de copiloto'],
             ['Tragaperras (F)', 'Tirar de la palanca: 10 🪙 por tirada'],
             ['Dardos (F en la línea amarilla)', 'Ratón: apuntar · Clic o Espacio: lanzar · Esc: salir'],
             ['Q / E', 'Girar la cámara'],

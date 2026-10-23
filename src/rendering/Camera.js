@@ -1,6 +1,5 @@
 // src/rendering/Camera.js
 import * as THREE from 'three';
-import { loadMouseCapture } from '../core/PlayerProfile';
 
 // A page loaded hidden or zero-sized (background tab, collapsed iframe)
 // reports 0x0, and 0/0 would leave the camera with a NaN aspect: a black
@@ -48,10 +47,6 @@ export class Camera {
         this.rotateKeys = { q: false, e: false };
         // Set by Game: right click (no drag) on the 3D view.
         this.onRightClick = null;
-        // ⚙️ → Ratón: while the right or middle button drags the view, the
-        // pointer is locked (hidden, it can't leave the window); it comes back
-        // where it was when the button is let go.
-        this.captureMouse = loadMouseCapture();
 
         this.init();
         this.setupEventListeners();
@@ -64,14 +59,11 @@ export class Camera {
     setupEventListeners() {
         // Right button rotates, middle button (wheel click) pans.
         window.addEventListener("mousedown", (e) => {
-            if (this.captureMouse && (e.button === 1 || e.button === 2) && this.isOverScene(e)) {
-                e.target.requestPointerLock?.();
-            }
             if (e.button === 2) {
                 this.isRightMouseDown = true;
                 this.previousMouseX = e.clientX;
                 this.previousMouseY = e.clientY;
-                this.rightPress = { x: e.clientX, y: e.clientY, moved: 0, onScene: this.isOverScene(e), dragged: false };
+                this.rightPress = { x: e.clientX, y: e.clientY, onScene: this.isOverScene(e), dragged: false };
             }
             if (e.button === 1 && this.isOverScene(e)) {
                 e.preventDefault(); // no browser autoscroll
@@ -82,7 +74,6 @@ export class Camera {
         });
 
         window.addEventListener("mouseup", (e) => {
-            if ((e.button === 1 || e.button === 2) && document.pointerLockElement) document.exitPointerLock();
             if (e.button === 2) {
                 this.isRightMouseDown = false;
                 const press = this.rightPress;
@@ -95,35 +86,32 @@ export class Camera {
         });
 
         window.addEventListener("mousemove", (e) => {
-            // A locked pointer doesn't move: only movementX/Y change.
-            const locked = Boolean(document.pointerLockElement);
-            const stepX = locked ? e.movementX : e.clientX - this.previousMouseX;
-            const stepY = locked ? e.movementY : e.clientY - this.previousMouseY;
-            if (!locked) {
-                this.previousMouseX = e.clientX;
-                this.previousMouseY = e.clientY;
-            }
             if (this.isPanning) {
                 // Drag the scene with the cursor; scaled so it feels the same at any zoom.
                 const scale = (this.view ? 1.5 : this.distance) * 0.002;
-                this.pan.x -= stepX * scale;
-                this.pan.y += stepY * scale;
+                this.pan.x -= (e.clientX - this.previousMouseX) * scale;
+                this.pan.y += (e.clientY - this.previousMouseY) * scale;
                 this.pan.clampLength(0, MAX_PAN);
+                this.previousMouseX = e.clientX;
+                this.previousMouseY = e.clientY;
                 return;
             }
             if (this.rightPress && !this.rightPress.dragged) {
-                this.rightPress.moved += Math.hypot(stepX, stepY);
-                if (this.rightPress.moved < RIGHT_CLICK_TOLERANCE) return;
+                const moved = Math.hypot(e.clientX - this.rightPress.x, e.clientY - this.rightPress.y);
+                if (moved < RIGHT_CLICK_TOLERANCE) return;
                 this.rightPress.dragged = true;
             }
             if (this.isRightMouseDown && !this.view) {
-                const deltaX = stepX;
-                const deltaY = stepY;
+                const deltaX = e.clientX - this.previousMouseX;
+                const deltaY = e.clientY - this.previousMouseY;
 
                 this.rotation.horizontal -= deltaX * 0.005;
                 this.rotation.vertical += deltaY * 0.005;
 
                 this.rotation.vertical = Math.max(0.1, Math.min(Math.PI / 2, this.rotation.vertical));
+
+                this.previousMouseX = e.clientX;
+                this.previousMouseY = e.clientY;
             }
         });
 

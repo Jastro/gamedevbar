@@ -67,7 +67,7 @@ function registerDriving(hub) {
         publish(carId);
     });
 
-    hub.on('driveUpdate', ({ ws, user }, { carId, x, z, yaw, speed, steer }) => {
+    hub.on('driveUpdate', ({ ws, user }, { carId, x, z, yaw, speed, steer, nitro }) => {
         const car = cars.get(carId);
         if (!car || car.driver !== user.id) return;
         const now = Date.now();
@@ -76,10 +76,11 @@ function registerDriving(hub) {
         const pose = { x: finite(x, WORLD_LIMIT), z: finite(z, WORLD_LIMIT), yaw: finite(yaw, 1000) };
         if (pose.x === null || pose.z === null || pose.yaw === null) return;
         Object.assign(car, pose, {
-            speed: Math.max(-20, Math.min(20, finite(speed, 100) ?? 0)),
+            speed: Math.max(-30, Math.min(30, finite(speed, 100) ?? 0)),
             steer: Math.max(-1, Math.min(1, finite(steer, 10) ?? 0))
         });
-        hub.broadcast({ type: 'driveUpdate', carId, x: car.x, z: car.z, yaw: car.yaw, speed: car.speed, steer: car.steer }, ws);
+        // nitro: Shift held (flames and a roar for everyone); not kept.
+        hub.broadcast({ type: 'driveUpdate', carId, x: car.x, z: car.z, yaw: car.yaw, speed: car.speed, steer: car.steer, nitro: Boolean(nitro) }, ws);
     });
 
     // A car shoved by another one. Parked: the pusher's client slides it (x,

@@ -73,6 +73,9 @@ bool regionLightAt( vec3 p, out vec3 ambient, out vec3 directional, out vec3 lam
 	directional = outdoorDirectional;
 	lampPosition = vec3( 0.0 );
 	lampLightColor = vec3( 0.0 );
+	#ifdef REGION_FORCE_OUTSIDE
+	return true;
+	#endif
 	for ( int i = 0; i < REGION_MAX; i ++ ) {
 		if ( i >= regionCount ) break;
 		vec4 box = regionBoxes[ i ];
@@ -150,8 +153,18 @@ export function installRegionLights(renderer) {
         if (!shader.fragmentShader.includes('#include <lights_fragment_begin>')
             || !shader.vertexShader.includes('#include <project_vertex>')) return;
         addRegionCode(shader);
+        if (this.userData.litAsOutside) shader.fragmentShader = `#define REGION_FORCE_OUTSIDE\n${shader.fragmentShader}`;
         shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_begin>', FRAGMENT_LIGHTS);
     };
+}
+
+// A material on the outside of something inside a bar's light space (the
+// roof's tiles over the bar): always lit as outside. Its own program key,
+// since the patch changes its shader.
+export function litAsOutside(material) {
+    material.userData.litAsOutside = true;
+    material.customProgramCacheKey = () => 'region-lit-as-outside';
+    return material;
 }
 
 // For an unlit material that only belongs outside (the lamps' ground glow):

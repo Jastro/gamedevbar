@@ -37,19 +37,20 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       shoved on their screen too. Does it feel right (`PUSH_*`, `SLIDE_FRICTION` in `DrivingSync.js`)?
 - [ ] **Toilet light** stays in the bathroom: with it on, nothing warm on the bar's walls or ceiling
       around the cubicle (also above the toilet, over the cubicle's ceiling), from inside or outside it.
-- [ ] **Wall finishes and closed buildings** (2026-10-23). Gamedev outside half-timbered, Desarrollo
-      whitewashed with the ochre base, both inside with the wood wainscot. Pattern size right
+- [ ] **Wall finishes and closed buildings** (2026-10-23). Both bars whitewashed outside with the ochre
+      base, both inside with the wood wainscot. Pattern size right
       (`width`/`height` per style in `src/world/WallTextures.js`)? The four other buildings: shut door
       and "PRÓXIMA APERTURA" sign, readable from the plaza (also at night)?
 - [ ] **Passenger seat** (2026-10-23). A friend drives a car; F next to it: "Subir de copiloto", you sit
       beside them and ride along; F gets you out. Looks right on both screens?
 - [ ] **Roofs.** From the plaza and the ring road: do the roofs look nice (color, pitch `RISE`, eaves
-      in `src/world/Roof.js`)? Walk in: your bar's roof disappears, the view inside is as before.
+      in `src/world/Roof.js`)? Inside: a sloped wooden ceiling; lit like the bar at night and by day?
 - [ ] **New bottom bar.** Chat input bottom left under the chat log; 🎙️ ⚙️ 👤 ❔ bottom right, all the
       same size; no 😊 button (emojis: right click). ❔ panel twice as wide. Also on a small window.
-- [ ] **Mouse capture** (⚙️ → Ratón). On: dragging the camera with the right (or middle) button hides
-      the cursor and it can't leave the window; let go: it's back where it was. A plain right click
-      still opens the menu. Firefox and Chrome?
+- [ ] **Nitro** (2026-10-23). Drive, hold Shift with W: faster, flames out the back, a whoosh and a
+      roar, the view widens; a friend sees and hears it. Fun? Too loud (`createRoar` volume 0.35)?
+      Top speed (`NITRO_MAX` 22 in `DrivingSync.js`)?
+- [ ] **Walking speed** up a bit (walk 3.7, run 6.5; `WALK_SPEED`/`RUN_SPEED` in `LocalPlayer.js`): right?
 - [ ] **Stools a bit higher** (sit at 1.55, was 1.4; `SEAT_HEIGHT` in `LocalPlayer.js`) and **stickers
       twice as big** (1.4): right?
 - [ ] **Four graffiti walls** in the bathroom (2026-10-23, now whole walls): F at each wall: the panel

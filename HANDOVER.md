@@ -19,22 +19,15 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
-- 2026-10-23 Wall finishes and closed buildings: Borja picked E6 (half-timbered) for Gamedev's outside,
-  E2 (whitewash, ochre base) for Desarrollo's and I1 (wood wainscot, cream plaster) inside both, drawn
-  in code and mapped in meters; level.json's duplicate walls removed. Slots 2-5 got closed buildings
-  (plain shell, roof, shut door, "PRÓXIMA APERTURA" sign). **Verified in the browser:** overview of
-  the six buildings around the plaza; close-ups of both facades, a closed building and the inside
-  wainscot; shaders compile; each closed building's front wall blocks, its doorstep is free and it
-  isn't a room.
-- 2026-10-23 Passenger seat, roofs, bottom bar: F next to a car someone drives rides along beside them
-  (`driveRide`); terracotta gable roofs on the bars (hidden for the bar you're in); chat input bottom
-  left lined up with the log, 🎙️ ⚙️ 👤 ❔ bottom right all 48 px, no 😊 button; ❔ panel 880 wide;
-  ⚙️ → Ratón: pointer lock while dragging the camera; stools sit at 1.55; stickers 1.4.
-  **Verified in the browser (two clients):** passenger boards ("Subir de copiloto" hint), sits on the
-  passenger seat (0 off) on both clients while the car drives, F gets out (on the free side), poses
-  cleared on both; roofs seen from the plaza and from above, hidden inside; input and log both
-  20 px / 452 px; buttons at the bottom right, 48 px each; the settings checkbox sets the camera and
-  is saved; stool sitting height 1.55. **Not verified:** the pointer lock itself (needs a real mouse).
+- 2026-10-23 Nitro, ceilings, Gamedev whitewashed, faster walking: Shift while driving is nitro (top 22,
+  flames, whoosh and roar, wider view, synced); the roofs show from inside as a sloped wooden ceiling
+  lit by the bar (tiles lit as outside); Gamedev's outside is whitewashed like Desarrollo's; walk 3.7,
+  run 6.5; the mouse capture option is removed (it didn't work for Borja). **Verified in the browser
+  (two clients):** with Shift the car reaches 22 in 1.4 s with flames, roar and a 87° view, the other
+  client shows the flames; letting go turns them off; flame close-up (no outlines); inside views by
+  night and day (same light), outside view; ⚙️ shows only Volumen and Micrófono.
+- 2026-10-23 Wall finishes (whitewash outside, wood wainscot inside), closed buildings in slots 2-5,
+  passenger seat, roofs, new bottom bar. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Stickers (12 code-drawn, right click → 🎨 Pegatina, one per person, 24 h), the toilet light
   ends at its ceiling, whole-wall bathroom graffiti, no hitch stepping into the toilet. Details in
   [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
@@ -66,9 +59,6 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   WS hardening, repo docs, rooms/street/doors/occlusion. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 
 ## Decisions to review
-- **Mouse capture = pointer lock while dragging** (right or middle button on the 3D view): browsers
-  can't keep a visible cursor inside the window. Always-on lock (FPS style) would break clicking UI.
-- **Roof hidden for the bar you're in** (not a ceiling): inside stays as it was.
 - **Stickers are flat squares, not projected decals:** on edges and curved things they overhang. They
   live in server memory (a deploy wipes them). The 12 designs are ours, in the memes' spirit.
 - **Uber Suicida:** seat 0 drives; it lost its collider (walk through it, like the other cars). If it

@@ -2,6 +2,24 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-23: walls, closed buildings, passenger, roofs)
+- 2026-10-23 Wall finishes and closed buildings: Borja picked E6 (half-timbered) for Gamedev's outside,
+  E2 (whitewash, ochre base) for Desarrollo's and I1 (wood wainscot, cream plaster) inside both, drawn
+  in code and mapped in meters; level.json's duplicate walls removed. Slots 2-5 got closed buildings
+  (plain shell, roof, shut door, "PRÓXIMA APERTURA" sign). **Verified in the browser:** overview of
+  the six buildings around the plaza; close-ups of both facades, a closed building and the inside
+  wainscot; shaders compile; each closed building's front wall blocks, its doorstep is free and it
+  isn't a room.
+- 2026-10-23 Passenger seat, roofs, bottom bar: F next to a car someone drives rides along beside them
+  (`driveRide`); terracotta gable roofs on the bars (hidden for the bar you're in); chat input bottom
+  left lined up with the log, 🎙️ ⚙️ 👤 ❔ bottom right all 48 px, no 😊 button; ❔ panel 880 wide;
+  stools sit at 1.55; stickers 1.4. (A mouse capture option came and went: see the next entry.)
+  **Verified in the browser (two clients):** passenger boards ("Subir de copiloto" hint), sits on the
+  passenger seat (0 off) on both clients while the car drives, F gets out (on the free side), poses
+  cleared on both; roofs seen from the plaza and from above, hidden inside; input and log both
+  20 px / 452 px; buttons at the bottom right, 48 px each; the settings checkbox sets the camera and
+  is saved; stool sitting height 1.55.
+
 ## Done (2026-10-23: stickers, bathroom walls)
 - 2026-10-23 Whole-wall graffiti, no toilet hitch: the four drawable panels now cover each wall floor
   to ceiling (the door's wall with the doorway cut out, shaded on the canvas); the bathrooms' shaders

@@ -113,6 +113,11 @@ export class DrivableCar {
         return this.group.localToWorld(new THREE.Vector3(-DRIVER_SEAT.x, DRIVER_SEAT.y, DRIVER_SEAT.z));
     }
 
+    // The back bumper, along the car (exhaust flames, see DrivingSync).
+    get rearZ() {
+        return -CAR_SIZE.length / 2;
+    }
+
     get halfWidth() {
         return CAR_SIZE.width / 2;
     }

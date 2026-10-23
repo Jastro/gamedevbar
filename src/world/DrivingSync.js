@@ -8,7 +8,9 @@ import { lerpAngle } from '../entities/Player';
 // Drivable cars (server: server/features/driving.js). F next to one to drive:
 // W/S speed up and brake (then reverse), A/D steer, F or Esc to get out.
 // F next to one someone drives takes the seat beside them (just riding
-// along; F or Esc to get out).
+// along; F or Esc to get out). Shift is nitro, like sprinting: faster and
+// quicker off the mark, with exhaust flames, a roar and a wider view; the
+// others see and hear it too.
 // The driver's client runs the car (simple bicycle model) and sends its pose;
 // everyone else eases toward it. Cars crash into walls, lamp posts, the
 // fountain and the map's edge, can't go into a bar, and pass through people.
@@ -47,7 +49,13 @@ const PUSH_RECOIL = 0.7;  // and how much of that you lose
 const SLIDE_FRICTION = 2.5; // 1/s: how fast a shoved car stops sliding (a full-speed hit: ~4)
 const MAX_KICK_SEND = 20; // the server's limit for a kick's speed
 const MAX_PUSH_SEND = 1.5; // the server's limit for one push message
-const HINT = 'W/S: acelerar / frenar · A/D: girar · F o Esc: bajar';
+const NITRO_MAX = 22;      // units/s with Shift held
+const NITRO_ACCELERATION = 16;
+const NITRO_FADE = 6;      // units/s² back down to MAX_FORWARD after letting go
+const NITRO_FOV = 12;      // degrees the driver's view widens
+const FOV_RATE = 6;        // 1/s
+const EXHAUSTS = [-0.55, 0.55]; // x of the two exhausts
+const HINT = 'W/S: acelerar / frenar · A/D: girar · Mayús: nitro · F o Esc: bajar';
 const RIDE_HINT = 'De copiloto · F o Esc: bajar';
 
 // Parked along the ring road, beside road k's junction, pointing along it.
@@ -108,6 +116,7 @@ export class DrivingSync {
             if (!entry || entry.driver === this.localId) return;
             entry.target = { x: data.x, z: data.z, yaw: data.yaw };
             entry.speed = Number(data.speed) || 0;
+            entry.nitro = Boolean(data.nitro);
             entry.steer = Number(data.steer) || 0;
         });
         network.on('driveBusy', (data) => this.say(data.seat === 'passenger'
@@ -148,7 +157,10 @@ export class DrivingSync {
                 entry.car.group.rotation.y = yaw;
             }
         }
-        if (!entry.driver) entry.speed = 0;
+        if (!entry.driver) {
+            entry.speed = 0;
+            entry.nitro = false;
+        }
         // Whoever got out gets their own pose back.
         [[previousDriver, entry.driver], [previousPassenger, entry.passenger]].forEach(([before, now]) => {
             if (!before || before === now || before === this.localId || before === entry.driver || before === entry.passenger) return;
@@ -467,11 +479,18 @@ export class DrivingSync {
         const left = !chatting && (this.keys.KeyA || this.keys.ArrowLeft);
         const right = !chatting && (this.keys.KeyD || this.keys.ArrowRight);
 
+        const nitro = forward && Boolean(this.keys.ShiftLeft || this.keys.ShiftRight);
+
         let speed = entry.speed;
-        if (forward) speed += (speed < 0 ? BRAKING : ACCELERATION) * dt;
+        if (forward) speed += (speed < 0 ? BRAKING : (nitro ? NITRO_ACCELERATION : ACCELERATION)) * dt;
         else if (back) speed -= (speed > 0.1 ? BRAKING : ACCELERATION * 0.6) * dt;
         else speed -= Math.sign(speed) * Math.min(Math.abs(speed), COASTING * dt);
-        speed = THREE.MathUtils.clamp(speed, -MAX_REVERSE, MAX_FORWARD);
+        // Past the normal top speed (nitro let go): eases back down.
+        const top = nitro ? NITRO_MAX : MAX_FORWARD;
+        speed = speed > top
+            ? Math.max(top, Math.min(speed, entry.speed) - NITRO_FADE * dt)
+            : Math.max(speed, -MAX_REVERSE);
+        entry.nitro = nitro && speed > 1;
         const steerTarget = left === right ? 0 : (left ? 1 : -1);
         entry.steer += (steerTarget - entry.steer) * Math.min(1, STEER_RATE * dt);
 
@@ -525,7 +544,7 @@ export class DrivingSync {
         if (now - this.lastSent >= SEND_INTERVAL) {
             this.lastSent = now;
             const round = (value) => Math.round(value * 1000) / 1000;
-            this.game.network.send('driveUpdate', { carId: car.id, x: round(x), z: round(z), yaw: round(yaw), speed: round(speed), steer: round(entry.steer) });
+            this.game.network.send('driveUpdate', { carId: car.id, x: round(x), z: round(z), yaw: round(yaw), speed: round(speed), steer: round(entry.steer), nitro: entry.nitro });
         }
     }
 
@@ -579,6 +598,84 @@ export class DrivingSync {
         }
     }
 
+    // Nitro: flames out of the exhausts, a whoosh as it kicks in and a roar
+    // while it lasts (any car, ours or someone else's).
+    updateNitro(entry) {
+        const on = Boolean(entry.nitro && entry.driver);
+        if (on && !entry.flames) entry.flames = this.createFlames(entry.car);
+        if (entry.flames) {
+            entry.flames.visible = on;
+            if (on) entry.flames.children.forEach(flame => { flame.scale.y = 0.7 + Math.random() * 0.6; });
+        }
+        const listener = this.game.environment.audioListener;
+        if (listener) {
+            const rear = new THREE.Vector3(0, 0.5, entry.car.rearZ);
+            if (on && !entry.wasNitro) playSynth(listener, entry.car.group, rear, 'whoosh', 5);
+            if (on && !entry.roar) entry.roar = this.createRoar(listener, entry.car, rear);
+            if (entry.roar) {
+                if (on && !entry.roar.isPlaying && listener.context.state === 'running') entry.roar.play();
+                if (!on && entry.roar.isPlaying) entry.roar.stop();
+            }
+        }
+        entry.wasNitro = on;
+    }
+
+    // Two cones per exhaust (a hot blue core in an orange flame), pointing back.
+    createFlames(car) {
+        const group = new THREE.Group();
+        const outer = new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+        const inner = new THREE.MeshBasicMaterial({ color: 0x66ccff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
+        // No toon outline (OutlineEffect drew them as black wedges).
+        [outer, inner].forEach(material => { material.userData.outlineParameters = { visible: false }; });
+        const cone = (radius, length) => new THREE.ConeGeometry(radius, length, 12, 1, true).translate(0, length / 2, 0);
+        EXHAUSTS.forEach(x => {
+            [[cone(0.16, 0.9), outer], [cone(0.08, 0.55), inner]].forEach(([geometry, material]) => {
+                const flame = new THREE.Mesh(geometry, material);
+                // The cone's tip (+y) to the back (-z).
+                flame.rotation.x = -Math.PI / 2;
+                flame.position.set(x, 0.45, car.rearZ - 0.05);
+                flame.raycast = () => {};
+                group.add(flame);
+            });
+        });
+        group.visible = false;
+        car.group.add(group);
+        return group;
+    }
+
+    // A low rushing roar: filtered noise on a loop, at the back of the car.
+    createRoar(listener, car, rear) {
+        const context = listener.context;
+        const length = context.sampleRate * 2;
+        const buffer = context.createBuffer(1, length, context.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (0.8 + 0.2 * Math.sin((2 * Math.PI * 14 * i) / length));
+        const roar = new THREE.PositionalAudio(listener);
+        roar.setBuffer(buffer);
+        roar.setLoop(true);
+        roar.setRefDistance(4);
+        roar.setVolume(0.35);
+        const filter = context.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 700;
+        filter.Q.value = 0.8;
+        roar.setFilter(filter);
+        roar.position.copy(rear);
+        car.group.add(roar);
+        return roar;
+    }
+
+    // While we're on nitro, the view widens a little.
+    updateFov(dt) {
+        const camera = this.game.camera.getCamera();
+        this.baseFov ??= camera.fov;
+        const boosting = Boolean(this.driving && this.cars.get(this.driving)?.nitro);
+        const target = this.baseFov + (boosting ? NITRO_FOV : 0);
+        if (Math.abs(camera.fov - target) < 0.05) return;
+        camera.fov += (target - camera.fov) * (1 - Math.exp(-FOV_RATE * dt));
+        camera.updateProjectionMatrix();
+    }
+
     // Sitting in the Uber's driver's seat takes the wheel; losing that seat
     // (the smoke ride stood us up) hands it back.
     updateUberDriver() {
@@ -622,12 +719,14 @@ export class DrivingSync {
         this.updateUberDriver();
         this.updateSlides(dt);
         this.sendPushes();
+        this.updateFov(dt);
         this.cars.forEach((entry, id) => {
             if (id === this.driving) this.drive(entry, dt);
             // Parked ones too: someone may be pushing them.
             else if (entry.driver || entry.target) this.follow(entry, dt);
             entry.car.animate(dt, entry.speed, entry.steer);
             this.updateEngine(entry);
+            this.updateNitro(entry);
             if (entry.car === this.uber) {
                 this.updateUberSeats();
                 return;

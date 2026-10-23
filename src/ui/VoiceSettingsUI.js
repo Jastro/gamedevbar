@@ -1,13 +1,12 @@
 import { PTT_KEY } from './VoiceUI';
-import { saveMouseCapture } from '../core/PlayerProfile';
 
 const VOLUME_LABELS = { radio: '📻 Radio', video: '📽️ Proyector', voice: '🗣️ Voces', arcade: '🕹️ Arcade' };
 
-// Settings panel, opened with the ⚙️ button next to the mic button: volume
-// sliders (radio, projector, voices; remembered per player), the mouse
-// capture option (Camera.captureMouse, remembered), input device picker
-// (remembered), live input level meter, a button to release the mic so the
-// browser's recording indicator goes away, and voice connection status.
+// Sound settings panel, opened with the ⚙️ button next to the mic button:
+// volume sliders (radio, projector, voices; remembered per player), input
+// device picker (remembered), live input level meter, a button to release
+// the mic so the browser's recording indicator goes away, and voice
+// connection status.
 export class VoiceSettingsUI {
     constructor(voice, audioSettings) {
         this.voice = voice;
@@ -33,8 +32,8 @@ export class VoiceSettingsUI {
         this.toggleButton.id = 'voice-settings-button';
         this.toggleButton.type = 'button';
         this.toggleButton.textContent = '⚙️';
-        this.toggleButton.title = 'Ajustes';
-        this.toggleButton.setAttribute('aria-label', 'Ajustes');
+        this.toggleButton.title = 'Ajustes de sonido';
+        this.toggleButton.setAttribute('aria-label', 'Ajustes de sonido');
         this.toggleButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.isOpen ? this.close() : this.open();
@@ -47,8 +46,6 @@ export class VoiceSettingsUI {
         this.panel.innerHTML = `
             <div class="voice-settings-title">🔊 Volumen</div>
             <div class="volume-sliders"></div>
-            <div class="voice-settings-title">🖱️ Ratón</div>
-            <label class="voice-open-mic"><input type="checkbox" data-action="capture-mouse"> Capturar el ratón al girar o mover la cámara (no se sale de la pantalla)</label>
             <div class="voice-settings-title">🎙️ Micrófono</div>
             <label class="voice-settings-label" for="voice-device-select">Dispositivo</label>
             <select id="voice-device-select"></select>
@@ -72,13 +69,6 @@ export class VoiceSettingsUI {
             this.openMicCheckbox.blur();
             await this.voice.setMode(this.openMicCheckbox.checked ? 'open' : 'ptt');
             this.refresh();
-        });
-        this.captureCheckbox = this.panel.querySelector('[data-action="capture-mouse"]');
-        this.captureCheckbox.checked = Boolean(this.voice.game.camera?.captureMouse);
-        this.captureCheckbox.addEventListener('change', () => {
-            this.captureCheckbox.blur();
-            this.voice.game.camera.captureMouse = this.captureCheckbox.checked;
-            saveMouseCapture(this.captureCheckbox.checked);
         });
         this.peerList = this.panel.querySelector('.voice-peers');
         this.createVolumeSliders(this.panel.querySelector('.volume-sliders'));

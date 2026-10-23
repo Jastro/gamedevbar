@@ -48,7 +48,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `playerGestureStop` | – | → `playerGestureStop {userId}` to others |
 | `powderSnort` | `roomId` | 3 s cooldown; line gone → `bathroomRefused {reason: 'empty'}`; else empty it for 45 s → `bathroomEvent snort` + `bathroomState` |
 | `driveStart` | `carId` (`car1`-`car8`, `uber`: sent by whoever sits in its seat 0), `x`, `z`, `yaw` (its parking spot, used if nobody moved it yet) | joined players, one car each; taken → `driveBusy {name}`; else → `driveState` to all |
-| `driveUpdate` | `carId`, `x`, `z`, `yaw`, `speed`, `steer` | the driver only, ≥ 30 ms apart, clamped → relayed to others |
+| `driveUpdate` | `carId`, `x`, `z`, `yaw`, `speed`, `steer`, `nitro` (Shift held) | the driver only, ≥ 30 ms apart, clamped → relayed to others |
 | `driveRide` | `carId` (an open-top car someone drives) | one passenger per car, not while you're in another car; taken → `driveBusy {name, seat: 'passenger'}`; else → `driveState` |
 | `driveStop` | – | out of whichever seat you're in (a car you drove stays where it is) → `driveState` |
 | `drivePush` | `carId` (not your own), `x`, `z`, `yaw` (where it is now), `dx`, `dz` (shoved since the last one), `vx`, `vz` (the kick) | joined players, ≥ 30 ms apart per car. Parked: pose ≤ 1.5 from the stored one → stored, `driveUpdate` to others. Driven: `drivePushed {carId, dx, dz, vx, vz}` to its driver |

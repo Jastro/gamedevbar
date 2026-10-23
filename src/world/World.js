@@ -174,6 +174,7 @@ export class World {
         addWall(FRONT_DOOR.width, lintelHeight, WALL_THICKNESS, FRONT_DOOR.x, FRONT_DOOR.height + lintelHeight / 2, ROOM_HALF_DEPTH, front);
 
         room.roof = createRoof(room, wallMaterial, outside);
+        this.cameraOccluders.push(...room.roof.userData.slopes);
     }
 
     createBarArea(room) {
@@ -224,14 +225,8 @@ export class World {
 
     // Colliders are static and measured once (CollisionManager), so there's
     // nothing to refresh per frame.
-    // playerPosition: the local player's, whose bar shows no roof (inside,
-    // the view stays open to the sky).
-    update(deltaTime, playerPosition) {
+    update(deltaTime) {
         this.outdoors?.update(deltaTime);
-        const here = playerPosition ? this.getRoomAt(playerPosition) : null;
-        this.rooms.forEach(room => {
-            if (room.roof) room.roof.visible = room !== here;
-        });
     }
 
     checkCollision(position, radius) {

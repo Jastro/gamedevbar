@@ -80,7 +80,7 @@ export const ROOMS = [
         paintings: true,
         radioStation: 'rock-fm', // until someone changes it (src/audio/radioStations.js)
         // Wall finishes (src/world/WallTextures.js).
-        exterior: 'timber',
+        exterior: 'whitewash',
         interior: 'wainscot',
         slot: 0
     },
