@@ -10,7 +10,7 @@ import { lerpAngle } from '../entities/Player';
 // F next to one someone drives takes the seat beside them (just riding
 // along; F or Esc to get out). Shift is nitro, like sprinting: faster and
 // quicker off the mark, with exhaust flames, a roar and a wider view; the
-// others see and hear it too.
+// others see and hear it too. G by the finish line: races (RaceSync).
 // The driver's client runs the car (simple bicycle model) and sends its pose;
 // everyone else eases toward it. Cars crash into walls, lamp posts, the
 // fountain and the map's edge, can't go into a bar, and pass through people.
@@ -55,7 +55,7 @@ const NITRO_FADE = 6;      // units/s² back down to MAX_FORWARD after letting g
 const NITRO_FOV = 12;      // degrees the driver's view widens
 const FOV_RATE = 6;        // 1/s
 const EXHAUSTS = [-0.55, 0.55]; // x of the two exhausts
-const HINT = 'W/S: acelerar / frenar · A/D: girar · Mayús: nitro · F o Esc: bajar';
+const HINT = 'W/S: acelerar / frenar · A/D: girar · Mayús: nitro · G: carrera · F o Esc: bajar';
 const RIDE_HINT = 'De copiloto · F o Esc: bajar';
 
 // Parked along the ring road, beside road k's junction, pointing along it.
@@ -474,8 +474,11 @@ export class DrivingSync {
     drive(entry, dt) {
         const { car } = entry;
         const chatting = this.game.chatActive;
-        const forward = !chatting && (this.keys.KeyW || this.keys.ArrowUp);
-        const back = !chatting && (this.keys.KeyS || this.keys.ArrowDown);
+        // On a race's grid until the green light (RaceSync).
+        const held = Boolean(this.game.races?.holding);
+        if (held) entry.speed = 0;
+        const forward = !chatting && !held && (this.keys.KeyW || this.keys.ArrowUp);
+        const back = !chatting && !held && (this.keys.KeyS || this.keys.ArrowDown);
         const left = !chatting && (this.keys.KeyA || this.keys.ArrowLeft);
         const right = !chatting && (this.keys.KeyD || this.keys.ArrowRight);
 

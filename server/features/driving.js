@@ -20,6 +20,8 @@ function registerDriving(hub) {
     const publish = (carId) => hub.broadcastAll({ type: 'driveState', ...publicState(carId) });
     const carOf = (user) => [...cars.entries()].find(([, car]) => car.driver === user.id)?.[0] ?? null;
     const rideOf = (user) => [...cars.entries()].find(([, car]) => car.passenger === user.id)?.[0] ?? null;
+    // For races (only drivers race).
+    hub.driving = { carOf: (userId) => carOf({ id: userId }) };
 
     const release = (carId) => {
         const car = cars.get(carId);

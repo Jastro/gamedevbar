@@ -19,6 +19,12 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-23 Races (plan step 6, plan done): the ring road is a circuit with a META gantry; every lap
+  is timed for the weekly board; G by the line opens/joins a race (grid, 3-2-1 lights, 3 laps,
+  winner announced). **Verified in the browser** (two clients, laps simulated by moving the car): a
+  19.5 s lap recorded and announced, a plaza shortcut gave no lap, both cars gridded and held with W
+  down until green, 3 laps → finish announced and `races` +1 saved, getting out left the race and it
+  closed.
 - 2026-10-23 Profiles on click (plan step 5): click an avatar → name, character, accessories, where they
   are, this week's ranking and coins; 👋 Saludar and challenge buttons; the bartender has his own card.
   Fixed: clicking a panel button also clicked whatever was behind it. **Verified in the browser** (two

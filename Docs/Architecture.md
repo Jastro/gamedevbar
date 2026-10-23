@@ -42,6 +42,7 @@ world/         RoomLayout (the hub: plaza, slots, roads), Room, World (shells, c
 bar/           drinks (menu, alcohol, decay math shared with the server), DrinkSync (order panel, B to sip,
                held drink, drunk tag and effects), DartsSync (taking the board, aiming, throwing),
                SlotSync (lever, shared spins, coins)
+               RaceSync (ring road circuit: laps, races, start gantry)
 interactions/  one file per clickable type: seat, radio, arcade, door, barTap, bathroom fixtures, player
                (click an avatar → ui/ProfileUI)…
 audio/         OcclusionChain (wall/door muffling shared by radios and voices)

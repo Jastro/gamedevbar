@@ -92,6 +92,21 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
   seat with the seated pose; the camera swings in behind a moving car.
 - **Uber Suicida** (below) is the fifth car, `'uber'`: its driver's seat drives it.
 
+## Races (the ring road circuit)
+
+- `src/world/RaceSync.js` + `server/features/races.js`. The ring road, counterclockwise (the way the
+  parked cars point); a checkered line and a gantry (META sign, three start lights, solid posts) at
+  slot 3's bearing, the far side of the plaza.
+- **Time trial:** while you drive, progress around the plaza counts only on the ring (±2 of its edges);
+  crossing the line forward after a full turn (0.3 rad of slack) sends `raceLap` → best lap on the
+  weekly board; the week's record is announced, and you get "⏱️ Vuelta en…" with your best. HUD: the
+  running lap time. A cut through the plaza leaves the lap short (no lap, a new one starts).
+- **Races:** G while driving within 30 of the line opens a race or joins it (G again: out). 20 s lobby;
+  with 2+ cars every entrant's car jumps to the grid behind the line (two lanes, join order) and holds
+  (`DrivingSync.drive`) for 1 s + 3-2-1 red lights and beeps, then green. 3 laps; the server times the
+  finish, announces the order, and the winner gets a 🏁 point. Getting out of the car leaves the race;
+  it closes 8 s after the last one finishes, or after 4 minutes.
+
 ## Uber Suicida (the smoke car)
 
 A black car parked on the plaza by the road between Gamedev and Desarrollo (`src/world/Car.js`,

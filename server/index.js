@@ -30,6 +30,7 @@ const { registerSlots } = require('./features/slots');
 const { registerFoosball } = require('./features/foosball');
 const { registerGestures } = require('./features/gestures');
 const { registerDriving } = require('./features/driving');
+const { registerRaces } = require('./features/races');
 const { registerCar } = require('./features/car');
 
 const DIST_DIR = path.join(__dirname, '..', 'dist');
@@ -79,6 +80,7 @@ registerSlots(hub);
 registerFoosball(hub);
 registerGestures(hub);
 registerDriving(hub);
+registerRaces(hub);
 registerDuel(hub);
 registerSoccer(hub);
 registerVoice(hub);

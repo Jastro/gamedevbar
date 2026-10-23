@@ -47,6 +47,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       in `src/world/Roof.js`)? Inside: a sloped wooden ceiling; lit like the bar at night and by day?
 - [ ] **New bottom bar.** Chat input bottom left under the chat log; 🎙️ ⚙️ 👤 ❔ bottom right, all the
       same size; no 😊 button (emojis: right click). ❔ panel twice as wide. Also on a small window.
+- [ ] **Races** (2026-10-23). Drive to the META gantry (far side of the plaza): a lap around the ring
+      shows the time top center and posts "⏱️ Vuelta en…". Two windows: G near the line in both,
+      wait 20 s: both cars jump to the grid, 3-2-1, green; 3 laps; the winner is announced. Fun? Lap
+      count right? Does the grid jump feel OK?
 - [ ] **Profiles** (2026-10-23). Two windows: click the other avatar → panel with name, character,
       hat, bar, this week's ranking, coins. 👋 Saludar: you cheer and the chat says "saluda a X". Click
       the bartender: his card. Easy enough to click someone in a crowd?

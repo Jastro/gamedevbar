@@ -28,6 +28,7 @@ import { StickerSync } from '../world/StickerSync';
 import { Bartender } from '../world/Bartender';
 import { Soundscape } from '../audio/Soundscape';
 import { LeaderboardSync } from '../world/LeaderboardSync';
+import { RaceSync } from '../world/RaceSync';
 import { Weather } from '../world/Weather';
 import { LocalWeather } from '../world/LocalWeather';
 import { GestureSync } from '../entities/GestureSync';
@@ -235,6 +236,8 @@ export class Game {
         // The weekly ranking board in each bar.
         this.leaderboards = new LeaderboardSync(this);
         this.leaderboards.create();
+        this.races = new RaceSync(this);
+        this.races.create();
         this.lighting.init();
         this.radioSync.applyDefaults();
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
@@ -282,6 +285,7 @@ export class Game {
         this.drivingSync.bind();
         this.bartenders.forEach(bartender => bartender.bind());
         this.leaderboards.bind();
+        this.races.bind();
         this.slotSync.bind();
         this.foosballSync.bind();
         this.virconSpectating.bind();
@@ -399,6 +403,7 @@ export class Game {
         this.foosballSync.update(deltaTime);
         updateGestureEffects(deltaTime);
         this.drivingSync.update(deltaTime);
+        this.races.update();
         this.bartenders?.forEach(bartender => bartender.update(deltaTime));
         this.soundscape?.update(deltaTime);
         const clockLabel = this.localWeather.label(this.weather);

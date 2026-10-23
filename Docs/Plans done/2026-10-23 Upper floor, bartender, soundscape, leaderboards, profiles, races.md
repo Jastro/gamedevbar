@@ -65,3 +65,7 @@ All room-local coordinates: x -15..15 (right = +x seen from the door), z -10..10
   side so the doorway stays clear. `floor` colliders block by the body's center (stairs reach the
   slab's height right at its edge). Blockers no longer block someone standing above their top (the
   closed entrance door blocked the doorway above it).
+- 5: only other avatars are clickable (ours sits between the camera and what we click); clicks on a
+  floating panel no longer reach the world (a panel button over an avatar reopened it).
+- 6: at the start every entrant's car jumps to a grid behind the line (fair start, holds there); the
+  server times finishes itself (clients only say "done"); time-trial laps are limited to one per 12 s.
