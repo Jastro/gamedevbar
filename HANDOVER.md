@@ -18,6 +18,13 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-24 Faster loading: gzipped copies made at build time and served by Node (download ~3.6 MB →
+  ~1.2 MB), the football stadium only loads on `/furbo`, each character model downloads once, one floor
+  texture for all bars. Fixed: a speech bubble replaced mid-fade threw an error (the cop hit it often);
+  Agente Porras restarted his walk 5 times a second (now carries on between updates). **Verified in the
+  browser** on the production build: `Content-Encoding: gzip`, no stadium at start and `/furbo` still
+  starts with it, models ~120-140 KB each and pj5 once, ready 1.66 s vs 1.96 s locally; no bubble
+  errors; the cop walks with 0 idle/walk flips in 4 s (40 before).
 - 2026-10-24 Agente Porras: a policeman in the plaza, run by the server, who chases random people
   (drunk ones first), searches them and hands out absurd verdicts; police cap and baton accessories.
   **Verified in the browser** (real server): he picked me after ~4 s of patrol, chased, caught me,

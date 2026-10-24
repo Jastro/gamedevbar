@@ -247,7 +247,6 @@ export class Game {
         this.radioSync.applyDefaults();
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
         this.bindNetwork();
-        await this.soccerGame.init();
     }
 
     // The first look into a bathroom compiled its shaders (the mirror and what
@@ -308,7 +307,8 @@ export class Game {
         }));
 
         // Escuchar eventos del juego de fútbol
-        this.network.on('startSoccerGame', (data) => {
+        this.network.on('startSoccerGame', async (data) => {
+            await this.soccerGame.load();
             this.soccerGame.startGame(this.players.players);
             this.ui.chat.addMessage({
                 type: 'system',

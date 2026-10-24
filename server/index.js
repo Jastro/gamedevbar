@@ -1,6 +1,7 @@
 // Server entry: static client over HTTP, game state over WebSocket.
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const http = require('http');
 const cors = require('cors');
 const { PORT } = require('./config');
@@ -38,6 +39,28 @@ const DIST_DIR = path.join(__dirname, '..', 'dist');
 
 const app = express();
 app.use(cors());
+// Gzipped copies made at build time (tools/precompress.js): sent instead of
+// the file when the browser accepts gzip, with the original's type.
+const PRECOMPRESSED = new Set(['.js', '.css', '.html', '.json', '.svg', '.glb', '.wasm', '.wav']);
+app.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    const extension = path.extname(req.path).toLowerCase();
+    if (!PRECOMPRESSED.has(extension) || !/\bgzip\b/.test(req.headers['accept-encoding'] || '')) return next();
+    let file;
+    try {
+        file = path.join(DIST_DIR, decodeURIComponent(req.path)) + '.gz';
+    } catch {
+        return next();
+    }
+    if (!file.startsWith(DIST_DIR + path.sep)) return next();
+    fs.stat(file, (error, stats) => {
+        if (error || !stats.isFile()) return next();
+        res.setHeader('Content-Encoding', 'gzip');
+        res.setHeader('Vary', 'Accept-Encoding');
+        res.type(extension);
+        res.sendFile(file);
+    });
+});
 // No automatic `/dir` → `/dir/` redirects: `/gamedev/` is redirected the other
 // way below.
 app.use(express.static(DIST_DIR, { redirect: false }));

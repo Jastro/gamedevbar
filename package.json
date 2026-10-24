@@ -7,7 +7,7 @@
     "dev": "concurrently \"vite\" \"nodemon server.js\"",
     "watch-frontend": "vite",
     "watch-backend": "nodemon server.js",
-    "build": "vite build",
+    "build": "vite build && node tools/precompress.js",
     "preview": "vite preview",
     "start": "node server.js"
   },

@@ -31,6 +31,13 @@ export class SoccerGame {
         this.playerRadius = 1.2; // Radio aumentado para colisiones más fáciles
     }
 
+    // The stadium (620 KB) loads the first time a match starts, not with the
+    // game: nobody waits for it on entry.
+    load() {
+        this.loading ??= this.init();
+        return this.loading;
+    }
+
     async init() {
         const loader = new GLTFLoader();
         try {

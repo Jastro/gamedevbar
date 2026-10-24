@@ -14,6 +14,20 @@ const SIT_FOOT_OFFSET = new THREE.Vector3(0, 0.22, 0.34);
 const SIT_FOOT_TILT = -1.0;
 const SIT_FEET = ['FootL', 'FootR'];
 
+// One download per model file however many avatars use it (two bartenders
+// on pj5 fetched it twice); each avatar still parses its own copy, so tints
+// and accessories stay per player.
+const modelFiles = new Map(); // path -> Promise<ArrayBuffer>
+function loadModelFile(path) {
+    if (!modelFiles.has(path)) {
+        const request = new THREE.FileLoader().setResponseType('arraybuffer').loadAsync(path);
+        // A failed download can be tried again later.
+        request.catch(() => modelFiles.delete(path));
+        modelFiles.set(path, request);
+    }
+    return modelFiles.get(path);
+}
+
 export function lerpAngle(from, to, t) {
     const delta = Math.atan2(Math.sin(to - from), Math.cos(to - from));
     return from + delta * t;
@@ -104,7 +118,7 @@ export class Player {
             const modelId = this.selectedModel;
             const modelPath = `/assets/models/${modelId}.glb`;
 
-            const gltf = await loader.loadAsync(modelPath);
+            const gltf = await loader.parseAsync(await loadModelFile(modelPath), '/assets/models/');
             // Another model was picked while this one loaded: the latest wins.
             if (modelId !== this.selectedModel) return false;
             const model = gltf.scene;
@@ -587,7 +601,9 @@ export class Player {
             clearTimeout(this.chatTimeout);
         }
 
-        // Establecer timeout para desvanecer
+        // Establecer timeout para desvanecer. The fade works on this bubble:
+        // a newer one may have replaced it meanwhile (it read a null one).
+        const bubble = this.chatBubble;
         this.chatTimeout = setTimeout(() => {
             const fadeStart = Date.now();
             const fadeDuration = 500;
@@ -596,11 +612,11 @@ export class Player {
                 const opacity = 1 - (fadeElapsed / fadeDuration);
 
                 if (opacity > 0) {
-                    this.chatBubble.material.opacity = opacity;
+                    bubble.material.opacity = opacity;
                     requestAnimationFrame(fade);
                 } else {
-                    this.mesh.remove(this.chatBubble);
-                    this.chatBubble = null;
+                    this.mesh.remove(bubble);
+                    if (this.chatBubble === bubble) this.chatBubble = null;
                 }
             };
             fade();
@@ -660,17 +676,19 @@ export class Player {
         this.chatBubble.renderOrder = 999;
         this.mesh.add(this.chatBubble);
 
-        // Actualizar las posiciones en la animación
+        // Actualizar las posiciones en la animación (on this emoji: a newer
+        // bubble may replace it meanwhile)
+        const bubble = this.chatBubble;
         const startTime = Date.now();
         const animate = () => {
             const elapsed = Date.now() - startTime;
 
             if (elapsed < 2000) {
                 const float = Math.sin(elapsed * 0.004) * 0.15;
-                this.chatBubble.position.y = 2.4 + float; // Usar la nueva altura base
-                this.chatBubble.rotation.z = Math.sin(elapsed * 0.002) * 0.15;
+                bubble.position.y = 2.4 + float; // Usar la nueva altura base
+                bubble.rotation.z = Math.sin(elapsed * 0.002) * 0.15;
                 const scale = 1.8 + Math.sin(elapsed * 0.006) * 0.1;
-                this.chatBubble.scale.set(scale, scale, 1);
+                bubble.scale.set(scale, scale, 1);
                 requestAnimationFrame(animate);
             } else {
                 const fadeStart = Date.now();
@@ -680,12 +698,12 @@ export class Player {
                     const opacity = 1 - (fadeElapsed / fadeDuration);
 
                     if (opacity > 0) {
-                        this.chatBubble.material.opacity = opacity;
-                        this.chatBubble.position.y = 2.4 + ((fadeElapsed / fadeDuration) * 0.5);
+                        bubble.material.opacity = opacity;
+                        bubble.position.y = 2.4 + ((fadeElapsed / fadeDuration) * 0.5);
                         requestAnimationFrame(fade);
                     } else {
-                        this.mesh.remove(this.chatBubble);
-                        this.chatBubble = null;
+                        this.mesh.remove(bubble);
+                        if (this.chatBubble === bubble) this.chatBubble = null;
                     }
                 };
                 fade();

@@ -84,22 +84,23 @@ export class World {
 
     createFloor(room) {
         const floorGeometry = new THREE.PlaneGeometry(ROOM_HALF_WIDTH * 2, ROOM_HALF_DEPTH * 2, 1, 1);
-        const textureLoader = new THREE.TextureLoader();
-        
-        const floorMaterial = new THREE.MeshToonMaterial({
-            roughness: 0.8,
-            metalness: 0.1,
-            side: THREE.DoubleSide,
-            gradientMap: this.toonGradient
-        });
-        
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        const floor = new THREE.Mesh(floorGeometry, this.getFloorMaterial());
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = 0.001;
         floor.receiveShadow = true;
         floor.name = "Floor";
-        
-        textureLoader.load(
+        room.add(floor);
+    }
+
+    // One material and one texture for every bar's floor: the 2048×1024
+    // boards image was downloaded and uploaded to the GPU once per bar.
+    getFloorMaterial() {
+        if (this.floorMaterial) return this.floorMaterial;
+        const floorMaterial = new THREE.MeshToonMaterial({
+            side: THREE.DoubleSide,
+            gradientMap: this.toonGradient
+        });
+        new THREE.TextureLoader().load(
             "https://threejs.org/examples/textures/hardwood2_diffuse.jpg",
             (texture) => {
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -112,8 +113,8 @@ export class World {
                 floorMaterial.needsUpdate = true;
             }
         );
-        
-        room.add(floor);
+        this.floorMaterial = floorMaterial;
+        return floorMaterial;
     }
 
     // The walls' plain cream: their ends and tops, and the closed buildings.

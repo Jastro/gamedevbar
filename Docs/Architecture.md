@@ -83,6 +83,12 @@ everything), then lights per pixel.
   the first time the count changes, shaders recompile once).
 - Pixel ratio capped at 1.5 (`Renderer`).
 
+Loading (2026-10-24): `npm run build` also runs `tools/precompress.js`, which writes `file.gz` next to
+each js/css/html/json/svg/glb/wasm/wav in `dist/` (not the Vircon32 ROMs); `server/index.js` sends the
+`.gz` when the browser accepts gzip (the bundle: ~1 MB → ~300 KB). Character models download once per
+file (`Player.loadModelFile`), each avatar parses its own copy. The football stadium loads on the first
+`/furbo` (`SoccerGame.load`), not on entry. One floor material/texture for every bar.
+
 ## Server (`server/`)
 
 ```
