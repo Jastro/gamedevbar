@@ -11,6 +11,8 @@ import { playTones } from '../audio/synth';
 const NAME = 'Agente Porras 🚓';
 const MODEL = 'pj'; // pj6 has a pointed hat of its own
 const LOOK = { head: 'police-cap', face: 'mustache', hand: 'baton', scale: 1.1 };
+const MAX_SPEED = 8;    // faster than this between two updates: he was moved, not walking
+const MAX_AHEAD = 0.3;  // s he carries on past his last pose (a late update)
 // A police whistle: two short trills.
 const WHISTLE = [[2900, 0, 0.12], [2500, 0.14, 0.12], [2900, 0.28, 0.12], [2500, 0.42, 0.3]];
 
@@ -46,6 +48,17 @@ export class PoliceSync {
         const previous = this.state?.phase;
         this.state = data;
         const position = new THREE.Vector3(Number(data.x) || 0, 1, Number(data.z) || 0);
+        const now = performance.now();
+        // His pose comes 5 times a second: between updates he carries on at
+        // the speed he had, so he walks steadily instead of reaching each
+        // point, stopping and restarting the walk.
+        if (this.serverPosition) {
+            const seconds = Math.max(0.05, (now - this.serverAt) / 1000);
+            this.velocity = position.clone().sub(this.serverPosition).divideScalar(seconds);
+            if (this.velocity.length() > MAX_SPEED) this.velocity.set(0, 0, 0); // a jump, not a walk
+        }
+        this.serverPosition = position;
+        this.serverAt = now;
         this.npc.targetPosition.copy(position);
         this.npc.targetRotation = Number(data.yaw) || 0;
         if (first) {
@@ -61,6 +74,10 @@ export class PoliceSync {
 
     update(deltaTime) {
         if (!this.state) return;
+        if (this.velocity) {
+            const ahead = Math.min((performance.now() - this.serverAt) / 1000, MAX_AHEAD);
+            this.npc.targetPosition.copy(this.serverPosition).addScaledVector(this.velocity, ahead);
+        }
         this.npc.update(deltaTime);
         const player = this.game.players.localPlayer;
         const here = player ? this.game.world.getRoomAt(player.position) : null;
