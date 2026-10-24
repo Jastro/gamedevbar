@@ -345,6 +345,20 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - The bartender has a fixed card instead (`NPC_CARDS`).
 - Clicks on any floating panel no longer reach the world behind it (`InteractionSystem.handleClick`).
 
+## Agente Porras (the plaza's policeman)
+
+- `server/features/police.js` walks him (5 ticks/s) so everyone sees the same: he patrols a circle round
+  the fountain at 1.6/s; every 20-50 s he picks someone in the open plaza who isn't driving (drunk
+  people, drinks level > 1, count three times) and chases them at 5.2/s (sprinting, 6.5, gets away;
+  walking, 3.7, doesn't), shouting every 5 s. Caught (within 1.6): a greeting, a "search" finding and a
+  verdict 3.2 s apart, the verdict also announced in the chat; walking off mid-search restarts the
+  chase. He gives up (with a line) if they enter a bar or a road, get in a car, leave, or after 35 s.
+  Nobody to pick: now and then an idle line. All lines are in `LINES` (server).
+- `src/world/PoliceSync.js`: his avatar (model pj, police cap, moustache, baton, 1.1×) follows
+  `policeState`; a whistle when a chase starts; the chased player gets his lines in their chat. Hidden
+  while you're in a bar with its door shut (name and bubbles show through walls). Clicking him: his card.
+- New accessories for everyone: 👮 police cap (head) and 🚓 baton (hand).
+
 ## Bartender
 
 - `src/world/Bartender.js`: one behind each counter (Manolo in Gamedev, Paco in Desarrollo, Fermín in FEDA,

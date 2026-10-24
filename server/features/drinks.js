@@ -14,6 +14,9 @@ function registerDrinks(hub) {
         return Math.max(0, drunk.level - Math.max(0, now - drunk.at) / DRUNK_DECAY_MS);
     };
 
+    // For the policeman (police.js): drunk people get stopped first.
+    hub.drinks = { levelOf: (user) => levelNow(user) };
+
     const stateOf = (user) => ({
         userId: user.id,
         drink: user.drink?.id ?? null,

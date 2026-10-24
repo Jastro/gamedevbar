@@ -105,6 +105,8 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `graffitiDraw` | `wallId`, `segments` | draw them on that wall |
 | `graffitiStates` | `walls: { wallId: segments }` | join snapshot |
 | `raceState` | `phase` (`idle`/`lobby`/`running`), `entrants: [{id, name}]`, `lobbyEndsAt`, `startAt` (green light, server ms), `laps`, `finishes: [{id, name, ms}]`; also on join | lights, HUD; entrants jump to the grid when it turns `running` |
+| `policeState` | `x`, `z`, `yaw`, `phase` (`patrol`/`chase`/`search`), `targetId`; 5 times a second while anyone's on, and on join | move Agente Porras; a whistle when a chase starts |
+| `policeSay` | `line`, `targetId` (who it's aimed at, or null), `final` (the verdict) | speech bubble; the target also gets it in chat (not the final one: the announcement shows it) |
 | `raceLapRecorded` | `ms`, `best` (their week's best) | "⏱️ Vuelta en…" chat line |
 | `profile` | `userId`, `name`, `stats` (`{ darts: { value, rank }, … }`, this week, only categories they're in), `coins` (tragaperras) | fill the profile panel |
 | `leaderboardState` | `week` (`2026-W43`), `boards: { darts, foosball, slots, lap, races: [{ name, value }] }` (top 5 each) | redraw the ranking boards |

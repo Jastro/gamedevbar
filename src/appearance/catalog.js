@@ -13,6 +13,7 @@ export const SLOTS = {
 export const ITEMS = [
     // Head
     { id: 'cap', slot: 'head', name: 'Gorra', icon: '🧢', build: () => items.cap() },
+    { id: 'police-cap', slot: 'head', name: 'Gorra de poli', icon: '👮', build: items.policeCap },
     { id: 'top-hat', slot: 'head', name: 'Chistera', icon: '🎩', build: items.topHat },
     { id: 'viking', slot: 'head', name: 'Casco vikingo', icon: '⚔️', build: items.vikingHelmet },
     { id: 'crown', slot: 'head', name: 'Corona', icon: '👑', build: items.crown },
@@ -39,6 +40,7 @@ export const ITEMS = [
     { id: 'tortilla', slot: 'hand', name: 'Pincho de tortilla', icon: '🥚', build: items.tortillaPincho },
     { id: 'gamepad', slot: 'hand', name: 'Mando', icon: '🎮', build: items.gamepad },
     { id: 'sword', slot: 'hand', name: 'Espada pixel', icon: '🗡️', build: items.pixelSword },
+    { id: 'baton', slot: 'hand', name: 'Porra', icon: '🚓', build: items.baton },
     { id: 'microphone', slot: 'hand', name: 'Micrófono', icon: '🎤', build: items.microphone },
     { id: 'one-up', slot: 'hand', name: 'Seta 1UP', icon: '🍄', build: items.oneUpMushroom },
     // Also what the bar serves (src/bar/drinks.js).

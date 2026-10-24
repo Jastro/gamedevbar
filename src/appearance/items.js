@@ -61,6 +61,17 @@ export function cap(color = 0xdc5a0b) {
     return group(crown, visor, button);
 }
 
+// The plaza policeman's (PoliceSync), wearable by anyone: navy, a gold badge.
+export function policeCap() {
+    const navy = mat(0x1a2a52);
+    const crown = mesh(new THREE.CylinderGeometry(0.44, 0.38, 0.22, 20), navy, 0, 0.06, 0);
+    const band = mesh(new THREE.CylinderGeometry(0.385, 0.385, 0.07, 20), mat(0x111111), 0, -0.02, 0);
+    const visor = mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.03, 20, 1, false, -Math.PI / 2, Math.PI), mat(0x111111), 0, -0.05, 0.3);
+    visor.scale.set(1.15, 1, 0.8);
+    const badge = mesh(new THREE.BoxGeometry(0.14, 0.12, 0.02), mat(0xf2c14e, { metalness: 0.7, roughness: 0.3 }), 0, 0.08, 0.42);
+    return group(crown, band, visor, badge);
+}
+
 export function topHat() {
     const brim = mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.04, 24), mat(0x111111));
     const tube = mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.55, 24), mat(0x161616), 0, 0.29, 0);
@@ -281,6 +292,14 @@ export function pixelSword() {
     const guard = mesh(new THREE.BoxGeometry(0.2, 0.04, 0.04), mat(0x8d6e63), 0, 0.12, 0.05);
     const hilt = mesh(new THREE.BoxGeometry(0.04, 0.12, 0.04), mat(0x5d4037), 0, 0.04, 0.05);
     return group(blade, guard, hilt);
+}
+
+export function baton() {
+    const stick = mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.5, 10), mat(0x161616), 0, 0.2, 0.05);
+    const grip = mesh(new THREE.CylinderGeometry(0.034, 0.034, 0.12, 10), mat(0x3a3a3a), 0, -0.02, 0.05);
+    const handle = mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.14, 8), mat(0x161616), 0.07, 0.02, 0.05);
+    handle.rotation.z = Math.PI / 2;
+    return group(stick, grip, handle);
 }
 
 export function microphone() {

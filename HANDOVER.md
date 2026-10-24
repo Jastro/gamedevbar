@@ -18,6 +18,11 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-24 Agente Porras: a policeman in the plaza, run by the server, who chases random people
+  (drunk ones first), searches them and hands out absurd verdicts; police cap and baton accessories.
+  **Verified in the browser** (real server): he picked me after ~4 s of patrol, chased, caught me,
+  searched and gave a verdict (announced in chat); stepping into Gamedev mid-chase made him give up
+  ("territorio del camarero"); hidden from inside the bar; picture of him with cap, moustache, baton.
 - 2026-10-24 Bartenders (and their names and lines) only show when you can see them: in their bar or
   through its open door. **Verified in the browser:** visible only in Gamedev from inside, none from the
   plaza or the terrace, FEDA's with its door open; a hidden one's card doesn't open; plaza picture.
