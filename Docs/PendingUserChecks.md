@@ -47,6 +47,8 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       in `src/world/Roof.js`)? Inside: a sloped wooden ceiling; lit like the bar at night and by day?
 - [ ] **New bottom bar.** Chat input bottom left under the chat log; 🎙️ ⚙️ 👤 ❔ bottom right, all the
       same size; no 😊 button (emojis: right click). ❔ panel twice as wide. Also on a small window.
+- [ ] **Fountain at night** (2026-10-24). After dark: spotlights in the basin, beams up the column,
+      glowing water. Too strong / too blue (`FOUNTAIN_LIGHTS` in `src/world/Outdoors.js`)?
 - [ ] **Agente Porras** (2026-10-24). Stand in the plaza ~1 min: he whistles and chases you; let him catch
       you (search + verdict), then once sprint away and once run into a bar. Funny? Too often / too
       rarely (`PICK_MS` in `server/features/police.js`)? Too fast or slow (`CHASE_SPEED`)?

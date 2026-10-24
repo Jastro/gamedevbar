@@ -18,6 +18,9 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-24 Fountain lights at night (basin spotlights, beams up the column, glowing water); ~30 more
+  bartender lines and a few per bar, ~35 more for Agente Porras. **Verified in the browser:** night
+  picture of the fountain (forced night); server starts with the new lines; 78-82 lines per bartender.
 - 2026-10-24 Faster loading: gzipped copies made at build time and served by Node (download ~3.6 MB →
   ~1.2 MB), the football stadium only loads on `/furbo`, each character model downloads once, one floor
   texture for all bars. Fixed: a speech bubble replaced mid-fade threw an error (the cop hit it often);

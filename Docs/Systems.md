@@ -353,7 +353,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   walking, 3.7, doesn't), shouting every 5 s. Caught (within 1.6): a greeting, a "search" finding and a
   verdict 3.2 s apart, the verdict also announced in the chat; walking off mid-search restarts the
   chase. He gives up (with a line) if they enter a bar or a road, get in a car, leave, or after 35 s.
-  Nobody to pick: now and then an idle line. All lines are in `LINES` (server).
+  Nobody to pick: now and then an idle line. All lines are in `LINES` (server, ~90).
 - `src/world/PoliceSync.js`: his avatar (model pj, police cap, moustache, baton, 1.1×) follows
   `policeState`; a whistle when a chase starts; the chased player gets his lines in their chat. Hidden
   while you're in a bar with its door shut (name and bubbles show through walls). Clicking him: his card.
@@ -366,7 +366,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   a RemotePlayer the game drives (not in `players`, no network), 1.35× a player's size, on a 0.5 high
   wooden deck behind the counter (a platform: players can jump onto it) so he shows over the 1.3
   counter. Every 9 s he walks (1.4/s) to another stop along the deck (x ±5.3), faces the customers and, a third of the
-  time, says a line (~40 sarcastic general ones plus a few of the bar's own in `ROOM_LINES`, which
+  time, says a line (~70 sarcastic general ones plus 5-7 of the bar's own in `ROOM_LINES`, which
   come up twice as often). Stops and lines come from the server clock and the bar, so everyone sees
   the same thing. A drink served to someone in his bar: "¡Marchando!" or something ruder.
 - Shown only while you can see him: you're in his bar, or its door is open and its interior is drawn
@@ -536,7 +536,9 @@ roads, the edge wall and the fountain in the middle (with the **Mediavida sign**
 "Mediavida" and the forum's logo (`public/assets/brand/mediavida-logo.svg`, its one-color icon,
 painted orange), both faces, turning 0.25 rad/s from the server clock so everyone sees the same side) (basin radius 2.4, a column with two bowls up to
 ~4.4, water falling from each bowl, a quiet positional loop: a faint fizz with soft splats and
-plips, made in code (`createWaterBuffer`); the basin is a round platform you
+plips, made in code (`createWaterBuffer`); at night (`Outdoors.setNight`, from Weather like the street
+lamps) 8 spotlights on the basin floor glow, soft additive beams rise up the column and the water glows
+cyan (`FOUNTAIN_LIGHTS`); the basin is a round platform you
 can hop onto, the column blocks); `getLampSpots()` puts a lamp beside each road and 18 along the ring road's outer edge. The soccer stadium lives at
 (0, 0, -50) behind Gamedev and is only shown during `/furbo`.
 

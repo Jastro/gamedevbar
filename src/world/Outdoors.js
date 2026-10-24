@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils';
 import {
     PLAZA_CENTER, PLAZA_RADIUS, RING_ROAD, WORLD_RADIUS, SLOT_COUNT, RADIAL_ROAD_WIDTH,
     slotAngle, bearing
@@ -19,6 +20,9 @@ const DROPS = 360;
 const WATER_VOLUME = 0.15; // about 20 dB under the old hiss
 const WATER_LOOP_SECONDS = 4;
 const RING_LAMPS = 18;
+// Night lights in the basin: spotlights on its floor, each with a soft beam
+// up the column, and the water glowing a little (setNight, from Weather).
+const FOUNTAIN_LIGHTS = { count: 8, radius: 1.7, color: 0x9fe6ff, beamTop: 3.3, beamOpacity: 0.12, waterGlow: 0.35 };
 
 // Where the small roads leave the plaza: between slot k and slot k + 1.
 export function roadAngle(index) {
@@ -131,7 +135,8 @@ export class Outdoors {
 
     createFountain() {
         const stone = new THREE.MeshStandardMaterial({ color: 0xb8b0a2, roughness: 0.8 });
-        const water = new THREE.MeshStandardMaterial({ color: 0x4fa3d1, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.8 });
+        const water = new THREE.MeshStandardMaterial({ color: 0x4fa3d1, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.8, emissive: FOUNTAIN_LIGHTS.color, emissiveIntensity: 0 });
+        this.waterMaterial = water;
         const fountain = new THREE.Group();
         fountain.position.set(PLAZA_CENTER.x, 0, PLAZA_CENTER.z);
         const add = (mesh, y) => {
@@ -156,6 +161,7 @@ export class Outdoors {
         });
         add(new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), stone), FOUNTAIN.columnTop + 0.15);
         add(new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.35, 12), stone), FOUNTAIN.columnTop + 0.45);
+        this.createFountainLights(fountain);
         fountain.traverse(child => { child.raycast = () => {}; });
         this.group.add(fountain);
         this.fountain = fountain;
@@ -180,6 +186,46 @@ export class Outdoors {
             blocker.raycast = () => {};
             this.group.add(blocker);
         });
+    }
+
+    // Spotlights round the basin floor, tilted at the column, and their
+    // beams (one mesh each for all of them; the beams additive, no outline).
+    createFountainLights(fountain) {
+        const { count, radius, color, beamTop } = FOUNTAIN_LIGHTS;
+        const lamps = [];
+        const beams = [];
+        const up = new THREE.Vector3(0, 1, 0);
+        for (let i = 0; i < count; i++) {
+            const angle = (i / count) * Math.PI * 2;
+            const base = new THREE.Vector3(Math.sin(angle) * radius, 0.12, Math.cos(angle) * radius);
+            // Up along the column, a little inside the bowls' rims.
+            const target = new THREE.Vector3(Math.sin(angle) * 0.35, beamTop, Math.cos(angle) * 0.35);
+            const direction = target.clone().sub(base);
+            const length = direction.length();
+            const turn = new THREE.Quaternion().setFromUnitVectors(up, direction.normalize());
+            lamps.push(new THREE.CylinderGeometry(0.11, 0.13, 0.12, 12).applyQuaternion(turn).translate(base.x, base.y, base.z));
+            // Narrow at the lamp, wider up top; open ends.
+            const beam = new THREE.CylinderGeometry(0.45, 0.08, length, 16, 1, true).translate(0, length / 2, 0);
+            beams.push(beam.applyQuaternion(turn).translate(base.x, base.y, base.z));
+        }
+        this.fountainLampMaterial = new THREE.MeshStandardMaterial({ color: 0x333a40, emissive: color, emissiveIntensity: 0, roughness: 0.4 });
+        fountain.add(new THREE.Mesh(mergeGeometries(lamps), this.fountainLampMaterial));
+        this.beamMaterial = new THREE.MeshBasicMaterial({
+            color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+        });
+        this.beamMaterial.userData.outlineParameters = { visible: false };
+        this.beams = new THREE.Mesh(mergeGeometries(beams), this.beamMaterial);
+        this.beams.visible = false;
+        fountain.add(this.beams);
+    }
+
+    // 0 by day, 1 at night (Weather, like the street lamps).
+    setNight(night) {
+        if (!this.beams) return;
+        this.fountainLampMaterial.emissiveIntensity = 2 * night;
+        this.beamMaterial.opacity = FOUNTAIN_LIGHTS.beamOpacity * night;
+        this.beams.visible = night > 0.02;
+        this.waterMaterial.emissiveIntensity = FOUNTAIN_LIGHTS.waterGlow * night;
     }
 
     // A drop leaving bowl `level`'s rim (fountain space), `progress` 0..1 of its fall.

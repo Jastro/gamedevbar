@@ -28,12 +28,18 @@ const LINES = {
         '¡Quieto ahí, sospechoso de indie!',
         '¡Control rutinario! ¡No corra, que me canso!',
         '¡Eh, tú! ¡Ese andar es de llevar un motor propio sin terminar!',
-        '¡Alto en nombre del foro!'
+        '¡Alto en nombre del foro!',
+        '¡Usted! ¡Tiene pinta de haber dejado un juego en early access desde 2016!',
+        '¡Alto! Ese gorro es sospechoso. Y la cara también.',
+        '¡Quieto! Se busca a alguien con su misma pinta de no haber dormido.',
+        '¡Inspección sorpresa! ¡Bueno, ya no es sorpresa, pero pare!'
     ],
     drunkStart: [
         '¡Control de alcoholemia! ¡Le huelo desde aquí!',
         '¡Usted ha bebido! Camina en zigzag como mi código.',
-        '¡Alto! ¡Ese no es el andar de alguien que ha pedido agua!'
+        '¡Alto! ¡Ese no es el andar de alguien que ha pedido agua!',
+        '¡Usted va más cargado que un servidor en día de lanzamiento!',
+        '¡Le veo la nariz roja desde la fuente! ¡Control!'
     ],
     shout: [
         '¡No corra, que es peor!',
@@ -42,13 +48,21 @@ const LINES = {
         '¡Por la autoridad que me confiere el foro!',
         '¡Pararse es gratis, correr le va a salir caro!',
         '¡Que le estoy viendo, eh!',
-        '¡Alto o… o… o le escribo un post!'
+        '¡Alto o… o… o le escribo un post!',
+        '¡Mis rodillas no son de esta generación de consolas!',
+        '¡Vuelva aquí, que tengo la multa a medio escribir!',
+        '¡Corre como si le persiguiera un publisher!',
+        '¡No me haga usar el sprint, que lo tengo sin desbloquear!',
+        '¡Ojo, que me sé atajos por detrás de la fuente!',
+        '¡Le doy tres segundos! Uno… dos… dos y medio…'
     ],
     caught: [
         '¡Te pillé! Manos donde las vea… no, ahí no.',
         'Documentación, por favor. ¿Cómo que solo lleva un nick?',
         'Control rutinario. Separe las piernas… del teclado.',
-        'Bueno, bueno, bueno… ¿qué tenemos aquí?'
+        'Bueno, bueno, bueno… ¿qué tenemos aquí?',
+        '¡Ajá! ¿Pensaba que no le iba a pillar? Yo tampoco.',
+        'Brazos en cruz. Así. Ahora haga el avión. Era para ver si me hacía caso.'
     ],
     drunkCaught: [
         'Sople aquí. Más fuerte. ¡Eso es un eructo, no un soplido!',
@@ -64,12 +78,20 @@ const LINES = {
         '¿Un tutorial de Unity de 2014? Esto es contrabando.',
         'Encuentro un tique de la tragaperras, migas de tortilla y mucha ilusión.',
         'Un cuaderno con 47 ideas de juego y ningún juego. Lo apunto.',
-        '¿Esto es un save de hace diez años? Lo requiso por nostalgia.'
+        '¿Esto es un save de hace diez años? Lo requiso por nostalgia.',
+        'Una servilleta con un diagrama de clases. Esto es material peligroso.',
+        'Lleva usted encima un "TODO: arreglar antes de la demo". De 2019.',
+        '¿Un mando con el botón A gastado? Usted ha jugado demasiado al FIFA.',
+        'Aquí hay una lista de ideas: "MMO, pero bueno". Muy sospechoso.',
+        'Lleva en el bolsillo una moneda de la tragaperras y la dignidad perdida.',
+        '¿Esto qué es, un pendrive o un cargamento de memes? Lo requiso para mí.'
     ],
     drunkSearch: [
         'El alcoholímetro marca "game jam". Eso es muy alto.',
         'Da positivo en cañas, chupitos y ganas de bailar.',
-        'Según el aparato, usted ahora mismo es un 60% cerveza.'
+        'Según el aparato, usted ahora mismo es un 60% cerveza.',
+        'El aparato pita y además me ha pedido una caña.',
+        'Sopla usted tan fuerte que me ha despeinado el bigote.'
     ],
     verdict: [
         'Multa: invitar a una ronda al camarero. Circule.',
@@ -79,7 +101,12 @@ const LINES = {
         'Le condeno a hacer un juego en 48 horas. Bueno, váyase.',
         'Todo en orden. Bueno, en orden no, pero me da pereza el papeleo.',
         'Le pongo una multa de un like. Úselo bien.',
-        'Por esta vez pase, pero que no le vea yo con Comic Sans.'
+        'Por esta vez pase, pero que no le vea yo con Comic Sans.',
+        'Le multo con jugar una partida a la tragaperras. Y perder.',
+        'Queda libre, pero con la condición de terminar UN juego este año.',
+        'Multa: dos horas escuchando las ideas de MMO del camarero.',
+        'Le pongo una amonestación. No sé lo que es, pero suena serio.',
+        'Puede irse. Y llévese a la fuente, que me mira raro.'
     ],
     escaped: [
         '¡Quieto parado! ¡Que no he terminado!',
@@ -102,7 +129,12 @@ const LINES = {
         'Esta fuente me mira raro.',
         '¿Quién ha aparcado ese coche ahí? Ah, el Uber Suicida. Mejor no.',
         'Patrullando, que no se diga.',
-        'Si alguien ve a un indie sospechoso, que me avise.'
+        'Si alguien ve a un indie sospechoso, que me avise.',
+        'Qué bonita está la fuente. Me ha robado el corazón. Y la cartera, creo.',
+        'Hoy toca turno de noche. Bueno, de día. Bueno, siempre estoy aquí.',
+        'Me han dicho que hay un cartel de Mediavida que gira. Lo tengo vigilado.',
+        'Silbato nuevo, porra nueva, mismas ganas de dormir.',
+        'Si alguien se sube a la fuente, le pongo una multa de diez gotas.'
     ]
 };
 

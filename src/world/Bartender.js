@@ -64,35 +64,77 @@ const LINES = [
     'He visto el fin del mundo tres veces. Las tres en una game jam.',
     'Si oyes risas en el baño, mejor no preguntes.',
     'El cliente siempre tiene razón. Tú no eres cliente, tú eres habitual.',
-    'Por cada "pole" que oigo me tomo un chupito. Voy por el cuarenta.'
+    'Por cada "pole" que oigo me tomo un chupito. Voy por el cuarenta.',
+    'Tengo un máster en servir cañas y otro en escuchar ideas de MMO. Solo uno da dinero.',
+    'Aquí se cierra cuando se vaya el último. O cuando yo me duerma de pie, lo que pase antes.',
+    'El vaso medio lleno o medio vacío me da igual: se paga entero.',
+    'Hace un rato uno me pidió feedback de su juego. Le puse una caña y se le pasó.',
+    'Si me das propina te escucho la idea del juego. Si me das más, no.',
+    'He visto pasar tres motores, dos crisis y un juego terminado. Uno.',
+    'Lo de "early access" aquí no existe: o pagas la caña o no hay caña.',
+    'Mi jefe dice que sonría más. Mi jefe no ha servido a un programador de shaders.',
+    'Si oyes un ruido raro en la cámara frigorífica, es el becario. Está bien. Creo.',
+    'Esta barra ha visto más lanzamientos fallidos que Steam un viernes.',
+    '¿Te pongo lo de siempre? ¿Y qué es lo de siempre? Ni idea, pero te lo cobro.',
+    'Una vez un cliente terminó su juego. Lo tenemos enmarcado en el baño.',
+    'Dicen que el Agente Porras nunca ha pillado a nadie corriendo. Yo le he visto perder contra la fuente.',
+    'El Uber Suicida tiene más estrellas de peligro que de valoración.',
+    'Apúntalo en la cuenta. ¿Qué cuenta? La que no vas a pagar nunca, campeón.',
+    'Aquí no hay wifi, hay cañas. Que habléis entre vosotros, como en 2003.',
+    'Si te tiemblan las manos es por el café, no por el crunch. Ah, no, es el crunch.',
+    'Los martes servimos parches de día uno. Vienen con más bugs que la cerveza.',
+    'Mi sueño era ser actor de doblaje. Ahora doblo servilletas.',
+    'He puesto el aire acondicionado al nivel "servidor de Mediavida en hora punta".',
+    'Ese tío de la esquina lleva tres horas con la misma caña. Respeto.',
+    'Si quieres hielo, hay en el corazón de los publishers.',
+    'Sí, el baño tiene espejo. No, no te va a gustar lo que veas.',
+    'Que alguien saque al perro del /furbo, que lleva media hora en el estadio.',
+    'Yo también hice un juego en Flash. Murió Flash, murió el juego, y aquí estoy.',
+    'Te veo cara de "solo una más". Llevas siete.',
+    'No es que esté borde, es que tengo el modo difícil activado.',
+    'Las tapas son gratis. Lo que se paga es mi paciencia.'
 ];
 // One bar's own, mixed in with the rest.
 const ROOM_LINES = {
     gamedev: [
         'Aquí se viene a hablar de juegos, no a hacerlos.',
-        'Otro que va a revolucionar el género. Apúntalo en la pizarra con los otros 200.'
+        'Otro que va a revolucionar el género. Apúntalo en la pizarra con los otros 200.',
+        'Aquí se habla de juegos todo el día. Jugar, lo que se dice jugar, poco.',
+        'El de la mesa del fondo lleva diez años con un roguelike "casi listo".',
+        '¿Pixel art? Eso es lo que dice la gente que no sabe dibujar, ¿no? Es broma. O no.'
     ],
     desarrollo: [
         'Aquí se discute de tabuladores contra espacios hasta que cerramos.',
-        'Mi código no tiene bugs, tiene características sorpresa.'
+        'Mi código no tiene bugs, tiene características sorpresa.',
+        'Aquí la gente discute de patrones de diseño. Yo solo conozco el de la cerveza: abrir, servir, cobrar.',
+        'Si alguien dice "en mi máquina funciona", que se lleve su máquina y pague la ronda.',
+        'He visto refactors más largos que la carta de vinos.'
     ],
     feda: [
         'Aquí se discute de todo y no se arregla nada. Como en casa.',
         'Prohibido hablar de política… es broma, aquí no se habla de otra cosa.',
         'Ese de la esquina lleva desde las ocho dando la razón a nadie.',
-        'Si vienes con un titular sin leer la noticia, la caña te la cobro doble.'
+        'Si vienes con un titular sin leer la noticia, la caña te la cobro doble.',
+        'Aquí cada uno tiene su opinión, y todas están mal menos la mía.',
+        'He servido a dos que discutían y se reconciliaron solo para criticar mi tortilla.',
+        'Hoy el tema de debate es "la caña: ¿derecho fundamental?". Gana la caña.'
     ],
     offtopic: [
         'Aquí ni yo sé de qué estamos hablando.',
         'Ayer alguien pidió un café con hielo y una opinión sobre los gatos. Le serví las dos.',
         'En Offtopic el tema del día es "sí".',
-        'Si encuentras el sentido de este bar, devuélvemelo, que lo perdí en 2009.'
+        'Si encuentras el sentido de este bar, devuélvemelo, que lo perdí en 2009.',
+        'Aquí ha entrado un pato. No ha pedido nada. Le he puesto una caña igual.',
+        'Me han preguntado si la tierra es plana. Les he dicho que la barra sí.',
+        'En este bar las conversaciones empiezan en los gatos y acaban en los gatos.'
     ]
 };
 const SERVED = [
     '¡Marchando!', '¡Marchando una!', 'Aquí tienes, crack.', 'Esa va por la casa… no.',
     'Toma, y no la tires encima del futbolín.', 'Bebe despacio, que el baño está ocupado.',
-    'Ahí la tienes, con su espuma y su desprecio.', 'Disfrútala, es lo único que vas a terminar hoy.'
+    'Ahí la tienes, con su espuma y su desprecio.', 'Disfrútala, es lo único que vas a terminar hoy.',
+    'Toma, y si te cae, la fregona está en el baño.', 'Marchando… despacio, que estoy en mi descanso.',
+    'Aquí tienes. No la compartas con el Agente Porras.', 'Bébetela antes de que se convierta en un DLC.'
 ];
 
 // A repeatable pseudo-random number in 0..1 from integers.
