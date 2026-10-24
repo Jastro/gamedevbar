@@ -202,6 +202,7 @@ export class GuillotineSync {
 
     release(targetId) {
         const player = this.game.players.players.get(targetId);
+        if (player) player.headBowed = false;
         if (player && player !== this.localPlayer) player.headless = false;
         if (this.execution?.targetId === targetId) this.execution = null;
         // Ours, if the timeline didn't get to it (we joined late, a slow tab).
@@ -235,6 +236,9 @@ export class GuillotineSync {
     updateExecution(now) {
         const { targetId, bladeAt, head } = this.execution;
         const mine = targetId === this.localPlayer?.id;
+        // Head bowed through the guillotine, face to the floor, until the blade.
+        const victim = this.victim();
+        if (victim) victim.headBowed = now < bladeAt;
         // We hold ourselves in the guillotine (everyone sees our position).
         if (mine && !this.respawning) {
             const player = this.localPlayer;
@@ -244,7 +248,6 @@ export class GuillotineSync {
         }
         if (!this.dropped && now >= bladeAt) {
             this.dropped = true;
-            const victim = this.victim();
             if (victim) victim.headless = true;
             this.addHead(head);
             const listener = this.game.environment.audioListener;
@@ -287,6 +290,7 @@ export class GuillotineSync {
                 player.rotation = Math.atan2(ahead.x - player.position.x, ahead.z - player.position.z);
                 this.game.camera.rotation.horizontal = player.rotation + Math.PI;
                 player.headless = false;
+                player.headBowed = false;
                 const room = this.game.world.getRoomAt(player.position);
                 this.say(`🚽 Te despiertas en el baño de ${room?.name ?? 'algún bar'}, con un dolor de cuello tremendo.`);
             }
@@ -388,10 +392,11 @@ export class GuillotineSync {
             angle = 0.6 + (along - nudge) / radius;
         }
         holder.position.set(from.x + dirX * along, y, from.z + dirZ * along);
-        // Rolling about the horizontal axis across its path, from facing out
-        // of the guillotine (as the body did).
+        // Rolling about the horizontal axis across its path, from how it was
+        // cut: facing out of the guillotine, bowed face down.
         const roll = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(dirZ, 0, -dirX), angle);
-        holder.quaternion.copy(roll).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.yaw));
+        const bowed = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw)), Math.PI / 2);
+        holder.quaternion.copy(roll).multiply(bowed).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.yaw));
     }
 
     // Drops along the head's path and a puddle where it stops.

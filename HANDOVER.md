@@ -18,6 +18,9 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-25 Guillotine victims bow their head 90° (face to the floor) until the blade; the head falls
+  face down from there. **Verified in the browser:** the head's face points straight down while
+  bowed and stays there (no build-up frame to frame); before/after pictures.
 - 2026-10-25 The guillotine: Agente Porras pursues anyone he sees doing the jerk or spit gesture at sprint
   speed, walks them (controls locked) to a guillotine in the plaza, beheads them (their own head rolls
   10 s), they respawn in a random toilet; heads and blood stay 24 h. **Verified in the browser** (real
@@ -45,8 +48,8 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 
 ## Decisions to review
 - **Guillotine:** the pursuit is exactly sprint speed, so you can't outrun him in the open: getting into a
-  bar (or a car) is the escape. Heads/blood live in server memory (a deploy clears them). The chibi
-  stands in it (the blade drops to the neck); no kneeling pose.
+  bar (or a car) is the escape. Heads/blood live in server memory (a deploy clears them). The victim
+  stands in it with the head bowed 90° (Borja's call, instead of kneeling).
 - **Pixel ratio capped at 1.5** (was 2): a bit softer on 2x screens, 44% fewer pixels. Back to 2 in
   `Renderer.js` if it looks blurry.
 - **Interiors hidden** when you're not in a bar, its door is shut and you're more than 16 from its

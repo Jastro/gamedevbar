@@ -352,12 +352,38 @@ export class Player {
             this.model.getObjectByName('Head')?.scale.setScalar(this.headless ? 1e-4 : 1);
             this.headHidden = this.headless;
         }
+        // In the guillotine (GuillotineSync): head bowed 90° forward, face to
+        // the floor, on top of whatever the animation did this frame.
+        if (this.model && (this.headBowed || this.bowApplied)) this.bowHead();
         if (this.pose !== 'sit' || !this.model) return;
         if (!this.poseFeet || this.poseFeet.model !== this.model) this.measureFeet();
         this.poseFeet.feet.forEach(({ bone, restPosition, restQuaternion, offset, tilt }) => {
             bone.position.copy(restPosition).add(offset);
             bone.quaternion.copy(restQuaternion).multiply(tilt);
         });
+    }
+
+    // Turns the Head bone about the avatar's sideways axis (+90°: the face,
+    // +z, turns to -y). The animation may not touch the head: then the
+    // rotation left from last frame is ours, and we start again from the
+    // head's own (else the bow would add up every frame); unbowed, it's put
+    // back.
+    bowHead() {
+        const head = this.model.getObjectByName('Head');
+        if (!head?.parent) return;
+        if (this.bowApplied && head.quaternion.equals(this.bowApplied)) head.quaternion.copy(this.bowBase);
+        if (!this.headBowed) {
+            this.bowApplied = null;
+            return;
+        }
+        this.bowBase = head.quaternion.clone();
+        head.parent.updateWorldMatrix(true, false);
+        const parent = head.parent.getWorldQuaternion(new THREE.Quaternion());
+        const side = new THREE.Vector3(1, 0, 0).applyQuaternion(this.mesh.getWorldQuaternion(new THREE.Quaternion()));
+        const bow = new THREE.Quaternion().setFromAxisAngle(side, Math.PI / 2);
+        const world = parent.clone().multiply(head.quaternion);
+        head.quaternion.copy(parent.invert().multiply(bow.multiply(world)));
+        this.bowApplied = head.quaternion.clone();
     }
 
     // Rest transforms, and the avatar-space offset expressed in each foot's
