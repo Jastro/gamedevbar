@@ -16,7 +16,9 @@ export class Renderer {
     init() {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.shadowMap.enabled = true;
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        // At most 1.5 pixels per CSS pixel: on a 2x screen that's 44% fewer
+        // pixels to shade, for a barely softer picture.
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         document.body.appendChild(this.renderer.domElement);
 
         // HTML in 3D (the projectors' YouTube iframes) is drawn by a CSS3D layer

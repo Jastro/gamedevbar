@@ -309,7 +309,9 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Collision** (`CollisionManager`): `floor` slabs (gallery, landing, terrace) you stand on and walk
   under (they block a body whose center is over them, between the slab's bottom and top); a `ramp`
   for the stairs (ground rises along it; it blocks walking into its sides below the treads). Blockers
-  no longer block someone standing fully above them (the entrance door, under the doorway). Walking
+  no longer block someone standing fully above them (the entrance door, under the doorway). Ramps count
+  as ground up to 0.35 into them and each movement substep lifts you onto them (`LocalPlayer.climb`): a
+  slow frame while running used to sink you into the treads and drop you through. Walking
   down keeps you on the stairs (`LocalPlayer.STEP_DOWN`). F skips things 3.5+ above or below you.
 - Gallery and terrace slabs are camera occluders.
 

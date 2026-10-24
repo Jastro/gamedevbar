@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils';
 
 // A small open-top car anyone can drive (DrivingSync moves it), so the driver
 // shows. Its own frame: +z forward, and facing forward, +x is the left side;
@@ -27,14 +28,15 @@ export class DrivableCar {
         const chrome = new THREE.MeshStandardMaterial({ color: 0xd0d4d8, metalness: 0.9, roughness: 0.2 });
         const seatMaterial = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.7 });
         const { length, width } = CAR_SIZE;
-        const parts = [];
-        const box = (w, h, d, material, x, y, z) => {
-            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
-            mesh.position.set(x, y, z);
-            mesh.castShadow = true;
-            group.add(mesh);
-            parts.push(mesh);
-            return mesh;
+        // The fixed parts, merged into one mesh per material at the end (a
+        // car is ~15 draws, not 25; there are eight of them).
+        const pieces = new Map(); // material -> geometries
+        const addPiece = (geometry, material) => {
+            if (!pieces.has(material)) pieces.set(material, []);
+            pieces.get(material).push(geometry);
+        };
+        const box = (w, h, d, material, x, y, z, tilt = 0) => {
+            addPiece(new THREE.BoxGeometry(w, h, d).rotateX(tilt).translate(x, y, z), material);
         };
 
         // Body: a tub with the cabin cut out (sides, nose, tail), open on top.
@@ -46,16 +48,12 @@ export class DrivableCar {
         box(width, BODY_HEIGHT * 0.8, 0.8, paint, 0, BODY_BOTTOM + BODY_HEIGHT * 0.4, -length / 2 + 0.4); // boot
         // Windscreen frame, seats, wheel.
         const glass = new THREE.MeshStandardMaterial({ color: 0x99bbdd, transparent: true, opacity: 0.35, roughness: 0.1 });
-        const screen = box(width - 0.1, 0.45, 0.04, glass, 0, top + 0.2, length / 2 - 1.25);
-        screen.rotation.x = -0.35;
+        box(width - 0.1, 0.45, 0.04, glass, 0, top + 0.2, length / 2 - 1.25, -0.35);
         box(0.7, 0.25, 0.6, seatMaterial, DRIVER_SEAT.x, top - 0.2, DRIVER_SEAT.z);
         box(0.7, 0.25, 0.6, seatMaterial, -DRIVER_SEAT.x, top - 0.2, DRIVER_SEAT.z);
         box(0.7, 0.55, 0.12, seatMaterial, DRIVER_SEAT.x, top + 0.05, DRIVER_SEAT.z - 0.3);
         box(0.7, 0.55, 0.12, seatMaterial, -DRIVER_SEAT.x, top + 0.05, DRIVER_SEAT.z - 0.3);
-        const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.03, 8, 20), dark);
-        wheelRim.position.set(DRIVER_SEAT.x, top + 0.1, DRIVER_SEAT.z + 0.55);
-        wheelRim.rotation.x = -0.6;
-        group.add(wheelRim);
+        addPiece(new THREE.TorusGeometry(0.17, 0.03, 8, 20).rotateX(-0.6).translate(DRIVER_SEAT.x, top + 0.1, DRIVER_SEAT.z + 0.55), dark);
         // Lights and bumpers.
         const headlight = new THREE.MeshBasicMaterial({ color: 0xfff3c0 });
         const taillight = new THREE.MeshBasicMaterial({ color: 0xaa1111 });
@@ -84,9 +82,12 @@ export class DrivableCar {
         });
 
         const highlight = new THREE.MeshStandardMaterial({ color: 0x7fff7f, emissive: 0x2f2f2f });
-        parts.forEach(mesh => {
-            mesh.userData.originalMaterial = mesh.material;
+        pieces.forEach((geometries, material) => {
+            const mesh = new THREE.Mesh(mergeGeometries(geometries), material);
+            mesh.castShadow = true;
+            mesh.userData.originalMaterial = material;
             mesh.userData.highlightMaterial = highlight;
+            group.add(mesh);
         });
         group.userData = { type: 'drivableCar', car: this };
         group.position.copy(position);

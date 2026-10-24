@@ -209,7 +209,10 @@ export class RoomLighting {
 
         this.discoLevel += ((room && state.disco ? 1 : 0) - this.discoLevel) * t;
         this.disco.forEach((light, i) => {
-            if (!room || this.discoLevel < 0.01) {
+            // Off: hidden, so every lit material stops computing it (three.js
+            // skips hidden lights, not dark ones).
+            light.visible = Boolean(room) && this.discoLevel >= 0.01;
+            if (!light.visible) {
                 light.intensity = 0;
                 return;
             }

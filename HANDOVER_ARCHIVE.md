@@ -2,6 +2,32 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done summaries (2026-10-20 to 2026-10-23)
+- 2026-10-23 Uber Suicida drivable, light per space through doors, ring-road lamps, quieter fountain,
+  futbolín turned; then street lamps in the shader, eight cars, sound distance from the avatar. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- 2026-10-23 The hub (round plaza, 6 bar slots, roads, ring road, colliders in their own frame), then
+  four drivable cars and the fountain. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- 2026-10-23 Two rounds of fixes: seated pose on every seat, gesture hands aimed by finger direction,
+  bar against the back wall, the meme tragaperras (Leeroy), powder table, futbolín score on the table,
+  👤 panel on the right. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- 2026-10-22 (night) Right-click radial menu with gestures, Spain weather outside with each player's
+  local clock. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- 2026-10-22 (evening) Light through open doors, the futbolín, the meme slot machine, Madrid time and
+  weather, small fixes (mic, stools). Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- 2026-10-22 Bar games batch: drinks and drunkenness, darts, bathroom graffiti, karaoke stage, two-player Pong,
+  then review fixes. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- 2026-10-22 Bathroom in each bar, then tweaks (quieter flush, latch click, ceiling, camera collision, jumpable
+  counter, sign on the back wall) and the seated toilet pose. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- 2026-10-21 Car + Pokebonk, appearance part 1 (27 accessories, tint, size, name colors), interactions/tables/lights
+  (F everywhere, chairs, Shift, standable tables, dormant rooms, switches), controls and movement (Q/E, ❔,
+  per-second movement, wall sliding). Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- 2026-10-21 Vircon32 spectating + Arcade slider (#19), and direct links + 👤 menu (#18). Details in
+  [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- Earlier 2026-10-21: camera pan/reset, 21 Vircon32 games and the cabinet, "who's here" board, open mic,
+  GHCR + Portainer deploy, volume sliders, shared radio and projector. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+- 2026-10-20: TURN deploy and voice-over-TURN fix, mic settings, modular refactor, push-to-talk voice,
+  WS hardening, repo docs, rooms/street/doors/occlusion. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
+
 ## Done (2026-10-23: Borja's upper-floor notes)
 - 2026-10-23 Borja's notes on the upper floor: stairs moved left of the door (by the bathroom), wider
   (1.9), solid handrail; terrace bigger (13 × 4, two tables); fixed the terrace floor z-fighting the

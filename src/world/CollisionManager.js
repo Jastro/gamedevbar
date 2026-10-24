@@ -163,7 +163,10 @@ export class CollisionManager {
                 collider.ensureMeasured();
                 if (!overlapsXZ(position, 0, collider)) continue;
                 const height = rampHeight(position, collider);
-                if (height <= feet + LANDING_SNAP && height > ground) ground = height;
+                // Anywhere you can be on it (up to RAMP_SIDE into it, e.g.
+                // a big step up the stairs in a slow frame) is on it; with
+                // LANDING_SNAP a fast run up dropped you through it.
+                if (height <= feet + RAMP_SIDE && height > ground) ground = height;
                 continue;
             }
             if (collider.type !== 'platform' && collider.type !== 'floor') continue;

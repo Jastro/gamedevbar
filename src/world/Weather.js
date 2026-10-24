@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils';
 import { ROOMS, ROOM_HALF_WIDTH, ROOM_HALF_DEPTH } from './RoomLayout';
 import { playSynth } from '../audio/synth';
 import { regionUniforms, clipToOutdoors, LAMP_MAX } from '../rendering/RegionLights';
@@ -139,20 +140,27 @@ export class Weather {
             blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2
         });
         clipToOutdoors(this.glowMaterial);
-        const glowGeometry = new THREE.CircleGeometry(LAMP_GLOW.radius, 32).rotateX(-Math.PI / 2);
+        // All posts, all bulbs and all glows are one mesh each (three draws,
+        // not one per part per lamp); each post still blocks, through an
+        // invisible collider of its own.
+        const posts = [];
+        const heads = [];
+        const glows = [];
+        const blocker = new THREE.MeshBasicMaterial({ visible: false });
         this.lampSpots.forEach(({ x, z }) => {
-            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, LAMP_HEIGHT, 10), pole);
-            post.position.set(x, LAMP_HEIGHT / 2, z);
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 10), this.bulbMaterial);
-            head.position.set(x, LAMP_HEIGHT + 0.1, z);
-            this.lampGroup.add(post, head);
-            post.updateMatrixWorld(true);
-            this.game.world.collisionManager.addCollider(post);
-            const glow = new THREE.Mesh(glowGeometry, this.glowMaterial);
-            glow.position.set(x, 0.05, z);
-            glow.raycast = () => {};
-            this.lampGroup.add(glow);
+            posts.push(new THREE.CylinderGeometry(0.08, 0.12, LAMP_HEIGHT, 10).translate(x, LAMP_HEIGHT / 2, z));
+            heads.push(new THREE.SphereGeometry(0.28, 14, 10).translate(x, LAMP_HEIGHT + 0.1, z));
+            glows.push(new THREE.CircleGeometry(LAMP_GLOW.radius, 32).rotateX(-Math.PI / 2).translate(x, 0.05, z));
+            const collider = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, LAMP_HEIGHT, 6), blocker);
+            collider.position.set(x, LAMP_HEIGHT / 2, z);
+            collider.raycast = () => {};
+            this.lampGroup.add(collider);
+            collider.updateMatrixWorld(true);
+            this.game.world.collisionManager.addCollider(collider);
         });
+        const glow = new THREE.Mesh(mergeGeometries(glows), this.glowMaterial);
+        glow.raycast = () => {};
+        this.lampGroup.add(new THREE.Mesh(mergeGeometries(posts), pole), new THREE.Mesh(mergeGeometries(heads), this.bulbMaterial), glow);
         const lamps = this.lampSpots.slice(0, LAMP_MAX);
         lamps.forEach(({ x, z }, i) => regionUniforms.lampPositions.value[i].set(x, LAMP_HEIGHT, z));
         regionUniforms.lampCount.value = lamps.length;

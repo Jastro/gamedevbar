@@ -104,11 +104,13 @@ export class Bar {
         const bottleGroup = new THREE.Group();
 
         const bodyGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.6, 8);
-        const bodyMaterial = new THREE.MeshStandardMaterial({
-            color: color,
-            transparent: true,
-            opacity: 0.8,
-        });
+        // One material per color, shared: the shelf merges into a few meshes
+        // (mergeStatic in Environment).
+        this.bottleMaterials ??= new Map();
+        if (!this.bottleMaterials.has(color)) {
+            this.bottleMaterials.set(color, new THREE.MeshStandardMaterial({ color, transparent: true, opacity: 0.8 }));
+        }
+        const bodyMaterial = this.bottleMaterials.get(color);
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         bottleGroup.add(body);
 
@@ -122,11 +124,7 @@ export class Bar {
 
     createGlass() {
         const glassGeometry = new THREE.CylinderGeometry(0.1, 0.07, 0.2, 8);
-        const glassMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.4,
-        });
-        return new THREE.Mesh(glassGeometry, glassMaterial);
+        this.glassMaterial ??= new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.4 });
+        return new THREE.Mesh(glassGeometry, this.glassMaterial);
     }
 }

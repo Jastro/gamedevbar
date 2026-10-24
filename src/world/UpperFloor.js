@@ -101,7 +101,8 @@ export class UpperFloor {
             const y = base + (baseEnd - base) * t;
             parts.push(new THREE.BoxGeometry(0.06, RAIL_HEIGHT, 0.06).translate(x0 + (x1 - x0) * t, y + RAIL_HEIGHT / 2, z0 + (z1 - z0) * t));
         }
-        const rail = new THREE.BoxGeometry(length, 0.08, 0.1);
+        // Sloping: as long as the slope itself, so it reaches both ends.
+        const rail = new THREE.BoxGeometry(Math.hypot(length, baseEnd - base), 0.08, 0.1);
         rail.rotateZ(Math.atan2(baseEnd - base, length));
         rail.rotateY(-Math.atan2(z1 - z0, x1 - x0));
         rail.translate((x0 + x1) / 2, (base + baseEnd) / 2 + RAIL_HEIGHT, (z0 + z1) / 2);
@@ -145,7 +146,9 @@ export class UpperFloor {
         // Tables with chairs (outside: F works from the terrace, see
         // InteractionSystem) and two potted plants.
         TERRACE_TABLES.forEach(({ x, z }) => {
-            const chairs = this.furniture.createTableSet(x, z, GALLERY.top);
+            // In the terrace's group: seen from the plaza when the bar's
+            // interior is hidden (Environment.updateInteriors).
+            const chairs = this.furniture.createTableSet(x, z, GALLERY.top, 4, this.group);
             chairs.forEach(chair => { chair.userData.outside = true; });
         });
         const pot = new THREE.MeshStandardMaterial({ color: 0xa0522d, roughness: 0.9 });

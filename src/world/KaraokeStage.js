@@ -106,6 +106,7 @@ export class KaraokeStage {
         lamp.rotation.x = -Math.atan2(aim.y, Math.hypot(aim.x, aim.z));
 
         this.spot = new THREE.SpotLight(0xfff2c0, 0, 12, 0.38, 0.5, 1);
+        this.spot.visible = false;
         this.spot.position.set(LIGHT_STAND.x, LIGHT_STAND.height, LIGHT_STAND.z);
         this.spot.target.position.copy(singer);
         const group = new THREE.Group();
@@ -133,6 +134,8 @@ export class KaraokeStage {
         this.lit += (target - this.lit) * Math.min(1, deltaTime * LIGHT_FADE);
         if (Math.abs(this.lit - target) < 0.001) this.lit = target;
         this.spot.intensity = LIGHT_INTENSITY * this.lit;
+        // Dark: hidden, so lit materials don't compute it at all.
+        this.spot.visible = this.lit > 0;
         this.lensMaterial.emissiveIntensity = 1.5 * this.lit;
         this.edgeMaterial.emissiveIntensity = 0.4 + 1.2 * this.lit;
     }

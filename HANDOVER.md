@@ -18,6 +18,15 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-24 Performance: hidden interiors of bars you can't see into, static meshes merged (walls,
+  roofs, railings, closed buildings, bottles; chairs, tables, lamps and cars as fewer meshes), lights at
+  0 hidden (7 lights were computed per pixel for nothing), pixel ratio ≤ 1.5. Fixed: running up the
+  stairs in a slow frame sank you into them / dropped you through; the stairs' handrail fell short at
+  both ends (tilted rail sized to the horizontal run). **Verified in the browser:** draw calls inside
+  facing the bar 574 → 274, looking out the door 2198 → 688, plaza 990 → 274; stairs run at 60/20/15/10
+  fps with the camera swinging: no sinking (the old code sank at ≤ 20 fps in the same test); chairs
+  seat and highlight, tables and lamp posts block, disco/karaoke lights switch, an open door shows its
+  bar from across the plaza; pictures inside, outside and of the handrail ends.
 - 2026-10-24 Mediavida sign over the fountain (turning, with the forum's logo), two new bars (FEDA in
   slot 2, Offtopic in slot 5, copies of Desarrollo), ~40 sarcastic bartender lines plus each bar's own.
   **Verified in the browser:** `/feda` spawns inside FEDA; four bars and bartenders; pictures of the
@@ -32,32 +41,15 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 - 2026-10-23 Hanging lamps, disco ball, windows, nitro, roofs, wall finishes, closed buildings,
   passenger seat, stickers, whole-wall graffiti, cars pushing each other, the toilet light.
   Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-23 Uber Suicida drivable, light per space through doors, ring-road lamps, quieter fountain,
-  futbolín turned; then street lamps in the shader, eight cars, sound distance from the avatar. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-23 The hub (round plaza, 6 bar slots, roads, ring road, colliders in their own frame), then
-  four drivable cars and the fountain. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-23 Two rounds of fixes: seated pose on every seat, gesture hands aimed by finger direction,
-  bar against the back wall, the meme tragaperras (Leeroy), powder table, futbolín score on the table,
-  👤 panel on the right. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-22 (night) Right-click radial menu with gestures, Spain weather outside with each player's
-  local clock. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-22 (evening) Light through open doors, the futbolín, the meme slot machine, Madrid time and
-  weather, small fixes (mic, stools). Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-22 Bar games batch: drinks and drunkenness, darts, bathroom graffiti, karaoke stage, two-player Pong,
-  then review fixes. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-22 Bathroom in each bar, then tweaks (quieter flush, latch click, ceiling, camera collision, jumpable
-  counter, sign on the back wall) and the seated toilet pose. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-21 Car + Pokebonk, appearance part 1 (27 accessories, tint, size, name colors), interactions/tables/lights
-  (F everywhere, chairs, Shift, standable tables, dormant rooms, switches), controls and movement (Q/E, ❔,
-  per-second movement, wall sliding). Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-21 Vircon32 spectating + Arcade slider (#19), and direct links + 👤 menu (#18). Details in
+- 2026-10-20 to 2026-10-23: the hub, cars and the Uber, gestures, weather, futbolín, slots, bar
+  games, bathrooms, appearance, Vircon32, TURN/voice. Summaries and details in
   [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- Earlier 2026-10-21: camera pan/reset, 21 Vircon32 games and the cabinet, "who's here" board, open mic,
-  GHCR + Portainer deploy, volume sliders, shared radio and projector. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-20: TURN deploy and voice-over-TURN fix, mic settings, modular refactor, push-to-talk voice,
-  WS hardening, repo docs, rooms/street/doors/occlusion. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 
 ## Decisions to review
+- **Pixel ratio capped at 1.5** (was 2): a bit softer on 2x screens, 44% fewer pixels. Back to 2 in
+  `Renderer.js` if it looks blurry.
+- **Interiors hidden** when you're not in a bar, its door is shut and you're more than 16 from its
+  front: if something pops in visibly when walking up, raise `INTERIOR_NEAR` (Environment.js).
 - **New bars:** FEDA in slot 2 (beside Desarrollo) and Offtopic in slot 5 (beside Gamedev), so the four
   sit together; radios Cadena SER / LOS40; bartenders Fermín (pj3) and Lola (pj5). Taglines: "Se
   discute de todo y no se arregla nada" / "De todo un poco, y nada en serio".

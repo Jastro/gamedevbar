@@ -146,7 +146,10 @@ export class LocalPlayer extends Player {
         const step = this.velocity.clone().multiplyScalar(dt);
         const substeps = Math.max(1, Math.ceil(step.length() / MAX_STEP));
         step.divideScalar(substeps);
-        for (let i = 0; i < substeps; i++) this.moveWithSlide(step);
+        for (let i = 0; i < substeps; i++) {
+            this.moveWithSlide(step);
+            this.climb();
+        }
 
         if (input) this.rotation = lerpAngle(this.rotation, Math.atan2(input.x, input.z), 1 - Math.exp(-TURN_RATE * dt));
         this.isMoving = this.velocity.length() > WALK_ANIMATION_SPEED;
@@ -176,6 +179,14 @@ export class LocalPlayer extends Player {
             direction.applyAxisAngle(UP, (Math.sin(t * 1.3) + 0.5 * Math.sin(t * 3.1)) * 0.45 * drunk);
         }
         return direction.normalize();
+    }
+
+    // Up the stairs as we go: each substep lifts us onto the ground ahead,
+    // so a long frame doesn't sink us into the ramp (handleJump does the rest).
+    climb() {
+        if (this.isJumping) return;
+        const ground = this.game.world.getGroundHeight(this.position, PLAYER_RADIUS);
+        if (ground > this.position.y - STANDING_HEIGHT) this.position.y = ground + STANDING_HEIGHT;
     }
 
     // Tries the whole step, then each axis on its own (sliding along walls),

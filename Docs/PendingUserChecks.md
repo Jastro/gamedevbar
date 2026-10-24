@@ -47,6 +47,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       in `src/world/Roof.js`)? Inside: a sloped wooden ceiling; lit like the bar at night and by day?
 - [ ] **New bottom bar.** Chat input bottom left under the chat log; 🎙️ ⚙️ 👤 ❔ bottom right, all the
       same size; no 😊 button (emojis: right click). ❔ panel twice as wide. Also on a small window.
+- [ ] **Performance and stairs** (2026-10-24). Inside a bar, looking around and out the door: smoother than
+      before? From the plaza, bars look the same (interiors only hidden when you can't see in: walk up
+      to a door, open it from afar). Run (Shift) up the stairs while turning with the right mouse button:
+      no falling through. Handrail reaches the floor and the landing.
 - [ ] **Mediavida sign and two new bars** (2026-10-24). The sign over the fountain: readable from the
       bar doors and terraces, the logo crisp, the turning speed OK, too big / too small? FEDA and
       Offtopic (next to Desarrollo and Gamedev; `/feda`, `/offtopic`): enter, lights, radio, their

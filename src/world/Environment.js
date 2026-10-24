@@ -21,7 +21,19 @@ import { PresenceBoard } from './PresenceBoard';
 import { CeilingFixtures } from './CeilingFixtures';
 import { UpperFloor } from './UpperFloor';
 import { VirconCabinet, CABINETS } from './VirconCabinet';
-import { DEFAULT_ROOM_ID } from './RoomLayout';
+import { DEFAULT_ROOM_ID, ROOM_HALF_DEPTH } from './RoomLayout';
+import { mergeStatic } from '../rendering/mergeStatic';
+
+// The child of `root` that `object` hangs from.
+function topLevel(object, root) {
+    let node = object;
+    while (node.parent && node.parent !== root) node = node.parent;
+    return node;
+}
+
+// Closer than this to a bar's front (outside), its interior shows: the
+// terrace and the doorway above the entrance look into the gallery.
+const INTERIOR_NEAR = 16;
 
 // Props and interactive objects. Every room gets its own full set, built in
 // room-local coordinates (see RoomLayout.js).
@@ -42,6 +54,8 @@ export class Environment {
 
     create() {
         this.world.rooms.forEach(room => {
+            // What World built (walls, roof, windows): the shell, always drawn.
+            const shell = new Set(room.root.children);
             const hasPaintings = room.definition.paintings !== false;
             const contents = {
                 room,
@@ -94,10 +108,30 @@ export class Environment {
             contents.graffiti = WALLS.map((_, index) => new GraffitiWall(contents.bathroom, index));
             contents.graffiti.forEach(wall => wall.create());
             if (contents.paintings) this.loadPaintings(contents.paintings);
+            // The rest is the interior, in its own group (room-local all the
+            // same), hidden when nobody can see into it (updateInteriors);
+            // the door and the terrace are seen from outside. One group, so
+            // things that show and hide themselves keep doing it inside.
+            contents.interior = new THREE.Group();
+            contents.interior.name = 'Interior';
+            room.root.children
+                .filter(child => !shell.has(child) && child !== contents.door.group && child !== contents.upperFloor.group)
+                .forEach(child => contents.interior.add(child));
+            room.add(contents.interior);
+            // Fewer draws: the shell and the upper floor's slabs and railings,
+            // and the bottles on the shelf, as one mesh per material.
+            const outside = new Set([...shell, contents.upperFloor.group]);
+            mergeStatic(room.root, object => outside.has(topLevel(object, room.root)));
+            const bottles = contents.interior.getObjectByName('BottlesAndGlasses');
+            if (bottles) mergeStatic(bottles);
 
             this.rooms.set(room.id, contents);
             this.doors.set(contents.door.id, contents.door);
         });
+
+        this.world.scene.children
+            .filter(child => child.name.startsWith('ClosedBuilding_'))
+            .forEach(building => mergeStatic(building));
 
         // The plaza's car (world coordinates, not part of a room).
         this.car = new Car(this.world.scene, this.world.collisionManager);
@@ -177,6 +211,25 @@ export class Environment {
         if (listenerPosition) this.updateAudioOcclusion(listenerPosition);
         this.rooms.forEach(({ projector }) => projector.update(listenerPosition, this, this.world));
         this.rooms.forEach(({ room, fixtures }) => fixtures.update(deltaTime, this.getLights(room.id)));
+        this.updateInteriors(listenerPosition);
+    }
+
+    // A bar's interior (~600 meshes, drawn twice with the outline pass) is
+    // hidden while nobody here can see into it: we're not in it, its front
+    // door is shut (or ours is, from another bar), and we're not near its
+    // front, where the terrace doorway shows the gallery. Walls, roof, door
+    // and terrace always show.
+    updateInteriors(viewer) {
+        if (!viewer) return;
+        const here = this.world.getRoomAt(viewer);
+        const doorOpen = (contents) => contents.door.angle !== 0;
+        this.rooms.forEach(contents => {
+            const { room } = contents;
+            contents.front ??= room.toWorld(0, 0, ROOM_HALF_DEPTH);
+            const near = !here && Math.hypot(viewer.x - contents.front.x, viewer.z - contents.front.z) < INTERIOR_NEAR;
+            const throughDoors = doorOpen(contents) && (!here || doorOpen(this.rooms.get(here.id)));
+            contents.interior.visible = here === room || near || throughDoors;
+        });
     }
 
     // Occlusion between two spaces (a Room, or null for outside): clear in

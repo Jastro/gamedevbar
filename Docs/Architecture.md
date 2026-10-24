@@ -68,6 +68,21 @@ Rules of thumb:
 - Room content uses room-local coordinates; compare positions in world space (`Room.toWorld`,
   `World.getRoomAt`).
 
+Rendering cost (2026-10-24): draw calls dominate (each mesh is drawn twice, the outline pass doubles
+everything), then lights per pixel.
+- A bar's contents built in `Environment.create` go into its `Interior` group, hidden while nobody can see
+  in (`Environment.updateInteriors`: not inside it, its door shut, not within 16 of its front). The door
+  and `UpperFloor` (terrace) stay outside it; the shell (World's walls, roof, windows) always shows.
+- `src/rendering/mergeStatic.js` draws a group's static meshes as one mesh per material (multi-material
+  boxes split by face): used on each bar's shell + upper floor, the bottle shelf and closed buildings. The
+  originals stay hidden for colliders, occluders and raycasts. Don't use it on anything that moves, hides
+  itself or swaps materials later; clickable/highlighted meshes are skipped by itself.
+- Many copies of one thing: one merged mesh (street lamps, a car's fixed parts, each chair/table) or
+  shared geometry + material, never a new material per copy.
+- A three.js light costs every lit pixel even at intensity 0: hide lights that are off (`visible = false`;
+  the first time the count changes, shaders recompile once).
+- Pixel ratio capped at 1.5 (`Renderer`).
+
 ## Server (`server/`)
 
 ```
@@ -87,7 +102,8 @@ logged). Lifecycle hooks: `onConnect`, `onJoin` (after `initCompleted`, in regis
 
 - **A room**: an entry in `ROOMS` (`src/world/RoomLayout.js`) with a free `slot` around the plaza, and its id
   in `ROOM_IDS` (`server/config.js`; darts, graffiti and Pong only accept those). Its placement, door and
-  props follow. Per-room flags (`barSign`, `paintings`) live on that entry.
+  props follow. Per-room flags (`barSign`, `paintings`) live on that entry. Its contents land in its
+  `Interior` group by themselves (see Rendering cost).
 - **Something clickable**: give its root group `userData.type = '<type>'` (and `originalMaterial` /
   `highlightMaterial` on meshes for the hover glow). Add `src/interactions/<type>Interaction.js` returning
   `{ type, use(object) }`, plus `findNearby(position)` and `hint(object)` if `F` should work near it. Register
