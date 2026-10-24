@@ -33,22 +33,9 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   **Verified in the browser** (real server): he picked me after ~4 s of patrol, chased, caught me,
   searched and gave a verdict (announced in chat); stepping into Gamedev mid-chase made him give up
   ("territorio del camarero"); hidden from inside the bar; picture of him with cap, moustache, baton.
-- 2026-10-24 Bartenders (and their names and lines) only show when you can see them: in their bar or
-  through its open door. **Verified in the browser:** visible only in Gamedev from inside, none from the
-  plaza or the terrace, FEDA's with its door open; a hidden one's card doesn't open; plaza picture.
-- 2026-10-24 Performance: hidden interiors of bars you can't see into, static meshes merged (walls,
-  roofs, railings, closed buildings, bottles; chairs, tables, lamps and cars as fewer meshes), lights at
-  0 hidden (7 lights were computed per pixel for nothing), pixel ratio ≤ 1.5. Fixed: running up the
-  stairs in a slow frame sank you into them / dropped you through; the stairs' handrail fell short at
-  both ends (tilted rail sized to the horizontal run). **Verified in the browser:** draw calls inside
-  facing the bar 574 → 274, looking out the door 2198 → 688, plaza 990 → 274; stairs run at 60/20/15/10
-  fps with the camera swinging: no sinking (the old code sank at ≤ 20 fps in the same test); chairs
-  seat and highlight, tables and lamp posts block, disco/karaoke lights switch, an open door shows its
-  bar from across the plaza; pictures inside, outside and of the handrail ends.
-- 2026-10-24 Mediavida sign over the fountain (turning, with the forum's logo), two new bars (FEDA in
-  slot 2, Offtopic in slot 5, copies of Desarrollo), ~40 sarcastic bartender lines plus each bar's own.
-  **Verified in the browser:** `/feda` spawns inside FEDA; four bars and bartenders; pictures of the
-  plaza with the sign, the sign up close, inside FEDA and Offtopic's front; the sign turns; no errors.
+- 2026-10-24 Performance (hidden interiors, merged meshes, lights, pixel ratio), stairs fix, Mediavida
+  sign, FEDA and Offtopic, bartenders only when visible. Details in
+  [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Borja's notes: stairs by the bathroom, bigger terrace, terrace z-fight fixed, bigger
   bartender on a deck. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Plan steps 4-6: weekly leaderboards (board on each gallery, `data/leaderboards.json`),
