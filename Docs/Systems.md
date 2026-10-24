@@ -358,7 +358,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   `policeState`; a whistle when a chase starts; the chased player gets his lines in their chat. Hidden
   while you're in a bar with its door shut (name and bubbles show through walls). Clicking him: his card.
 - New accessories for everyone: 👮 police cap (head) and 🚓 baton (hand).
-- **The guillotine** (2026-10-25; layout in `server/shared/guillotine.json`, 20 from the fountain toward
+- **The guillotine** (2026-10-25; layout in `server/shared/guillotine.json`, 10 from the fountain toward
   the road between slots 3 and 4, facing the fountain). Doing the jerk or spit gesture where he can see it
   (in the open plaza, within 35) starts a `pursuit` at once, at sprint speed (6.5): only getting into a bar
   (or a car) saves you; 60 s and he gives up. Caught (`policeArrest`): your controls lock (no walking,
@@ -372,7 +372,8 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 - **Heads and blood** stay 24 h (server memory, max 25; a deploy clears them; sent on join): each head
   where it stopped, a trail of drops along its path and a puddle under it; a pool under the guillotine
   while any head is there. `src/world/GuillotineSync.js` draws the guillotine (posts block people and
-  cars; "GUILLOTINA MUNICIPAL"), the blade from the server's timestamps, the heads and the blood.
+  cars; "GUILLOTINA MUNICIPAL"; at night a warm spotlight on a post beside it lights it and a quarter
+  more around), the blade from the server's timestamps, the heads and the blood.
 
 ## Bartender
 
@@ -384,9 +385,8 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   time, says a line (~70 sarcastic general ones plus 5-7 of the bar's own in `ROOM_LINES`, which
   come up twice as often). Stops and lines come from the server clock and the bar, so everyone sees
   the same thing. A drink served to someone in his bar: "¡Marchando!" or something ruder.
-- Shown only while you can see him: you're in his bar, or its door is open and its interior is drawn
-  (`updateVisibility`). His name and bubbles are drawn over everything, so otherwise they showed through
-  every wall. A hidden one can't be clicked (`playerInteraction`).
+- Shown only while you're in his bar (`updateVisibility`): his name and bubbles are drawn over
+  everything, so otherwise they showed through walls and open doors from across the plaza. A hidden one can't be clicked (`playerInteraction`).
 
 ## Tragaperras (video-game meme slot machine)
 
@@ -553,7 +553,8 @@ painted orange), both faces, turning 0.25 rad/s from the server clock so everyon
 ~4.4, water falling from each bowl, a quiet positional loop: a faint fizz with soft splats and
 plips, made in code (`createWaterBuffer`); at night (`Outdoors.setNight`, from Weather like the street
 lamps) 8 spotlights on the basin floor glow, soft additive beams rise up the column and the water glows
-cyan (`FOUNTAIN_LIGHTS`); the basin is a round platform you
+cyan (`FOUNTAIN_LIGHTS`), and a warm spotlight from the Mediavida mast (8.3 up) covers the basin
+and a quarter more around it (`FOUNTAIN_SPOT`); the basin is a round platform you
 can hop onto, the column blocks); `getLampSpots()` puts a lamp beside each road and 18 along the ring road's outer edge. The soccer stadium lives at
 (0, 0, -50) behind Gamedev and is only shown during `/furbo`.
 

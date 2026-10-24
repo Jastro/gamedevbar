@@ -81,7 +81,8 @@ everything), then lights per pixel.
 - Many copies of one thing: one merged mesh (street lamps, a car's fixed parts, each chair/table) or
   shared geometry + material, never a new material per copy.
 - A three.js light costs every lit pixel even at intensity 0: hide lights that are off (`visible = false`;
-  the first time the count changes, shaders recompile once).
+  the first time the count changes, shaders recompile once). Exception: lights that switch with the time
+  of day (the fountain and guillotine spotlights) stay in the scene at 0 by day, so dusk doesn't stall.
 - Pixel ratio capped at 1.5 (`Renderer`).
 
 Loading (2026-10-24): `npm run build` also runs `tools/precompress.js`, which writes `file.gz` next to

@@ -23,6 +23,9 @@ const RING_LAMPS = 18;
 // Night lights in the basin: spotlights on its floor, each with a soft beam
 // up the column, and the water glowing a little (setNight, from Weather).
 const FOUNTAIN_LIGHTS = { count: 8, radius: 1.7, color: 0x9fe6ff, beamTop: 3.3, beamOpacity: 0.12, waterGlow: 0.35 };
+// And a spotlight from the Mediavida sign's mast (just under the board),
+// straight down: the basin and a quarter more around it, soft and warm.
+const FOUNTAIN_SPOT = { height: 8.3, reach: FOUNTAIN.basinRadius * 1.25, intensity: 28, color: 0xfff1d6 };
 
 // Where the small roads leave the plaza: between slot k and slot k + 1.
 export function roadAngle(index) {
@@ -217,6 +220,21 @@ export class Outdoors {
         this.beams = new THREE.Mesh(mergeGeometries(beams), this.beamMaterial);
         this.beams.visible = false;
         fountain.add(this.beams);
+
+        const { height, reach, intensity, color: spotColor } = FOUNTAIN_SPOT;
+        const housing = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 0.3, 16), new THREE.MeshStandardMaterial({ color: 0x2f3337, metalness: 0.5, roughness: 0.5 }));
+        housing.position.y = height + 0.15;
+        this.fountainSpotGlass = new THREE.MeshStandardMaterial({ color: 0x555555, emissive: spotColor, emissiveIntensity: 0 });
+        const glass = new THREE.Mesh(new THREE.CircleGeometry(0.21, 16).rotateX(Math.PI / 2), this.fountainSpotGlass);
+        glass.position.y = height - 0.005;
+        fountain.add(housing, glass);
+        // Always in the scene (lit at night only): switching a light on and
+        // off makes every material recompile once.
+        this.fountainSpot = new THREE.SpotLight(spotColor, 0, height + 4, Math.atan(reach / height), 0.4, 1);
+        this.fountainSpot.position.set(0, height, 0);
+        this.fountainSpot.target.position.set(0, 0, 0);
+        this.fountainSpotIntensity = intensity;
+        fountain.add(this.fountainSpot, this.fountainSpot.target);
     }
 
     // 0 by day, 1 at night (Weather, like the street lamps).
@@ -226,6 +244,8 @@ export class Outdoors {
         this.beamMaterial.opacity = FOUNTAIN_LIGHTS.beamOpacity * night;
         this.beams.visible = night > 0.02;
         this.waterMaterial.emissiveIntensity = FOUNTAIN_LIGHTS.waterGlow * night;
+        this.fountainSpot.intensity = this.fountainSpotIntensity * night;
+        this.fountainSpotGlass.emissiveIntensity = 1.5 * night;
     }
 
     // A drop leaving bowl `level`'s rim (fountain space), `progress` 0..1 of its fall.

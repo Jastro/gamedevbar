@@ -277,6 +277,7 @@ export class Weather {
         this.glowMaterial.opacity = LAMP_GLOW.opacity * night;
         this.glowMaterial.visible = night > 0.02;
         this.game.world.outdoors?.setNight(night);
+        this.game.guillotine?.setNight(night);
 
         // Rain and snow.
         const raining = kind === 'rain' || kind === 'drizzle' || kind === 'storm';

@@ -18,6 +18,11 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-25 Spotlights at night on the fountain (from the Mediavida mast) and the guillotine (a post
+  beside it), each covering it and a quarter more, soft; the guillotine moved to 10 from the fountain;
+  bartenders only show inside their bar (no names through open doors). **Verified in the browser:**
+  night pictures with and without the fountain spot, the guillotine's pool of light, no bartender
+  visible from the plaza with Gamedev's door open.
 - 2026-10-25 Guillotine victims bow their head 90° (face to the floor) until the blade; the head falls
   face down from there. **Verified in the browser:** the head's face points straight down while
   bowed and stays there (no build-up frame to frame); before/after pictures.

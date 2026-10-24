@@ -28,6 +28,9 @@ const FADE_MS = 1000;     // #fade-overlay's transition, then the toilet
 const TOILET_SPOT = { x: -12.8, z: 7.5 };  // bathroom-local, in front of the toilet
 const HEAD_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const FOLLOW = { distance: 1.1, rate: 8 };
+// A spotlight on a post beside it, aimed at it: the guillotine and a quarter
+// more around (about 1.9 across), soft and warm; lit at night (Weather).
+const SPOT = { post: { x: 2.4, z: 2.2 }, height: 6, aim: { x: 0, y: 1.2, z: 0 }, reach: 1.9, intensity: 22, color: 0xfff1d6 };
 
 // A repeatable 0..1 from a string (blood drops look the same for everyone).
 function seeded(text) {
@@ -119,17 +122,54 @@ export class GuillotineSync {
         this.pool.visible = false;
         group.add(this.pool);
 
+        this.addSpot(group, wood);
+
         group.traverse(child => { child.raycast = () => {}; });
         group.updateMatrixWorld(true);
         // People and cars bump into the posts (not the low base).
         const collisions = this.game.world.collisionManager;
-        posts.forEach(post => {
+        [...posts, this.spotPost].forEach(post => {
             const blocker = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.3, 0.3), new THREE.MeshBasicMaterial({ visible: false }));
             blocker.position.copy(post.position);
             group.add(blocker);
             blocker.updateMatrixWorld(true);
             collisions.addCollider(blocker);
         });
+    }
+
+    addSpot(group, wood) {
+        const { post, height, aim, reach, intensity, color } = SPOT;
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, height, 10), new THREE.MeshStandardMaterial({ color: 0x2f3337, metalness: 0.5, roughness: 0.5 }));
+        pole.position.set(post.x, height / 2, post.z);
+        group.add(pole);
+        this.spotPost = pole;
+        // The lamp head at the top, tipped toward the guillotine.
+        const from = new THREE.Vector3(post.x, height, post.z);
+        const to = new THREE.Vector3(aim.x, aim.y, aim.z);
+        const head = new THREE.Group();
+        head.position.copy(from);
+        group.add(head);
+        group.updateMatrixWorld(true);
+        head.lookAt(to.clone().applyMatrix4(group.matrixWorld)); // lookAt takes world space
+        const housing = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.4, 14).rotateX(Math.PI / 2), wood);
+        this.spotGlass = new THREE.MeshStandardMaterial({ color: 0x555555, emissive: color, emissiveIntensity: 0 });
+        const glass = new THREE.Mesh(new THREE.CircleGeometry(0.15, 14), this.spotGlass);
+        glass.position.z = 0.205;
+        head.add(housing, glass);
+        const distance = from.distanceTo(to);
+        // Always in the scene (lit at night only): switching a light on and
+        // off makes every material recompile once.
+        this.spot = new THREE.SpotLight(color, 0, distance + 4, Math.atan(reach / distance), 0.4, 1);
+        this.spot.position.copy(from);
+        this.spot.target.position.copy(to);
+        group.add(this.spot, this.spot.target);
+    }
+
+    // 0 by day, 1 at night (Weather, like the street lamps).
+    setNight(night) {
+        if (!this.spot) return;
+        this.spot.intensity = SPOT.intensity * night;
+        this.spotGlass.emissiveIntensity = 1.5 * night;
     }
 
     addSign(group) {
