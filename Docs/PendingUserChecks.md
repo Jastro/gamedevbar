@@ -47,6 +47,11 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       in `src/world/Roof.js`)? Inside: a sloped wooden ceiling; lit like the bar at night and by day?
 - [ ] **New bottom bar.** Chat input bottom left under the chat log; 🎙️ ⚙️ 👤 ❔ bottom right, all the
       same size; no 😊 button (emojis: right click). ❔ panel twice as wide. Also on a small window.
+- [ ] **Guillotine** (2026-10-25). In the plaza near Agente Porras, right click → spit (or the other
+      one): he sprints at you; let him catch you: you can't move, he walks you to the guillotine, last
+      words, blade, your head rolls (from your own view too), fade, you wake up in a toilet. Heads and
+      blood stay. Too brutal / too slow / too fast? Can you escape into a bar in time? (Speeds and times
+      in `server/features/police.js` and `server/shared/guillotine.json`.)
 - [ ] **Fountain at night** (2026-10-24). After dark: spotlights in the basin, beams up the column,
       glowing water. Too strong / too blue (`FOUNTAIN_LIGHTS` in `src/world/Outdoors.js`)?
 - [ ] **Agente Porras** (2026-10-24). Stand in the plaza ~1 min: he whistles and chases you; let him catch

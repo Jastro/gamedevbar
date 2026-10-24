@@ -16,7 +16,7 @@ export class GestureSync {
     play(name) {
         const def = GESTURES[name];
         const player = this.game.players.localPlayer;
-        if (!def || !player || this.game.playMode) return;
+        if (!def || !player || this.game.playMode || this.game.guillotine?.arrested) return;
         // Dancing and push-ups need you on your feet.
         if (def.standing && player.isSitting) player.standUp();
         player.playGesture(name);

@@ -31,6 +31,7 @@ import { LeaderboardSync } from '../world/LeaderboardSync';
 import { RaceSync } from '../world/RaceSync';
 import { MediavidaSign } from '../world/MediavidaSign';
 import { PoliceSync } from '../world/PoliceSync';
+import { GuillotineSync } from '../world/GuillotineSync';
 import { Weather } from '../world/Weather';
 import { LocalWeather } from '../world/LocalWeather';
 import { GestureSync } from '../entities/GestureSync';
@@ -243,6 +244,8 @@ export class Game {
         this.mediavidaSign = new MediavidaSign(this);
         this.mediavidaSign.create();
         this.police = new PoliceSync(this);
+        this.guillotine = new GuillotineSync(this);
+        this.guillotine.create();
         this.lighting.init();
         this.radioSync.applyDefaults();
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
@@ -291,6 +294,7 @@ export class Game {
         this.leaderboards.bind();
         this.races.bind();
         this.police.bind();
+        this.guillotine.bind();
         this.slotSync.bind();
         this.foosballSync.bind();
         this.virconSpectating.bind();
@@ -412,6 +416,7 @@ export class Game {
         this.races.update();
         this.mediavidaSign.update();
         this.police.update(deltaTime);
+        this.guillotine.update();
         this.bartenders?.forEach(bartender => bartender.update(deltaTime));
         this.soundscape?.update(deltaTime);
         const clockLabel = this.localWeather.label(this.weather);

@@ -122,6 +122,14 @@ export class LocalPlayer extends Player {
     // toward the input (no instant start/stop), the avatar turns smoothly,
     // and a blocked step slides along the wall instead of stopping dead.
     handleMovement(dt) {
+        // Arrested (GuillotineSync moves us): no input, walking only while
+        // the policeman takes us along.
+        const guillotine = this.game.guillotine;
+        if (guillotine?.arrested) {
+            this.velocity.set(0, 0, 0);
+            this.isMoving = guillotine.escortMoving;
+            return;
+        }
         const blocked = this.game.chatActive || this.game.playMode
             || this.game.environment.isPlayingArcade(this.id);
         if (blocked) {
@@ -248,7 +256,7 @@ export class LocalPlayer extends Player {
     // Jumping, falling off a table and landing on one. The ground is the
     // floor or the top of a platform (CollisionManager.getGroundHeight).
     handleJump(dt) {
-        if (this.isSitting || this.game.playMode) return;
+        if (this.isSitting || this.game.playMode || this.game.guillotine?.arrested) return;
         const world = this.game.world;
         const ground = world.getGroundHeight(this.position, PLAYER_RADIUS);
         const feet = this.position.y - STANDING_HEIGHT;

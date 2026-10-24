@@ -18,21 +18,14 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
-- 2026-10-24 Fountain lights at night (basin spotlights, beams up the column, glowing water); ~30 more
-  bartender lines and a few per bar, ~35 more for Agente Porras. **Verified in the browser:** night
-  picture of the fountain (forced night); server starts with the new lines; 78-82 lines per bartender.
-- 2026-10-24 Faster loading: gzipped copies made at build time and served by Node (download ~3.6 MB →
-  ~1.2 MB), the football stadium only loads on `/furbo`, each character model downloads once, one floor
-  texture for all bars. Fixed: a speech bubble replaced mid-fade threw an error (the cop hit it often);
-  Agente Porras restarted his walk 5 times a second (now carries on between updates). **Verified in the
-  browser** on the production build: `Content-Encoding: gzip`, no stadium at start and `/furbo` still
-  starts with it, models ~120-140 KB each and pj5 once, ready 1.66 s vs 1.96 s locally; no bubble
-  errors; the cop walks with 0 idle/walk flips in 4 s (40 before).
-- 2026-10-24 Agente Porras: a policeman in the plaza, run by the server, who chases random people
-  (drunk ones first), searches them and hands out absurd verdicts; police cap and baton accessories.
-  **Verified in the browser** (real server): he picked me after ~4 s of patrol, chased, caught me,
-  searched and gave a verdict (announced in chat); stepping into Gamedev mid-chase made him give up
-  ("territorio del camarero"); hidden from inside the bar; picture of him with cap, moustache, baton.
+- 2026-10-25 The guillotine: Agente Porras pursues anyone he sees doing the jerk or spit gesture at sprint
+  speed, walks them (controls locked) to a guillotine in the plaza, beheads them (their own head rolls
+  10 s), they respawn in a random toilet; heads and blood stay 24 h. **Verified in the browser** (real
+  server): spit → pursuit 1 s → arrest 2 s → escort → last words 10 s → blade 13 s (headless, head
+  rolling) → respawn in a toilet 24 s with controls back, no errors; heads come back after a reload;
+  pictures of the victim in it, the head rolling, heads and blood, the blade up and down.
+- 2026-10-24 Fountain lights, more lines, faster loading (gzip, stadium on demand), Agente Porras.
+  Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-24 Performance (hidden interiors, merged meshes, lights, pixel ratio), stairs fix, Mediavida
   sign, FEDA and Offtopic, bartenders only when visible. Details in
   [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
@@ -51,6 +44,9 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 
 ## Decisions to review
+- **Guillotine:** the pursuit is exactly sprint speed, so you can't outrun him in the open: getting into a
+  bar (or a car) is the escape. Heads/blood live in server memory (a deploy clears them). The chibi
+  stands in it (the blade drops to the neck); no kneeling pose.
 - **Pixel ratio capped at 1.5** (was 2): a bit softer on 2x screens, 44% fewer pixels. Back to 2 in
   `Renderer.js` if it looks blurry.
 - **Interiors hidden** when you're not in a bar, its door is shut and you're more than 16 from its

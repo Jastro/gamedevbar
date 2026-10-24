@@ -11,6 +11,8 @@ function registerGestures(hub) {
         if (now - (user.lastGesture ?? 0) < MIN_INTERVAL_MS) return;
         user.lastGesture = now;
         hub.broadcast({ type: 'playerGesture', userId: user.id, gesture }, ws);
+        // The policeman may have seen it (police.js).
+        hub.police?.onGesture(user, gesture);
     });
 
     hub.on('playerGestureStop', ({ ws, user }) => {

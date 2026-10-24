@@ -46,7 +46,7 @@ export class InteractionSystem {
         });
         window.addEventListener('click', (e) => this.handleClick(e));
         window.addEventListener('keydown', (e) => {
-            if (this.game.chatActive || this.game.playMode || e.repeat || e.key.toLowerCase() !== INTERACT_KEY) return;
+            if (this.game.chatActive || this.game.playMode || this.game.guillotine?.arrested || e.repeat || e.key.toLowerCase() !== INTERACT_KEY) return;
             const nearby = this.findNearby();
             if (nearby) nearby.interaction.use(nearby.object);
         });
@@ -84,7 +84,7 @@ export class InteractionSystem {
     }
 
     handleClick(event) {
-        if (this.game.chatActive || this.game.playMode || !this.highlightedObject) return;
+        if (this.game.chatActive || this.game.playMode || this.game.guillotine?.arrested || !this.highlightedObject) return;
         // Like F: seated, you get up first (WASD).
         if (this.game.players.localPlayer?.isSitting) return;
         const clicked = document.elementFromPoint(event.clientX, event.clientY);

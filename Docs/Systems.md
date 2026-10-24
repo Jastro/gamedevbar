@@ -358,6 +358,20 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   `policeState`; a whistle when a chase starts; the chased player gets his lines in their chat. Hidden
   while you're in a bar with its door shut (name and bubbles show through walls). Clicking him: his card.
 - New accessories for everyone: 👮 police cap (head) and 🚓 baton (hand).
+- **The guillotine** (2026-10-25; layout in `server/shared/guillotine.json`, 20 from the fountain toward
+  the road between slots 3 and 4, facing the fountain). Doing the jerk or spit gesture where he can see it
+  (in the open plaza, within 35) starts a `pursuit` at once, at sprint speed (6.5): only getting into a bar
+  (or a car) saves you; 60 s and he gives up. Caught (`policeArrest`): your controls lock (no walking,
+  jumping, F, clicks or gestures; chat works) and you walk behind him to the guillotine (`escort`).
+  There (`guillotine`, `execute`): you stand in it, last words, the blade drops 2.5 s later
+  (`bladeAt`), your avatar loses its head (the Head bone shrunk: `Player.headless`) and a copy of the
+  head (your model, hat and face items, everything else shrunk away) falls and rolls 3-6 m to a spot
+  the server chose, slowing down, for 10 s; then you fade out and wake up in front of the toilet of a
+  random bar (`GuillotineSync.respawn`); `policeRelease` 11.5 s after the blade. Announced in chat.
+- **Heads and blood** stay 24 h (server memory, max 25; a deploy clears them; sent on join): each head
+  where it stopped, a trail of drops along its path and a puddle under it; a pool under the guillotine
+  while any head is there. `src/world/GuillotineSync.js` draws the guillotine (posts block people and
+  cars; "GUILLOTINA MUNICIPAL"), the blade from the server's timestamps, the heads and the blood.
 
 ## Bartender
 

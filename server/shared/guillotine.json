@@ -1,0 +1,13 @@
+{
+  "comment": "The plaza's guillotine (server/features/police.js, src/world/GuillotineSync.js). bearing/distance: where it stands from the plaza's center (RoomLayout.bearing), facing the center (its local +z). Spots are local: x right, z front.",
+  "bearing": 3.6652,
+  "distance": 20,
+  "copSpot": { "x": 1.5, "z": -0.35 },
+  "victimSpot": { "x": 0, "z": -0.05 },
+  "headStart": { "x": 0, "y": 1.12, "z": 0.05 },
+  "headRadius": 0.4,
+  "rollDistance": { "min": 3, "max": 6 },
+  "lastWordsMs": 2500,
+  "rollMs": 10000,
+  "respawnMs": 11500
+}

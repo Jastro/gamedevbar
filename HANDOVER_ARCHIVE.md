@@ -2,6 +2,23 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-24: fountain lights, lines, loading, Agente Porras)
+- 2026-10-24 Fountain lights at night (basin spotlights, beams up the column, glowing water); ~30 more
+  bartender lines and a few per bar, ~35 more for Agente Porras. **Verified in the browser:** night
+  picture of the fountain (forced night); server starts with the new lines; 78-82 lines per bartender.
+- 2026-10-24 Faster loading: gzipped copies made at build time and served by Node (download ~3.6 MB →
+  ~1.2 MB), the football stadium only loads on `/furbo`, each character model downloads once, one floor
+  texture for all bars. Fixed: a speech bubble replaced mid-fade threw an error (the cop hit it often);
+  Agente Porras restarted his walk 5 times a second (now carries on between updates). **Verified in the
+  browser** on the production build: `Content-Encoding: gzip`, no stadium at start and `/furbo` still
+  starts with it, models ~120-140 KB each and pj5 once, ready 1.66 s vs 1.96 s locally; no bubble
+  errors; the cop walks with 0 idle/walk flips in 4 s (40 before).
+- 2026-10-24 Agente Porras: a policeman in the plaza, run by the server, who chases random people
+  (drunk ones first), searches them and hands out absurd verdicts; police cap and baton accessories.
+  **Verified in the browser** (real server): he picked me after ~4 s of patrol, chased, caught me,
+  searched and gave a verdict (announced in chat); stepping into Gamedev mid-chase made him give up
+  ("territorio del camarero"); hidden from inside the bar; picture of him with cap, moustache, baton.
+
 ## Done (2026-10-24: performance, sign, new bars, bartender visibility)
 - 2026-10-24 Bartenders (and their names and lines) only show when you can see them: in their bar or
   through its open door. **Verified in the browser:** visible only in Gamedev from inside, none from the

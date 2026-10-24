@@ -18,7 +18,7 @@ const SIT_FEET = ['FootL', 'FootR'];
 // on pj5 fetched it twice); each avatar still parses its own copy, so tints
 // and accessories stay per player.
 const modelFiles = new Map(); // path -> Promise<ArrayBuffer>
-function loadModelFile(path) {
+export function loadModelFile(path) {
     if (!modelFiles.has(path)) {
         const request = new THREE.FileLoader().setResponseType('arraybuffer').loadAsync(path);
         // A failed download can be tried again later.
@@ -346,6 +346,12 @@ export class Player {
     // the feet's position (and barely their rotation), so the pose is set
     // from the rest transform each time instead of being added on top.
     applyPose() {
+        // Beheaded (GuillotineSync): the head, and what's worn on it, shrink to
+        // nothing; put back once (the animation doesn't scale it).
+        if (this.model && (this.headless || this.headHidden)) {
+            this.model.getObjectByName('Head')?.scale.setScalar(this.headless ? 1e-4 : 1);
+            this.headHidden = this.headless;
+        }
         if (this.pose !== 'sit' || !this.model) return;
         if (!this.poseFeet || this.poseFeet.model !== this.model) this.measureFeet();
         this.poseFeet.feet.forEach(({ bone, restPosition, restQuaternion, offset, tilt }) => {

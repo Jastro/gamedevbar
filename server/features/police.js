@@ -5,6 +5,12 @@
 // absurd verdict, announced in the chat. Sprinting (6.5) outruns him (5.2),
 // walking (3.7) doesn't. He gives up if they get into a bar or a car, or
 // after a while.
+// Crimes: anyone he sees (in the plaza, within SIGHT) doing the jerk or spit
+// gesture is pursued at once at sprint speed; caught, they're walked to the
+// guillotine (server/shared/guillotine.json), their controls locked, and
+// beheaded: the head rolls for 10 s, they respawn in a random bar's toilet,
+// and the head stays in the plaza for 24 h (GuillotineSync draws it all).
+const GUILLOTINE = require('../shared/guillotine.json');
 const TICK_MS = 200;
 // The plaza (as RoomLayout: front walls form a hexagon round it).
 const PLAZA_RADIUS = (2 * 15 + 6) / (2 * Math.tan(Math.PI / 6));
@@ -21,8 +27,51 @@ const SEARCH_STEP_MS = 3200;     // between the search's lines
 const PICK_MS = { min: 20000, max: 50000 };
 const IDLE_LINE_CHANCE = 0.25;   // per pick that finds nobody
 const DRUNK = 1;                 // drinks level (about one beer) that counts as drunk
+const CRIMES = { jerk: 'escándalo público', spit: 'escupir en la plaza' };
+const SIGHT = 35;                // how far he sees a crime
+const PURSUIT_SPEED = 6.5;       // a player's sprint
+const PURSUIT_MAX_MS = 60000;
+const ESCORT_SPEED = 2.6;
+const HEAD_LIFETIME_MS = 24 * 60 * 60 * 1000;
+const MAX_HEADS = 25;
 
 const LINES = {
+    crime: {
+        jerk: [
+            '¡¡ESCÁNDALO PÚBLICO!! ¡A la guillotina, guarro!',
+            '¡Eso no se hace en MI plaza! ¡Guillotina!',
+            '¡Las manos donde las vea! ¡Y ESAS no! ¡Guillotina!',
+            '¡Delante de la fuente no, hombre! ¡Al patíbulo!'
+        ],
+        spit: [
+            '¿¡Ha escupido en MI plaza!? ¡Guillotina!',
+            '¡Un escupitajo! ¡Eso aquí es pena capital!',
+            '¡Ese gapo le va a costar la cabeza!'
+        ]
+    },
+    pursuit: [
+        '¡No hay escapatoria, cerdo!',
+        '¡Corro igual que usted y no me canso!',
+        '¡La guillotina le espera, y ya la he afilado!',
+        '¡Ríndase! ¡Es solo un corte de pelo… muy bajo!'
+    ],
+    arrest: [
+        '¡Te tengo! Camina, que la guillotina no espera.',
+        'Al patíbulo, que hoy hay función.',
+        'Vamos dando un paseíto… sin vuelta.'
+    ],
+    lastWords: [
+        '¿Últimas palabras? ¿No? Pues nada.',
+        'Esto me duele más a mí que a usted. Mentira.',
+        'Que conste que solo cumplo órdenes. Mías.',
+        'Por el poder que me otorga esta porra…'
+    ],
+    beheaded: [
+        'Justicia poética.',
+        'Siguiente.',
+        'Y que sirva de lección.',
+        'Se le ha subido la fama a la cabeza. Y la cabeza a la plaza.'
+    ],
     start: [
         '¡Alto! ¡Policía de la Taberna!',
         '¡Quieto ahí, sospechoso de indie!',
@@ -149,6 +198,11 @@ function registerPolice(hub) {
     };
 
     const publicState = () => ({ x: round(cop.x), z: round(cop.z), yaw: round(cop.yaw), phase: cop.phase, targetId: cop.targetId });
+    let heads = []; // the guillotine's heads, kept 24 h (in memory: a deploy clears them)
+    const liveHeads = () => {
+        heads = heads.filter(head => Date.now() - head.droppedAt < HEAD_LIFETIME_MS);
+        return heads;
+    };
     // targetId: who it's aimed at (they get it in their chat too); final:
     // the verdict, which the chat announcement already shows.
     const say = (line, final = false) => hub.broadcastAll({ type: 'policeSay', line, targetId: cop.targetId, final });
@@ -190,13 +244,107 @@ function registerPolice(hub) {
         return distance - step;
     };
 
+    // The guillotine's frame (yaw: its front faces the plaza's center).
+    const guillotineYaw = GUILLOTINE.bearing;
+    const guillotineAt = (local) => {
+        const originX = CENTER.x - Math.sin(guillotineYaw) * GUILLOTINE.distance;
+        const originZ = CENTER.z - Math.cos(guillotineYaw) * GUILLOTINE.distance;
+        const cos = Math.cos(guillotineYaw);
+        const sin = Math.sin(guillotineYaw);
+        return { x: originX + local.x * cos + local.z * sin, z: originZ - local.x * sin + local.z * cos };
+    };
+
+    const release = () => {
+        if (cop.targetId) hub.broadcastAll({ type: 'policeRelease', targetId: cop.targetId });
+        cop.execution = null;
+    };
+
+    // Seen doing something nasty (gestures.js tells us).
+    hub.police = {
+        onGesture(user, gesture) {
+            if (!CRIMES[gesture] || !user.username || !Array.isArray(user.position)) return;
+            if (['pursuit', 'escort', 'execute'].includes(cop.phase)) return;
+            if (!inPlaza(user) || driving(user)) return;
+            if (Math.hypot(user.position[0] - cop.x, user.position[2] - cop.z) > SIGHT) return;
+            const now = Date.now();
+            cop.phase = 'pursuit';
+            cop.targetId = user.id;
+            cop.crime = gesture;
+            cop.chaseStartedAt = now;
+            cop.lastShoutAt = now;
+            say(pick(LINES.crime[gesture]));
+            hub.broadcastAll({ type: 'policeState', ...publicState() });
+        }
+    };
+
+    // Walk the prisoner to the guillotine, then the show (timed from here,
+    // drawn by every client from the same timestamps).
+    const execution = (now, dt) => {
+        const found = hub.findUser(cop.targetId);
+        const target = found?.user;
+        if (cop.phase === 'escort') {
+            if (!target) {
+                release();
+                return backToPatrol(null);
+            }
+            const spot = guillotineAt(GUILLOTINE.copSpot);
+            if (walkTo(spot.x, spot.z, ESCORT_SPEED, dt) > 0.15) return;
+            const start = guillotineAt(GUILLOTINE.headStart);
+            const angle = guillotineYaw + (Math.random() * 2 - 1) * 1.0;
+            const { min, max } = GUILLOTINE.rollDistance;
+            const distance = min + Math.random() * (max - min);
+            const bladeAt = now + GUILLOTINE.lastWordsMs;
+            cop.phase = 'execute';
+            cop.yaw = guillotineYaw - Math.PI / 2; // facing the victim, beside it
+            cop.execution = {
+                targetId: target.id,
+                name: target.username,
+                startAt: now,
+                bladeAt,
+                head: {
+                    id: `${target.id}:${bladeAt}`,
+                    name: target.username,
+                    modelId: target.selectedModel ?? 'pj',
+                    appearance: target.appearance ?? null,
+                    from: { x: round(start.x), y: GUILLOTINE.headStart.y, z: round(start.z) },
+                    to: { x: round(start.x + Math.sin(angle) * distance), z: round(start.z + Math.cos(angle) * distance) },
+                    spin: round(Math.random() * Math.PI * 2),
+                    droppedAt: bladeAt
+                }
+            };
+            cop.dropped = false;
+            hub.broadcastAll({ type: 'guillotine', ...cop.execution });
+            say(pick(LINES.lastWords));
+            return;
+        }
+        // execute
+        const { bladeAt, head } = cop.execution;
+        if (!cop.dropped && now >= bladeAt) {
+            cop.dropped = true;
+            liveHeads().push(head);
+            if (heads.length > MAX_HEADS) heads.splice(0, heads.length - MAX_HEADS);
+            say(pick(LINES.beheaded));
+            hub.announce?.(`🪓 ${head.name} ha perdido la cabeza en la guillotina por ${CRIMES[cop.crime] ?? 'indecente'}.`);
+        }
+        if (!cop.dropped && !target) {
+            release();
+            return backToPatrol(null);
+        }
+        if (now >= bladeAt + GUILLOTINE.respawnMs) {
+            release();
+            backToPatrol(null);
+        }
+    };
+
     const tick = () => {
         const now = Date.now();
         const dt = TICK_MS / 1000;
         const everyone = users();
         if (everyone.length === 0) return;
 
-        if (cop.phase === 'patrol') {
+        if (cop.phase === 'escort' || cop.phase === 'execute') {
+            execution(now, dt);
+        } else if (cop.phase === 'patrol') {
             cop.patrolAngle += (PATROL_SPEED / PATROL_RADIUS) * dt;
             walkTo(CENTER.x - Math.sin(cop.patrolAngle) * PATROL_RADIUS, CENTER.z - Math.cos(cop.patrolAngle) * PATROL_RADIUS, PATROL_SPEED, dt);
             if (now >= cop.nextPickAt) {
@@ -221,7 +369,18 @@ function registerPolice(hub) {
             if (driving(target)) return backToPatrol(pick(LINES.inCar));
             if (!inPlaza(target)) return backToPatrol(pick(LINES.inBar));
             const [x, , z] = target.position;
-            if (cop.phase === 'chase') {
+            if (cop.phase === 'pursuit') {
+                if (now - cop.chaseStartedAt > PURSUIT_MAX_MS) return backToPatrol(pick(LINES.tired));
+                const left = walkTo(x, z, PURSUIT_SPEED, dt);
+                if (left < CATCH_DISTANCE) {
+                    cop.phase = 'escort';
+                    say(pick(LINES.arrest));
+                    hub.broadcastAll({ type: 'policeArrest', targetId: target.id });
+                } else if (now - cop.lastShoutAt > SHOUT_EVERY_MS) {
+                    cop.lastShoutAt = now;
+                    say(pick(LINES.pursuit));
+                }
+            } else if (cop.phase === 'chase') {
                 if (now - cop.chaseStartedAt > CHASE_MAX_MS) return backToPatrol(pick(LINES.tired));
                 const left = walkTo(x, z, CHASE_SPEED, dt);
                 if (left < CATCH_DISTANCE) {
@@ -258,7 +417,10 @@ function registerPolice(hub) {
     };
     setInterval(tick, TICK_MS);
 
-    hub.onJoin(({ ws }) => hub.send(ws, { type: 'policeState', ...publicState() }));
+    hub.onJoin(({ ws }) => {
+        hub.send(ws, { type: 'policeState', ...publicState() });
+        hub.send(ws, { type: 'guillotineState', heads: liveHeads(), execution: cop.execution ?? null });
+    });
 }
 
 function round(value) {

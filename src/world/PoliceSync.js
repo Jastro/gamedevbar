@@ -65,10 +65,14 @@ export class PoliceSync {
             this.npc.position.copy(position);
             this.npc.mesh.position.copy(position);
         }
-        if (data.phase === 'chase' && previous === 'patrol') {
+        const pursuit = data.phase === 'pursuit' && previous !== 'pursuit';
+        if ((data.phase === 'chase' && previous === 'patrol') || pursuit) {
             const listener = this.game.environment.audioListener;
             if (listener) playTones(listener, this.npc.mesh, new THREE.Vector3(0, 1.6, 0), WHISTLE, 0.12, 10);
-            if (this.chasingMe) this.game.ui.chat?.addMessage({ type: 'system', message: '🚓 ¡El Agente Porras va a por ti! Corre (Mayús) o déjate cachear.' });
+            const message = pursuit
+                ? '🚓 ¡El Agente Porras te ha visto! Viene a por ti a toda velocidad: si te pilla, guillotina. ¡Métete en un bar!'
+                : '🚓 ¡El Agente Porras va a por ti! Corre (Mayús) o déjate cachear.';
+            if (this.chasingMe) this.game.ui.chat?.addMessage({ type: 'system', message });
         }
     }
 
