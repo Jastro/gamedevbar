@@ -14,7 +14,7 @@ import * as THREE from 'three';
 // per-light cost on every material.
 export const REGION_MAX = 12;
 export const LAMP_MAX = 32;
-export const ROOM_LAMP_MAX = 8;
+export const ROOM_LAMP_MAX = 12;
 
 export const regionUniforms = {
     regionCount: { value: 0 },

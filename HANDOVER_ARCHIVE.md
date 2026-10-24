@@ -2,6 +2,15 @@
 
 Full entries moved out of HANDOVER.md (one-line summaries stay there).
 
+## Done (2026-10-23: Borja's upper-floor notes)
+- 2026-10-23 Borja's notes on the upper floor: stairs moved left of the door (by the bathroom), wider
+  (1.9), solid handrail; terrace bigger (13 × 4, two tables); fixed the terrace floor z-fighting the
+  wall above the entrance (the wall now stops under the slab); bartender 1.35× on a 0.5 deck behind
+  the counter. **Verified in the browser:** walked up/down the stairs in Gamedev and rotated
+  Desarrollo, handrail stops you from the stairs and from the floor, terrace to its new edge, F
+  finds the terrace chairs; pictures of stairs, terrace from outside and the bartender over the
+  counter.
+
 ## Done (2026-10-23: leaderboards, profiles, races)
 - 2026-10-23 Races (plan step 6, plan done): the ring road is a circuit with a META gantry; every lap
   is timed for the weekly board; G by the line opens/joins a race (grid, 3-2-1 lights, 3 laps,

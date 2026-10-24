@@ -9,7 +9,9 @@ import { LEADERBOARD_CATEGORIES } from '../world/LeaderboardSync';
 // The bartender gets a card of his own.
 const NPC_CARDS = {
     'npc:bartender:gamedev': 'Manolo, camarero de la taberna desde que se inventó el /gamedev/. No fía.',
-    'npc:bartender:desarrollo': 'Paco, el camarero de Desarrollo. Dice que tiene un motor propio a medias.'
+    'npc:bartender:desarrollo': 'Paco, el camarero de Desarrollo. Dice que tiene un motor propio a medias.',
+    'npc:bartender:feda': 'Fermín, el camarero de FEDA. Tiene opinión de todo y razón de nada.',
+    'npc:bartender:offtopic': 'Lola, la camarera de Offtopic. Nadie sabe cómo llegó aquí, ni ella.'
 };
 
 export class ProfileUI {

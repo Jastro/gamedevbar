@@ -18,26 +18,19 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
-- 2026-10-23 Borja's notes on the upper floor: stairs moved left of the door (by the bathroom), wider
-  (1.9), solid handrail; terrace bigger (13 × 4, two tables); fixed the terrace floor z-fighting the
-  wall above the entrance (the wall now stops under the slab); bartender 1.35× on a 0.5 deck behind
-  the counter. **Verified in the browser:** walked up/down the stairs in Gamedev and rotated
-  Desarrollo, handrail stops you from the stairs and from the floor, terrace to its new edge, F
-  finds the terrace chairs; pictures of stairs, terrace from outside and the bartender over the
-  counter.
+- 2026-10-24 Mediavida sign over the fountain (turning, with the forum's logo), two new bars (FEDA in
+  slot 2, Offtopic in slot 5, copies of Desarrollo), ~40 sarcastic bartender lines plus each bar's own.
+  **Verified in the browser:** `/feda` spawns inside FEDA; four bars and bartenders; pictures of the
+  plaza with the sign, the sign up close, inside FEDA and Offtopic's front; the sign turns; no errors.
+- 2026-10-23 Borja's notes: stairs by the bathroom, bigger terrace, terrace z-fight fixed, bigger
+  bartender on a deck. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Plan steps 4-6: weekly leaderboards (board on each gallery, `data/leaderboards.json`),
   profiles on click, races on the ring road (timed laps, G races). Details in
   [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Plan steps 1-3: an upper gallery with stairs and a terrace in each bar, a bartender
   (Manolo / Paco), the soundscape. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-23 Hanging lamps and a disco ball in each bar, windows on every building, car nitro, roofs
-  as ceilings inside, faster walking. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-23 Wall finishes (whitewash outside, wood wainscot inside), closed buildings in slots 2-5,
-  passenger seat, roofs, new bottom bar. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-23 Stickers (12 code-drawn, right click → 🎨 Pegatina, one per person, 24 h), the toilet light
-  ends at its ceiling, whole-wall bathroom graffiti, no hitch stepping into the toilet. Details in
-  [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
-- 2026-10-23 Cars push each other (shove + slide), the toilet lamp as a bathroom-only shader light.
+- 2026-10-23 Hanging lamps, disco ball, windows, nitro, roofs, wall finishes, closed buildings,
+  passenger seat, stickers, whole-wall graffiti, cars pushing each other, the toilet light.
   Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 - 2026-10-23 Uber Suicida drivable, light per space through doors, ring-road lamps, quieter fountain,
   futbolín turned; then street lamps in the shader, eight cars, sound distance from the avatar. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
@@ -65,6 +58,11 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   WS hardening, repo docs, rooms/street/doors/occlusion. Details in [HANDOVER_ARCHIVE.md](HANDOVER_ARCHIVE.md).
 
 ## Decisions to review
+- **New bars:** FEDA in slot 2 (beside Desarrollo) and Offtopic in slot 5 (beside Gamedev), so the four
+  sit together; radios Cadena SER / LOS40; bartenders Fermín (pj3) and Lola (pj5). Taglines: "Se
+  discute de todo y no se arregla nada" / "De todo un poco, y nada en serio".
+- **Mediavida logo:** the forum's `safari-pinned-tab.svg` (one color), painted orange (#ff7f00) on a
+  dark board; the exact brand orange may differ.
 - **Bartender's deck** (0.5 high behind the counter) is a platform: players can still go behind the
   bar by jumping onto it. If they shouldn't go there at all: a blocker at the counter's ends.
 - **Stickers are flat squares, not projected decals:** on edges and curved things they overhang. They

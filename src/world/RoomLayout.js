@@ -100,6 +100,30 @@ export const ROOMS = [
         interior: 'wainscot',
         // Gamedev's neighbor around the plaza (a short walk, door to door).
         slot: 1
+    },
+    // Copies of Desarrollo for now (2026-10-24), each with its own name and
+    // radio; on either side of the first two, so the four bars sit together.
+    {
+        id: 'feda',
+        name: 'FEDA',
+        tagline: 'Se discute de todo y no se arregla nada',
+        barSign: 'FEDA MV',
+        paintings: false,
+        radioStation: 'cadena-ser',
+        exterior: 'whitewash',
+        interior: 'wainscot',
+        slot: 2
+    },
+    {
+        id: 'offtopic',
+        name: 'Offtopic',
+        tagline: 'De todo un poco, y nada en serio',
+        barSign: 'Offtopic MV',
+        paintings: false,
+        radioStation: 'los40',
+        exterior: 'whitewash',
+        interior: 'wainscot',
+        slot: 5
     }
 ].map(room => ({ ...room, ...slotPlacement(room.slot) }));
 

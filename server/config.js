@@ -61,7 +61,7 @@ if (TURN.urls.length > 0 && !TURN.secret) {
 
 // The bars that exist (ROOMS in src/world/RoomLayout.js; keep both in sync).
 // Per-room features only accept these, so made-up ids can't fill their state.
-const ROOM_IDS = new Set(['gamedev', 'desarrollo']);
+const ROOM_IDS = new Set(['gamedev', 'desarrollo', 'feda', 'offtopic']);
 const isRoomId = (roomId) => typeof roomId === 'string' && ROOM_IDS.has(roomId);
 
 module.exports = {

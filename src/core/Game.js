@@ -29,6 +29,7 @@ import { Bartender } from '../world/Bartender';
 import { Soundscape } from '../audio/Soundscape';
 import { LeaderboardSync } from '../world/LeaderboardSync';
 import { RaceSync } from '../world/RaceSync';
+import { MediavidaSign } from '../world/MediavidaSign';
 import { Weather } from '../world/Weather';
 import { LocalWeather } from '../world/LocalWeather';
 import { GestureSync } from '../entities/GestureSync';
@@ -238,6 +239,8 @@ export class Game {
         this.leaderboards.create();
         this.races = new RaceSync(this);
         this.races.create();
+        this.mediavidaSign = new MediavidaSign(this);
+        this.mediavidaSign.create();
         this.lighting.init();
         this.radioSync.applyDefaults();
         this.camera.setOccluderProvider(() => this.world.getCameraOccluders());
@@ -404,6 +407,7 @@ export class Game {
         updateGestureEffects(deltaTime);
         this.drivingSync.update(deltaTime);
         this.races.update();
+        this.mediavidaSign.update();
         this.bartenders?.forEach(bartender => bartender.update(deltaTime));
         this.soundscape?.update(deltaTime);
         const clockLabel = this.localWeather.label(this.weather);

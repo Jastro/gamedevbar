@@ -47,6 +47,10 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
       in `src/world/Roof.js`)? Inside: a sloped wooden ceiling; lit like the bar at night and by day?
 - [ ] **New bottom bar.** Chat input bottom left under the chat log; 🎙️ ⚙️ 👤 ❔ bottom right, all the
       same size; no 😊 button (emojis: right click). ❔ panel twice as wide. Also on a small window.
+- [ ] **Mediavida sign and two new bars** (2026-10-24). The sign over the fountain: readable from the
+      bar doors and terraces, the logo crisp, the turning speed OK, too big / too small? FEDA and
+      Offtopic (next to Desarrollo and Gamedev; `/feda`, `/offtopic`): enter, lights, radio, their
+      bartender's lines. Are the new lines funny or too much?
 - [ ] **Races** (2026-10-23). Drive to the META gantry (far side of the plaza): a lap around the ring
       shows the time top center and posts "⏱️ Vuelta en…". Two windows: G near the line in both,
       wait 20 s: both cars jump to the grid, 3-2-1, green; 3 laps; the winner is announced. Fun? Lap

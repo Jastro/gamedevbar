@@ -21,8 +21,9 @@ const TALK_CHANCE = 0.35; // per stop
 // over the counter; his center goes up with it, feet on the deck.
 const SCALE = 1.35;
 const CENTER_Y = DECK.height + SCALE;
-const NAMES = { gamedev: 'Manolo 🍺', desarrollo: 'Paco 🍺' };
-const MODELS = { gamedev: 'pj4', desarrollo: 'pj2' };
+const NAMES = { gamedev: 'Manolo 🍺', desarrollo: 'Paco 🍺', feda: 'Fermín 🍺', offtopic: 'Lola 🍺' };
+const MODELS = { gamedev: 'pj4', desarrollo: 'pj2', feda: 'pj3', offtopic: 'pj5' };
+// Any bar's. Sarcastic on purpose.
 const LINES = [
     '¿Qué te pongo?',
     'Aquí no se fía.',
@@ -33,9 +34,66 @@ const LINES = [
     'Yo también tengo un juego indie a medias, ¿eh?',
     'El de la tragaperras me debe tres cañas.',
     'Si vas a vomitar, al baño, que acabo de fregar.',
-    'Arriba en la terraza se ve la fuente, muy bonito todo.'
+    'Arriba en la terraza se ve la fuente, muy bonito todo.',
+    '¿Otra caña o vas a seguir mirando la barra como si te debiera dinero?',
+    'Tu juego sale "en dos semanas" desde 2019, ¿no?',
+    'Aquí el único que termina proyectos es el lavavajillas.',
+    'Si me pides agua te cobro el vaso, la sed y el disgusto.',
+    'Llevo 20 años detrás de esta barra y todavía no he visto a nadie terminar un MMO.',
+    'Se aceptan Bizum, efectivo y promesas de early access.',
+    'El wifi es "pagaprimero", todo junto y en minúsculas.',
+    'He visto más bugs en vuestro código que cucarachas en la cocina. Y eso es mucho decir.',
+    'No, no te voy a poner la caña en el motor propio. Usa un vaso como todo el mundo.',
+    'El último que dijo "esto lo arreglo en un finde" sigue en el baño.',
+    'Hoy tenemos de tapa: crunch con patatas.',
+    'Si vienes a llorar por Unity, la barra libre de pañuelos se acabó ayer.',
+    '¿Godot, Unreal o Unity? Me da igual, la caña cuesta lo mismo.',
+    'Ese que ves en la tragaperras se jugó el presupuesto de su Kickstarter.',
+    'A las tres de la mañana aquí todo el mundo es diseñador de juegos.',
+    'Yo de joven también quería hacer un RPG. Ahora sirvo cañas. Haz cuentas.',
+    'Vuestra hoja de ruta tiene menos sentido que la carta de vinos.',
+    'Los pájaros de fuera son de verdad. El resto del bar, lo dudo.',
+    'He pedido a los mods que te baneen de la barra. Me han dicho que con +1 no vale.',
+    'Mi sueño es un sábado sin que nadie me hable de shaders.',
+    'Si la fuente echara cerveza, yo estaría en el paro y feliz.',
+    'Este bar no tiene mecánicas de crafteo: pides, pagas, bebes.',
+    'Hay un tío arriba en la terraza que lleva tres días diciendo "ahora bajo".',
+    'Aquí el único balance que importa es el de mi caja.',
+    'No me mires así, que yo también tengo un Steam lleno de juegos sin abrir.',
+    'Me han dicho que el bar entero es un prototipo. Ya decía yo que crujía.',
+    'He visto el fin del mundo tres veces. Las tres en una game jam.',
+    'Si oyes risas en el baño, mejor no preguntes.',
+    'El cliente siempre tiene razón. Tú no eres cliente, tú eres habitual.',
+    'Por cada "pole" que oigo me tomo un chupito. Voy por el cuarenta.'
 ];
-const SERVED = ['¡Marchando!', '¡Marchando una!', 'Aquí tienes, crack.', 'Esa va por la casa… no.'];
+// One bar's own, mixed in with the rest.
+const ROOM_LINES = {
+    gamedev: [
+        'Aquí se viene a hablar de juegos, no a hacerlos.',
+        'Otro que va a revolucionar el género. Apúntalo en la pizarra con los otros 200.'
+    ],
+    desarrollo: [
+        'Aquí se discute de tabuladores contra espacios hasta que cerramos.',
+        'Mi código no tiene bugs, tiene características sorpresa.'
+    ],
+    feda: [
+        'Aquí se discute de todo y no se arregla nada. Como en casa.',
+        'Prohibido hablar de política… es broma, aquí no se habla de otra cosa.',
+        'Ese de la esquina lleva desde las ocho dando la razón a nadie.',
+        'Si vienes con un titular sin leer la noticia, la caña te la cobro doble.'
+    ],
+    offtopic: [
+        'Aquí ni yo sé de qué estamos hablando.',
+        'Ayer alguien pidió un café con hielo y una opinión sobre los gatos. Le serví las dos.',
+        'En Offtopic el tema del día es "sí".',
+        'Si encuentras el sentido de este bar, devuélvemelo, que lo perdí en 2009.'
+    ]
+};
+const SERVED = [
+    '¡Marchando!', '¡Marchando una!', 'Aquí tienes, crack.', 'Esa va por la casa… no.',
+    'Toma, y no la tires encima del futbolín.', 'Bebe despacio, que el baño está ocupado.',
+    'Ahí la tienes, con su espuma y su desprecio.', 'Disfrútala, es lo único que vas a terminar hoy.'
+];
 
 // A repeatable pseudo-random number in 0..1 from integers.
 function hash(...values) {
@@ -53,6 +111,9 @@ export class Bartender {
         this.room = room;
         this.seed = [...room.id].reduce((sum, c) => sum + c.charCodeAt(0), 0);
         this.lastSegment = null;
+        // The bar's own lines twice: they come up more than any one general line.
+        const own = ROOM_LINES[room.id] ?? [];
+        this.lines = [...LINES, ...own, ...own];
         this.worldPoint = new THREE.Vector3();
         this.createDeck();
         this.npc = new RemotePlayer(`npc:bartender:${room.id}`, room.toWorld(0, CENTER_Y, LANE_Z), game);
@@ -113,7 +174,7 @@ export class Bartender {
         if (!walking && this.lastSegment !== segment) {
             this.lastSegment = segment;
             if (hash(this.seed, segment, 7) < TALK_CHANCE) {
-                this.say(LINES[Math.floor(hash(this.seed, segment, 11) * LINES.length)]);
+                this.say(this.lines[Math.floor(hash(this.seed, segment, 11) * this.lines.length)]);
             }
         }
         this.npc.update(deltaTime);
