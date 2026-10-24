@@ -355,6 +355,9 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   time, says a line (~40 sarcastic general ones plus a few of the bar's own in `ROOM_LINES`, which
   come up twice as often). Stops and lines come from the server clock and the bar, so everyone sees
   the same thing. A drink served to someone in his bar: "¡Marchando!" or something ruder.
+- Shown only while you can see him: you're in his bar, or its door is open and its interior is drawn
+  (`updateVisibility`). His name and bubbles are drawn over everything, so otherwise they showed through
+  every wall. A hidden one can't be clicked (`playerInteraction`).
 
 ## Tragaperras (video-game meme slot machine)
 

@@ -18,6 +18,9 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-10-24 Bartenders (and their names and lines) only show when you can see them: in their bar or
+  through its open door. **Verified in the browser:** visible only in Gamedev from inside, none from the
+  plaza or the terrace, FEDA's with its door open; a hidden one's card doesn't open; plaza picture.
 - 2026-10-24 Performance: hidden interiors of bars you can't see into, static meshes merged (walls,
   roofs, railings, closed buildings, bottles; chairs, tables, lamps and cars as fewer meshes), lights at
   0 hidden (7 lights were computed per pixel for nothing), pixel ratio ≤ 1.5. Fixed: running up the

@@ -5,7 +5,8 @@ export function createPlayerInteraction(game) {
         type: 'player',
         use(object) {
             const player = object.userData.player;
-            if (player) game.ui.profile.open(player);
+            // A hidden avatar (a bartender behind walls) still catches the ray.
+            if (player && object.visible) game.ui.profile.open(player);
         }
     };
 }

@@ -178,5 +178,17 @@ export class Bartender {
             }
         }
         this.npc.update(deltaTime);
+        this.updateVisibility();
+    }
+
+    // Only while you can see him: in his bar, or through its open door. His
+    // name and speech bubbles ignore walls (drawn on top), so otherwise every
+    // bartender's showed through every wall.
+    updateVisibility() {
+        const player = this.game.players.localPlayer;
+        const contents = this.game.environment.rooms.get(this.room.id);
+        const inHisBar = Boolean(player) && this.game.world.getRoomAt(player.position) === this.room;
+        const throughDoor = Boolean(contents?.interior.visible) && contents.door.angle !== 0;
+        this.npc.mesh.visible = inHisBar || throughDoor;
     }
 }
