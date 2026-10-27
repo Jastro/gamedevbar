@@ -142,6 +142,7 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
 - Desarrollo's identity: different decoration, default music?
 
 ## Next
+- **Forum embed and identity:** plan in `Docs/Plans to be done/2026-10-27 Forum embed and identity.md`; waits on the [OPEN]s there (identity source A/B, domain, who builds the add-on, subforum list).
 - More characters: the six models are by an artist who collaborates with the project; new ones (or
   variations) wait for them. They must keep the rig (CORE/Body/Head + floating hands/feet with finger
   bones, clips Grounded/Idle/Jump/Sprint/Walk) for accessories, the seated pose and the gestures.
