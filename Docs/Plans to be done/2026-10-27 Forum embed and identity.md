@@ -19,13 +19,16 @@ script. So:
 
 ## Decisions needed
 
-- [OPEN] **Identity source** (step 5): **A** a token signed by Mediavida (needs their admin: one small
-  endpoint), or **B** a one-time code in the user's MV profile checked by our server (no MV help, but
-  MV is behind Cloudflare: our plain requests got 403 and the old scraper needed headless Chromium,
-  removed 2026-10-21; step 5B starts with a spike to see if it can work at all). A is much better.
+- [PROPOSAL] **Identity source** (step 5): **A**, a token signed by Mediavida. We're in touch with MV's
+  admins and they're on board (Borja, 2026-10-27), so we ask them for the endpoint (questions below).
+  **B** (a one-time code in the user's MV profile checked by our server) stays as the fallback only: MV
+  is behind Cloudflare, our plain requests got 403 and the old scraper needed headless Chromium,
+  removed 2026-10-21.
 - [OPEN] **Production domain** of the game (needed for `frame-ancestors`, the WebSocket origin list
   and the add-on's iframe URL).
-- [OPEN] **Who builds the add-on** and whether it's ours to change (see "Questions about the add-on").
+- **The add-on** (Borja, 2026-10-27): it already exists; Chrome and Firefox as far as we know; Manifest
+  version unknown; panel position not decided; most likely only inside threads. The rest is in the
+  Spanish questions below, for whoever maintains it.
 - [OPEN] **Subforum → bar list**: which MV subforums map to Gamedev, Desarrollo, FEDA, Offtopic; the
   rest go to the plaza (or a default bar?).
 - [PROPOSAL] Guests stay allowed (as "Invitado NNNN", no ✓), so the bar works before/without linking.
@@ -76,7 +79,7 @@ Today any client can send `setUsername` with any name. Change:
   `src/network/WebSocketManager.js`, `src/entities/Player.js` (setUsername, name sprite),
   `src/ui/CustomizeUI.js`. Touches: those, new `server/features/identity.js`, `Docs/Protocol.md`.
 
-### 5A. Identity from a Mediavida-signed token [OPEN: needs MV's admin] [Cloud]
+### 5A. Identity from a Mediavida-signed token [PROPOSAL: needs the endpoint from MV's admins] [Cloud]
 - MV adds `GET /api/taberna-token` (their session cookie): returns a short-lived (≈5 min) token signed
   with **their** key (Ed25519 or ES256 JWT): `{ sub: mvUserId, name, mod: [subforums], aud: 'taberna',
   exp }`.
@@ -102,7 +105,7 @@ Today any client can send `setUsername` with any name. Change:
 - Read: `server/features/chat.js`, `server/features/voice.js`, `server/features/profiles.js`,
   `src/ui/ProfileUI.js`. Touches: those, new `server/features/moderation.js`.
 
-### 7. The add-on [OPEN: who builds it] [Local]
+### 7. The add-on [OPEN: its maintainer's answers] [Local]
 - Manifest V3 (Chrome and Firefox), one content script on `https://www.mediavida.com/foro/*`, host
   permission for mediavida.com only, no remote code, no cookies/tabs permissions.
 - Adds a dockable panel; on open creates the iframe
@@ -115,13 +118,36 @@ Today any client can send `setUsername` with any name. Change:
 - `Docs/Embed.md` (how it fits together, the threat model, the add-on contract), Protocol (`auth`,
   badges), Systems, HANDOVER, PendingUserChecks (log in, impersonation attempts fail, mod tools).
 
-## Questions about the add-on (for Borja)
-1. Does it exist already? Who writes and publishes it, and can we change it?
-2. Which browsers and versions (Chrome, Firefox; Manifest V3)?
-3. Where does the panel go (docked side, bottom, floating), and what size?
-4. Which pages: only threads (`/foro/<sub>/<thread>`), or subforum indexes too?
-5. How does it read the username and the mod status today (which DOM elements)?
-6. Does it create our iframe itself, or load an extension page that contains it?
-7. Does it talk to any server of its own, or store anything?
-8. Is there any contact with Mediavida's admins (for 5A), and has anyone asked about their rules for
-   add-ons and requests to their site?
+## Open questions (in Spanish, to forward)
+
+Already answered (Borja, 2026-10-27): the add-on exists; Chrome and Firefox; most likely only inside
+threads; we're in touch with MV's admins and they're fine with it.
+
+### Para quien mantiene la extensión
+1. ¿Quién la mantiene y la publica en las tiendas de Chrome y Firefox? ¿Podemos añadirle código nosotros
+   o se lo pedimos a esa persona?
+2. ¿Usa Manifest V3 o V2? (Chrome ya solo acepta V3).
+3. ¿Dónde irá el panel (acoplado a un lado, abajo, flotante) y con qué tamaño? ¿Se puede redimensionar,
+   ponerse a pantalla completa o minimizar?
+4. ¿En qué páginas aparece: solo dentro de los hilos (`/foro/<subforo>/<hilo>`) o también en los
+   índices de subforo y la portada?
+5. ¿Cómo saca ahora el nombre de usuario y si es moderador? ¿De qué elementos de la página? (Para
+   nosotros solo será una pista para la interfaz: la identidad la decide el servidor).
+6. ¿Crea el iframe del juego directamente en la página del foro, o carga una página propia de la
+   extensión que lo contiene?
+7. ¿Habla con algún servidor propio o guarda datos (ajustes, sesión…)?
+8. ¿Puede añadir al iframe `allow="microphone; fullscreen; autoplay"` y crearlo solo cuando el usuario
+   abre el panel (no en cada carga de hilo)?
+
+### Para los admins de Mediavida (paso 5A)
+1. ¿Pueden añadir un endpoint, p. ej. `GET /api/taberna-token`, que con la sesión normal del usuario
+   devuelva un token corto (≈5 min) firmado con una clave suya (Ed25519 o un JWT ES256)?
+2. Contenido del token: id de usuario, nombre, de qué subforos es moderador (o si es admin), `aud`
+   (`taberna`) y caducidad. ¿Les falta o sobra algo?
+3. ¿Nos pasan la clave pública para verificar la firma? ¿Cómo la rotaríamos si hiciera falta?
+4. ¿Debe poder llamarlo la extensión desde la página del foro (misma web, va la cookie de sesión)? ¿Hay
+   que limitarlo por `Origin`?
+5. ¿Qué subforos van a cada bar (Gamedev, Desarrollo, FEDA, Offtopic) y qué hacemos con el resto (la
+   plaza o un bar por defecto)?
+6. ¿Algún límite o norma que debamos respetar (peticiones, datos que podemos guardar, avisos de
+   privacidad para el micro y la voz)?
