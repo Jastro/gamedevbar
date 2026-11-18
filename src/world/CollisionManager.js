@@ -6,8 +6,10 @@ import * as THREE from 'three';
 //   entirely under your feet (the entrance door, seen from the gallery
 //   above it) doesn't block;
 // - platforms (tables, the bar counter): a top you can jump onto and stand
-//   on; they block only while your feet are below that top. Tables are
-//   round (addPlatform), the counter is a box (addBoxPlatform);
+//   on; they block only while your feet are below that top (and your head
+//   above their bottom: a table on the terrace or the gallery doesn't block
+//   the ground under it). Tables are round (addPlatform), the counter is a
+//   box (addBoxPlatform);
 // - floors (addFloor: the upper gallery, the terrace): a raised slab you
 //   stand on and can walk underneath; it only blocks a body overlapping it;
 // - ramps (addRamp: stairs): a sloped walkable surface rising along the
@@ -77,6 +79,7 @@ export class CollisionManager {
             measure();
             collider.center = collider.box.getCenter(new THREE.Vector3());
             collider.top = collider.box.max.y;
+            collider.bottom = collider.box.min.y;
         };
         return collider;
     }
@@ -114,6 +117,7 @@ export class CollisionManager {
         collider.update = () => {
             measure();
             collider.top = collider.box.max.y;
+            collider.bottom = collider.box.min.y;
         };
         return collider;
     }
@@ -140,6 +144,7 @@ export class CollisionManager {
             }
             if (collider.type === 'platform') {
                 if (feet >= collider.top - STEP_TOLERANCE) continue;
+                if (head <= collider.bottom) continue; // raised above us (terrace, gallery)
                 if (collider.shape === 'box') {
                     if (overlapsXZ(position, radius, collider)) return true;
                 } else if (centerDistance(position, collider) < collider.radius + radius) {

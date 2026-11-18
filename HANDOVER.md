@@ -27,6 +27,13 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   at 0.67, chat focus with the option on/off, Twitch link parsing, the Twitch embed loading (ready,
   offline notice, volume, cleanup), the volume table around Gamedev; `vite build` passes. Not checked:
   real Twitch video playback and the full game (see `Docs/PendingUserChecks.md`).
+- 2026-11-18 (later) The invisible wall left of every bar's door was the terrace tables: round
+  platforms blocked any body below their top, however high they hang; now they only block a body
+  reaching past their bottom (`CollisionManager`), which also frees the floor under the gallery tables.
+  Chat log resizable from its top-right corner (min 300×150, remembered, double click resets), text
+  wraps to any width. Rain, birds and crickets quieter. **Checked in a local Chrome on the real game:**
+  probe in front of all four doors (only wall and door left), terrace tables still block up there,
+  chat drag/min/persist/fit/reset and rewrap; `vite build` passes.
 - 2026-10-25 Spotlights at night on the fountain (from the Mediavida mast) and the guillotine (a post
   beside it), each covering it and a quarter more, soft; the guillotine moved to 10 from the fountain;
   bartenders only show inside their bar (no names through open doors). **Verified in the browser:**

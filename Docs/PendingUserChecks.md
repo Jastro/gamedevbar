@@ -3,6 +3,13 @@
 Things only a human can judge. Run `npm run dev`, open http://localhost:5148 (two browser windows for
 multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOVER.md.
 
+- [ ] **Chat resize** (2026-11-18). Drag the chat's top-right corner: it grows up/right, can't go under
+      the minimum or over the buttons, the input below follows, text rewraps; the size survives a reload;
+      double click on the corner resets it.
+- [ ] **Quieter rain and nature** (2026-11-18). Rain ≈ -5 dB, birds ≈ -5 dB, crickets ≈ -3 dB. Enough?
+      (`RAIN_VOLUME` in `Weather.js`, `VOLUME` in `Soundscape.js`.)
+- [ ] **No wall left of the doors** (2026-11-18). Walk along each bar's front, left of the door seen from
+      the plaza (under the terrace tables): nothing stops you. Up on the terrace the tables still block.
 - [ ] **HUD scale** (2026-11-18). At your usual window size the chat, buttons and panels look exactly
       as before; making the window smaller shrinks them all together (never bigger than now). Right
       click → the ring and the emoji panel still open under the cursor. Sizes: `REF_WIDTH`/`REF_HEIGHT`/

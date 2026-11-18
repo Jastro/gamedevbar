@@ -31,7 +31,7 @@ const LAMP_COLOR = new THREE.Color(0xffd590);
 const LAMP_HEIGHT = 5;
 const LAMP_INTENSITY = 14;
 const LAMP_DISTANCE = 26;
-const RAIN_VOLUME = { outside: 0.35, inside: 0.06 };
+const RAIN_VOLUME = { outside: 0.2, inside: 0.035 }; // lowered 2026-11-18 (was 0.35 / 0.06)
 
 // WMO weather codes → what we draw.
 export function weatherKind(code) {

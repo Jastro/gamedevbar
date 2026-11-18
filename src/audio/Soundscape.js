@@ -6,7 +6,7 @@ import * as THREE from 'three';
 // - a murmur of voices outside each bar's door that grows with how many
 //   people are inside (none for the bar you're in: you hear them for real).
 const LOOP_SECONDS = 8;
-const VOLUME = { birds: 0.18, crickets: 0.12, murmur: 0.4 };
+const VOLUME = { birds: 0.1, crickets: 0.085, murmur: 0.4 }; // birds and crickets lowered 2026-11-18
 const INSIDE_FACTOR = 0.12;
 const RAIN_FACTOR = { birds: 0.25, crickets: 0.6 };
 const CROWD_FULL = 6;        // people inside for the loudest murmur

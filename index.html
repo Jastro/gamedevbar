@@ -176,7 +176,7 @@
       position: fixed;
       bottom: 20px;
       left: 20px;
-      width: 482px; /* the chat log's 450 + its padding and border */
+      width: var(--chat-width, 482px); /* as wide as the chat log (ChatUI resizes both) */
       z-index: 1001;
       display: flex;
       align-items: center;
@@ -211,17 +211,19 @@
       font-style: italic;
     }
 
+    /* The chat frame (resizable from its top-right corner, see ChatUI) and
+       the scrolling log of messages inside it. */
     #chat-box {
       position: fixed;
       left: 20px;
       bottom: 90px;
-      width: 450px;
-      height: 400px;
+      width: var(--chat-width, 482px);
+      height: var(--chat-height, 432px);
+      box-sizing: border-box;
       background: rgba(0, 0, 0, 0.65);
       color: white;
       border-radius: 16px;
-      padding: 15px;
-      overflow-y: auto;
+      overflow: hidden;
       font-family: 'Segoe UI', Arial, sans-serif;
       z-index: 1000;
       backdrop-filter: blur(10px);
@@ -229,34 +231,70 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       display: flex;
       flex-direction: column;
+    }
+
+    #chat-log {
+      flex: 1;
+      min-height: 0;
+      padding: 15px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
       gap: 4px;
       line-height: 1.2;
     }
 
-    #chat-box::-webkit-scrollbar {
+    .chat-resize-handle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 22px;
+      height: 22px;
+      cursor: nesw-resize;
+      touch-action: none;
+      opacity: 0.5;
+      z-index: 1;
+      background: linear-gradient(45deg, transparent 52%, rgba(220, 90, 11, 0.9) 52% 58%,
+        transparent 58% 68%, rgba(220, 90, 11, 0.9) 68% 74%, transparent 74%);
+      transition: opacity 0.15s ease;
+    }
+
+    .chat-resize-handle:hover,
+    #chat-box.resizing .chat-resize-handle {
+      opacity: 1;
+    }
+
+    #chat-box.resizing {
+      user-select: none;
+    }
+
+    #chat-log::-webkit-scrollbar {
       width: 8px;
     }
 
-    #chat-box::-webkit-scrollbar-track {
+    #chat-log::-webkit-scrollbar-track {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 4px;
       margin: 4px;
     }
 
-    #chat-box::-webkit-scrollbar-thumb {
+    #chat-log::-webkit-scrollbar-thumb {
       background: rgba(220, 90, 11, 0.5);
       border-radius: 4px;
       transition: background 0.3s ease;
     }
 
-    #chat-box::-webkit-scrollbar-thumb:hover {
+    #chat-log::-webkit-scrollbar-thumb:hover {
       background: rgba(220, 90, 11, 0.7);
     }
 
     .chat-message {
       margin: 1px 0;
       padding: 6px 10px;
-      word-wrap: break-word;
+      overflow-wrap: anywhere; /* long words and links wrap at any width */
+      min-width: 0;
+      flex-shrink: 0;
       background: rgba(255, 255, 255, 0.03);
       border-radius: 8px;
       font-size: 14px;
@@ -1348,6 +1386,8 @@
         bottom: 125px;
       }
 
+      .chat-resize-handle { display: none; }
+
       #chat-container {
         left: 10px;
         width: calc(100% - 20px);
@@ -1413,7 +1453,10 @@
     </div>
     <button id="start-button">Entrar al Bar</button>
   </div>
-  <div id="chat-box" class="hidden"></div>
+  <div id="chat-box" class="hidden">
+    <div id="chat-log"></div>
+    <div class="chat-resize-handle" title="Arrastra para cambiar el tamaño del chat (doble clic: tamaño normal)"></div>
+  </div>
   <div id="interaction-hint" class="hidden"></div>
   <div id="chat-container" class="hidden">
     <input type="text" id="chat-input" placeholder="Escribe tu mensaje... (Enter para enviar, /me para emotes)"

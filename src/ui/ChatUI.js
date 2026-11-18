@@ -1,10 +1,19 @@
 import { EmotesUI } from './EmotesUI';
+import { getUIScale } from './UIScale';
 
 const KEEP_OPEN_KEY = 'chatKeepOpen';
+const SIZE_KEY = 'chatSize';
+// The chat frame's size in CSS pixels (before --ui-scale): default, minimum,
+// and room kept free (the round buttons on the right, a margin on top).
+const DEFAULT_SIZE = { width: 482, height: 432 };
+const MIN_SIZE = { width: 300, height: 150 };
+const RIGHT_ROOM = 280; // left margin + the buttons at the bottom right
+const TOP_ROOM = 110;   // the frame's bottom offset + a margin above it
 
 export class ChatUI {
     constructor() {
-        this.chatBox = document.getElementById('chat-box');
+        this.chatFrame = document.getElementById('chat-box');
+        this.chatBox = document.getElementById('chat-log'); // where messages go
         this.chatInput = null;
         this.chatContainer = null;
         this.emotesUI = null;
@@ -28,11 +37,13 @@ export class ChatUI {
     init() {
         this.createChatElements();
         this.setupEventListeners();
+        this.setupResize();
     }
 
     createChatElements() {
-        this.chatBox = document.getElementById('chat-box');
-        if (!this.chatBox) {
+        this.chatFrame = document.getElementById('chat-box');
+        this.chatBox = document.getElementById('chat-log');
+        if (!this.chatBox || !this.chatFrame) {
             console.error('Chat box element not found');
             return;
         }
@@ -102,6 +113,90 @@ export class ChatUI {
         this.chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') this.chatInput.blur();
         });
+    }
+
+    // Drag the frame's top-right corner to resize the chat (it grows up and
+    // to the right; the input below follows its width). Remembered; double
+    // click goes back to the default size.
+    setupResize() {
+        const handle = this.chatFrame?.querySelector('.chat-resize-handle');
+        if (!handle) return;
+        let saved = null;
+        try {
+            saved = JSON.parse(localStorage.getItem(SIZE_KEY) || 'null');
+        } catch {
+            // Corrupt or unavailable: default size.
+        }
+        this.size = { ...DEFAULT_SIZE, ...(saved && typeof saved === 'object' ? saved : {}) };
+        this.applySize(this.size);
+
+        let drag = null;
+        handle.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handle.setPointerCapture(e.pointerId);
+            const shown = this.chatFrame.getBoundingClientRect();
+            const scale = getUIScale();
+            drag = { x: e.clientX, y: e.clientY, width: shown.width / scale, height: shown.height / scale, scale };
+            this.chatFrame.classList.add('resizing');
+        });
+        handle.addEventListener('pointermove', (e) => {
+            if (!drag) return;
+            this.applySize({
+                width: drag.width + (e.clientX - drag.x) / drag.scale,
+                height: drag.height - (e.clientY - drag.y) / drag.scale
+            });
+        });
+        const end = (e) => {
+            if (!drag) return;
+            drag = null;
+            if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
+            this.chatFrame.classList.remove('resizing');
+            this.saveSize();
+        };
+        handle.addEventListener('pointerup', end);
+        handle.addEventListener('pointercancel', end);
+        // Keep these from reaching the 3D world (InteractionSystem) or panels.
+        ['click', 'mousedown'].forEach(type => handle.addEventListener(type, (e) => e.stopPropagation()));
+        handle.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            this.applySize(DEFAULT_SIZE);
+            this.saveSize();
+        });
+        // A smaller window (or UI scale) may no longer fit the chosen size.
+        window.addEventListener('resize', () => this.applySize(this.size));
+    }
+
+    // `wanted`: the size the player chose. What's shown is that, kept within
+    // the window (and never under the minimum); the choice itself is kept,
+    // so it comes back when the window grows again.
+    applySize(wanted) {
+        this.size = {
+            width: Math.max(MIN_SIZE.width, Math.round(Number(wanted.width) || DEFAULT_SIZE.width)),
+            height: Math.max(MIN_SIZE.height, Math.round(Number(wanted.height) || DEFAULT_SIZE.height))
+        };
+        const scale = getUIScale();
+        const width = Math.min(this.size.width, Math.max(MIN_SIZE.width, window.innerWidth / scale - RIGHT_ROOM));
+        const height = Math.min(this.size.height, Math.max(MIN_SIZE.height, window.innerHeight / scale - TOP_ROOM));
+        const atBottom = this.isScrolledToBottom();
+        const root = document.documentElement.style;
+        root.setProperty('--chat-width', `${Math.round(width)}px`);
+        root.setProperty('--chat-height', `${Math.round(height)}px`);
+        // Wrapping changes the log's height: stay on the newest message.
+        if (atBottom) this.chatBox.scrollTop = this.chatBox.scrollHeight;
+    }
+
+    isScrolledToBottom() {
+        const log = this.chatBox;
+        return !log || log.scrollHeight - log.scrollTop - log.clientHeight < 24;
+    }
+
+    saveSize() {
+        try {
+            localStorage.setItem(SIZE_KEY, JSON.stringify(this.size));
+        } catch {
+            // Not critical: the size just won't be remembered.
+        }
     }
 
     setKeepOpen(keepOpen) {
@@ -189,12 +284,12 @@ export class ChatUI {
     }
 
     show() {
-        this.chatBox.classList.remove('hidden');
+        this.chatFrame.classList.remove('hidden');
         this.chatContainer.classList.remove('hidden');
     }
 
     hide() {
-        this.chatBox.classList.add('hidden');
+        this.chatFrame.classList.add('hidden');
         this.chatContainer.classList.add('hidden');
     }
 

@@ -46,7 +46,9 @@ Detail notes per system. Last updated 2026-10-20. Structure and extension points
   - the map is a disc: `setBoundary` keeps everyone inside the wall at its edge;
   - tables are round platforms: they block walking, but you can jump onto one, stand on it
     (`getGroundHeight`) and fall off it. The bar counter is a box platform (`addBoxPlatform`, top at 1.3)
-    and works the same way;
+    and works the same way. A platform only blocks a body that reaches up past its bottom, so the
+    tables on the gallery and the terrace (at 5) don't block the floor or the plaza under them (fixed
+    2026-11-18: the terrace tables made an invisible wall left of every bar's door);
   - chairs have no collider.
 - **Seats:** stools, chairs (sit lower, facing their table) and the toilet. Clicking or F sits you down,
   Every seat shows the seated pose (feet forward, `Player.setPose('sit')`) to everyone: `userSat` carries
@@ -257,7 +259,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   each road a little out from the plaza and along the ring road's outer edge (18). Every lamp casts a
   soft additive glow on the ground (not drawn inside a bar: `clipToOutdoors`). Their light is not
   three.js lights (each would cost every lit material): `RegionLights` lights outside pixels from every
-  lamp (up to 32) in the material shader, so all lamps light at once and none reach into a bar. Rain has a looping hiss, quieter inside.
+  lamp (up to 32) in the material shader, so all lamps light at once and none reach into a bar. Rain has a looping hiss, quieter inside (`RAIN_VOLUME` 0.2 / 0.035, lowered 2026-11-18).
 - **Clock:** above the door inside each bar (`WallClock.js`): *your* local time (browser) and *your*
   weather (`LocalWeather.js`): the browser asks once for your location, rounded to ~10 km, kept a day,
   and fetched from Open-Meteo straight from your browser ("Tu zona"). Denied: the Canary timezone gets
@@ -331,7 +333,8 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 ## Soundscape
 
 - `src/audio/Soundscape.js`, all synthesized (8 s loops): birds (chirp bursts) by day and two crickets
-  at night, non-positional, full outside and at 12% inside a bar, birds at a quarter in the rain;
+  at night, non-positional (`VOLUME`: birds 0.1, crickets 0.085, lowered 2026-11-18), full outside
+  and at 12% inside a bar, birds at a quarter in the rain;
   each bar has a murmur of voices just outside its door (positional) that grows with the people
   inside (full at 6) and is silent for the bar you're in. Fades at 1.5/s; starts with the audio.
 
@@ -637,6 +640,11 @@ ROM picker. People standing round it watch the game live (WebRTC from the player
 [Vircon32.md](Vircon32.md).
 
 ## Volume settings
+
+The chat log (`#chat-box` frame, messages in `#chat-log`) resizes from its top-right corner (it grows up
+and right; the input follows its width), from 300×150 up to what fits next to the round buttons, in CSS
+pixels before `--ui-scale` (`ChatUI.setupResize`, saved in `localStorage` `chatSize`, double click on the
+corner resets it). Messages wrap to whatever width (`overflow-wrap: anywhere`, long links too).
 
 ⚙️ (next to the mic button) also has a 💬 Chat option, *Mantener el chat abierto al enviar*
 (`ChatUI.keepOpen`, `localStorage` `chatKeepOpen`): Enter sends and the box keeps the focus; Enter on an
