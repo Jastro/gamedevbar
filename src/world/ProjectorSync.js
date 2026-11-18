@@ -35,8 +35,11 @@ export class ProjectorSync {
 
     announce(roomName, previous, state, by) {
         let action;
+        const changed = !previous || previous.videoId !== state?.videoId
+            || (previous.provider ?? 'youtube') !== (state?.provider ?? 'youtube');
         if (!state) action = 'ha apagado el proyector';
-        else if (!previous || previous.videoId !== state.videoId) action = 'ha puesto un vídeo en el proyector';
+        else if (changed && state.provider === 'twitch') action = `ha puesto el directo de ${state.videoId} en el proyector`;
+        else if (changed) action = 'ha puesto un vídeo en el proyector';
         else if (state.pausedAt !== null) action = 'ha pausado el proyector';
         else action = 'ha reanudado el proyector';
         this.game.ui.chat?.addMessage({ type: 'system', message: `📽️ ${by} ${action} de ${roomName}` });
@@ -52,7 +55,9 @@ export class ProjectorSync {
         if (!projector) return;
         const now = this.game.serverClock.now();
         const state = projector.state;
-        if (type === 'projectorPlay') projector.applyState({ videoId: extra.videoId, startedAt: now, pausedAt: null });
+        if (type === 'projectorPlay') {
+            projector.applyState({ provider: extra.provider, videoId: extra.videoId, startedAt: now, pausedAt: null });
+        }
         if (type === 'projectorPause' && state && state.pausedAt === null) {
             projector.applyState({ ...state, pausedAt: (now - state.startedAt) / 1000 });
         }
@@ -62,7 +67,8 @@ export class ProjectorSync {
         if (type === 'projectorStop') projector.applyState(null);
     }
 
-    play(roomId, videoId) { this.send('projectorPlay', roomId, { videoId }); }
+    // media: { provider: 'youtube' | 'twitch' | 'twitch-vod', videoId }
+    play(roomId, media) { this.send('projectorPlay', roomId, { provider: media.provider, videoId: media.videoId }); }
     pause(roomId) { this.send('projectorPause', roomId); }
     resume(roomId) { this.send('projectorResume', roomId); }
     stop(roomId) { this.send('projectorStop', roomId); }

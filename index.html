@@ -6,6 +6,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Taberna Virtual MV Gamedev</title>
   <style>
+    :root {
+      --ui-scale: 1; /* set by src/ui/UIScale.js from the window size */
+    }
+
+    /* HUD roots shrink with the window (never grow). Children inherit the zoom:
+       the round buttons and the settings panel live inside #chat-container. */
+    #chat-box,
+    #chat-container,
+    #interaction-hint,
+    .floating-panel,
+    #radial-menu,
+    #emotes-panel,
+    #race-hud,
+    #car-countdown,
+    #webgame-exit {
+      zoom: var(--ui-scale);
+    }
+
     body {
       margin: 0;
       overflow: hidden;
@@ -1291,37 +1309,8 @@
       z-index: 1000;
     }
 
-    @media (max-width: 1366px) {
-      #chat-box {
-        width: 420px;
-        height: 380px;
-        left: 20px;
-        bottom: 85px;
-      }
-
-      #chat-container {
-        width: 452px;
-      }
-    }
-
-    @media (max-width: 1024px) {
-      #chat-box {
-        width: 380px;
-        height: 320px;
-        left: 15px;
-        bottom: 85px;
-      }
-
-      #chat-container {
-        left: 15px;
-        width: 412px;
-      }
-
-      .chat-message {
-        font-size: 13.5px;
-        padding: 5px 10px;
-      }
-    }
+    /* Smaller windows: --ui-scale shrinks the whole HUD (src/ui/UIScale.js),
+       so the chat no longer has its own width breakpoints. */
 
     /* Narrow windows: the settings panel never wider than the window. */
     @media (max-width: 900px) {
@@ -1339,29 +1328,6 @@
 
       .model-preview {
         height: 160px;
-      }
-
-      #chat-box {
-        width: 320px;
-        height: 260px;
-        left: 10px;
-      }
-
-      #chat-container {
-        left: 10px;
-        width: 352px;
-      }
-
-
-      .chat-message {
-        font-size: 13px;
-        padding: 5px 8px;
-        line-height: 1.25;
-      }
-
-      #chat-input {
-        padding: 12px 18px;
-        font-size: 14px;
       }
     }
 

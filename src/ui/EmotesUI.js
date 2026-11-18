@@ -1,4 +1,5 @@
 import { emotesList } from './emotes.js';
+import { getUIScale } from './UIScale';
 
 const EDGE_MARGIN = 8; // px kept between the panel and the window edge
 
@@ -58,17 +59,20 @@ export class EmotesUI {
     }
 
     // anchor 'cursor': top-left at (x, y); 'above': bottom-right at (x, y).
-    // Either way it's kept inside the window.
+    // Either way it's kept inside the window. x, y in viewport pixels.
     openAt(x, y, anchor = 'cursor') {
         this.isOpen = true;
         this.emotesPanel.classList.remove('hidden');
+        // The panel is zoomed with the HUD (--ui-scale): the rect is in viewport
+        // pixels, style.left/top in the panel's own (scaled) CSS pixels.
+        const scale = getUIScale();
         const { width, height } = this.emotesPanel.getBoundingClientRect();
         let left = anchor === 'above' ? x - width : x;
         let top = anchor === 'above' ? y - height : y;
         left = Math.min(Math.max(EDGE_MARGIN, left), window.innerWidth - width - EDGE_MARGIN);
         top = Math.min(Math.max(EDGE_MARGIN, top), window.innerHeight - height - EDGE_MARGIN);
-        this.emotesPanel.style.left = `${left}px`;
-        this.emotesPanel.style.top = `${top}px`;
+        this.emotesPanel.style.left = `${left / scale}px`;
+        this.emotesPanel.style.top = `${top / scale}px`;
     }
 
     closePanel() {

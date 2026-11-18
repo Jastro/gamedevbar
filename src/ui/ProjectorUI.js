@@ -1,8 +1,24 @@
 import { FloatingPanel } from './FloatingPanel';
 import { parseYouTubeId } from '../media/youtube';
+import { parseTwitchLink } from '../media/twitch';
 
-// Projector controls, opened by clicking a room's screen: paste a YouTube
-// link, pause/resume, turn off. Everyone in the bar sees the same video.
+// Projector controls, opened by clicking a room's screen: paste a YouTube or
+// Twitch link (live channel or past broadcast), pause/resume, turn off.
+// Everyone in the bar sees the same thing.
+
+// A pasted link → { provider, videoId }, { error } or null.
+export function parseProjectorLink(text) {
+    const youTubeId = parseYouTubeId(text);
+    if (youTubeId) return { provider: 'youtube', videoId: youTubeId };
+    return parseTwitchLink(text);
+}
+
+// Short label for the panel's status line.
+export function describeMedia(state) {
+    if (state.provider === 'twitch') return `twitch.tv/${state.videoId} (directo)`;
+    if (state.provider === 'twitch-vod') return `twitch.tv/videos/${state.videoId}`;
+    return `youtu.be/${state.videoId}`;
+}
 export class ProjectorUI {
     constructor(game) {
         this.game = game;
@@ -13,8 +29,8 @@ export class ProjectorUI {
         this.form.className = 'projector-form';
         this.input = document.createElement('input');
         this.input.type = 'text';
-        this.input.placeholder = 'Enlace de YouTube';
-        this.input.setAttribute('aria-label', 'Enlace de YouTube');
+        this.input.placeholder = 'Enlace de YouTube o Twitch';
+        this.input.setAttribute('aria-label', 'Enlace de YouTube o Twitch');
         const submit = document.createElement('button');
         submit.type = 'submit';
         submit.className = 'floating-panel-button';
@@ -36,7 +52,8 @@ export class ProjectorUI {
 
         const note = document.createElement('div');
         note.className = 'floating-panel-note';
-        note.textContent = 'Todo el bar ve lo mismo. Algunos vídeos no se pueden ver fuera de YouTube.';
+        note.textContent = 'Todo el bar ve lo mismo. De Twitch valen canales en directo y vídeos (no clips). '
+            + 'Algunos vídeos de YouTube no se pueden ver fuera de YouTube.';
 
         // Karaoke: find a lyrics video, paste its link here, sing on the stage.
         const karaoke = document.createElement('div');
@@ -84,16 +101,20 @@ export class ProjectorUI {
         this.pauseButton.textContent = state?.pausedAt !== null && active ? '▶ Reanudar' : '⏸ Pausar';
         this.status.textContent = !active
             ? 'Apagado.'
-            : `${state.pausedAt !== null ? 'En pausa' : 'Reproduciendo'}: youtu.be/${state.videoId}`;
+            : `${state.pausedAt !== null ? 'En pausa' : 'Reproduciendo'}: ${describeMedia(state)}`;
     }
 
     play() {
-        const videoId = parseYouTubeId(this.input.value);
-        if (!videoId) {
-            this.status.textContent = 'Ese enlace no parece de YouTube.';
+        const media = parseProjectorLink(this.input.value);
+        if (media?.error === 'clip') {
+            this.status.textContent = 'Los clips de Twitch no se pueden poner; usa el canal o el vídeo entero.';
             return;
         }
-        this.game.projectorSync.play(this.roomId, videoId);
+        if (!media) {
+            this.status.textContent = 'Ese enlace no parece de YouTube ni de Twitch.';
+            return;
+        }
+        this.game.projectorSync.play(this.roomId, media);
         this.input.value = '';
         this.input.blur();
     }

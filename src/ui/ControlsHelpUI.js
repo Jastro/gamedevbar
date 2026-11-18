@@ -26,7 +26,7 @@ const SECTIONS = [
             ['R', 'Centrar la cámara'],
             ['Clic derecho', 'Menú: emojis, animaciones (baile, flexiones, beso, brindar…) o pegar tu pegatina (elígela en 👤)'],
             ['V (mantener)', 'Hablar por micrófono (en ⚙️: micrófono abierto)'],
-            ['Enter', 'Escribir en el chat (Enter envía, /me para acciones)'],
+            ['Enter', 'Escribir en el chat (Enter envía, /me para acciones; Esc o Enter vacío para salir)'],
             ['Esc', 'Cerrar paneles y emojis']
         ]
     },

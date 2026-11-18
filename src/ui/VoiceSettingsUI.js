@@ -2,15 +2,17 @@ import { PTT_KEY } from './VoiceUI';
 
 const VOLUME_LABELS = { radio: '📻 Radio', video: '📽️ Proyector', voice: '🗣️ Voces', arcade: '🕹️ Arcade' };
 
-// Sound settings panel, opened with the ⚙️ button next to the mic button:
-// volume sliders (radio, projector, voices; remembered per player), input
+// Settings panel, opened with the ⚙️ button next to the mic button:
+// volume sliders (radio, projector, voices; remembered per player), the
+// chat's "keep open after sending" option, input
 // device picker (remembered), live input level meter, a button to release
 // the mic so the browser's recording indicator goes away, and voice
 // connection status.
 export class VoiceSettingsUI {
-    constructor(voice, audioSettings) {
+    constructor(voice, audioSettings, chat = null) {
         this.voice = voice;
         this.audioSettings = audioSettings;
+        this.chat = chat;
         this.isOpen = false;
         this.meter = null;
         this.createElements();
@@ -32,8 +34,8 @@ export class VoiceSettingsUI {
         this.toggleButton.id = 'voice-settings-button';
         this.toggleButton.type = 'button';
         this.toggleButton.textContent = '⚙️';
-        this.toggleButton.title = 'Ajustes de sonido';
-        this.toggleButton.setAttribute('aria-label', 'Ajustes de sonido');
+        this.toggleButton.title = 'Ajustes';
+        this.toggleButton.setAttribute('aria-label', 'Ajustes');
         this.toggleButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.isOpen ? this.close() : this.open();
@@ -46,6 +48,9 @@ export class VoiceSettingsUI {
         this.panel.innerHTML = `
             <div class="voice-settings-title">🔊 Volumen</div>
             <div class="volume-sliders"></div>
+            <div class="voice-settings-title">💬 Chat</div>
+            <label class="voice-open-mic"><input type="checkbox" data-action="chat-keep-open"> Mantener el chat abierto al enviar</label>
+            <div class="voice-settings-hint chat-hint">Enter con el cuadro vacío o Esc para volver a moverte.</div>
             <div class="voice-settings-title">🎙️ Micrófono</div>
             <label class="voice-settings-label" for="voice-device-select">Dispositivo</label>
             <select id="voice-device-select"></select>
@@ -63,12 +68,18 @@ export class VoiceSettingsUI {
         this.allowButton = this.panel.querySelector('[data-action="allow"]');
         this.releaseButton = this.panel.querySelector('[data-action="release"]');
         this.meterFill = this.panel.querySelector('.voice-meter-fill');
-        this.hint = this.panel.querySelector('.voice-settings-hint');
+        this.hint = this.panel.querySelector('.voice-settings-hint:not(.chat-hint)');
         this.openMicCheckbox = this.panel.querySelector('[data-action="open-mic"]');
         this.openMicCheckbox.addEventListener('change', async () => {
             this.openMicCheckbox.blur();
             await this.voice.setMode(this.openMicCheckbox.checked ? 'open' : 'ptt');
             this.refresh();
+        });
+        this.chatKeepOpenCheckbox = this.panel.querySelector('[data-action="chat-keep-open"]');
+        this.chatKeepOpenCheckbox.checked = Boolean(this.chat?.keepOpen);
+        this.chatKeepOpenCheckbox.addEventListener('change', () => {
+            this.chatKeepOpenCheckbox.blur();
+            this.chat?.setKeepOpen(this.chatKeepOpenCheckbox.checked);
         });
         this.peerList = this.panel.querySelector('.voice-peers');
         this.createVolumeSliders(this.panel.querySelector('.volume-sliders'));

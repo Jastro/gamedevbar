@@ -1,5 +1,7 @@
 import { EmotesUI } from './EmotesUI';
 
+const KEEP_OPEN_KEY = 'chatKeepOpen';
+
 export class ChatUI {
     constructor() {
         this.chatBox = document.getElementById('chat-box');
@@ -11,6 +13,14 @@ export class ChatUI {
         this.chatActive = false;
         this.maxMessages = 50;
         this.messages = [];
+        // Settings (⚙️ → Chat): keep typing after sending instead of going back
+        // to the game. Enter on an empty box or Esc still closes it.
+        this.keepOpen = false;
+        try {
+            this.keepOpen = localStorage.getItem(KEEP_OPEN_KEY) === '1';
+        } catch {
+            // Storage unavailable: default (closes after sending).
+        }
 
         this.init();
     }
@@ -83,9 +93,24 @@ export class ChatUI {
                     this.sendMessage(message);
                     this.chatInput.value = '';
                 }
-                this.chatInput.blur(); // Solo quitamos el foco cuando se envía el mensaje
+                // Back to the game, unless the player keeps the chat open
+                // (then only an empty Enter closes it).
+                if (!message || !this.keepOpen) this.chatInput.blur();
             }
         });
+
+        this.chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') this.chatInput.blur();
+        });
+    }
+
+    setKeepOpen(keepOpen) {
+        this.keepOpen = Boolean(keepOpen);
+        try {
+            localStorage.setItem(KEEP_OPEN_KEY, this.keepOpen ? '1' : '0');
+        } catch {
+            // Not critical: the setting just won't be remembered.
+        }
     }
 
     handleEmote(emote) {

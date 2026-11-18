@@ -101,7 +101,7 @@ export class Game {
         this.players = new PlayerManager(this);
         this.voice = new VoiceChat(this);
         this.ui.voice = new VoiceUI(this.voice, this.ui.chat);
-        this.ui.voiceSettings = new VoiceSettingsUI(this.voice, this.audioSettings);
+        this.ui.voiceSettings = new VoiceSettingsUI(this.voice, this.audioSettings, this.ui.chat);
         this.doorSync = new DoorSync(this);
         this.radioSync = new RadioSync(this);
         this.projectorSync = new ProjectorSync(this);

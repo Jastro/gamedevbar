@@ -18,6 +18,15 @@ Docs/TURN.md); then retest voice across networks.
 Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protocol](Docs/Protocol.md).
 
 ## Done
+- 2026-11-18 HUD scales down with the window (`src/ui/UIScale.js`, CSS `zoom: var(--ui-scale)` on the
+  HUD roots; full size from 1920×900, min 0.55; phones keep their layout); ⚙️ → 💬 option to keep the
+  chat open after sending; Twitch on the projector (live channels and VODs, `src/media/twitch.js`,
+  `ScreenPlayers.js`; protocol: `provider` on `projectorPlay`/state); projector sound from outside now
+  travels through the door(s) instead of the wall, and the wall cuts are stronger (0.4 / 0.08).
+  **Checked in a local Chrome:** sizes at 2560/1920/1280/900/400 wide, the ring centered on the cursor
+  at 0.67, chat focus with the option on/off, Twitch link parsing, the Twitch embed loading (ready,
+  offline notice, volume, cleanup), the volume table around Gamedev; `vite build` passes. Not checked:
+  real Twitch video playback and the full game (see `Docs/PendingUserChecks.md`).
 - 2026-10-25 Spotlights at night on the fountain (from the Mediavida mast) and the guillotine (a post
   beside it), each covering it and a quarter more, soft; the guillotine moved to 10 from the fountain;
   bartenders only show inside their bar (no names through open doors). **Verified in the browser:**

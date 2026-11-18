@@ -638,7 +638,9 @@ ROM picker. People standing round it watch the game live (WebRTC from the player
 
 ## Volume settings
 
-⚙️ (next to the mic button) also has per-player volume sliders: 📻 radio, 📽️ projector, 🗣️ voices,
+⚙️ (next to the mic button) also has a 💬 Chat option, *Mantener el chat abierto al enviar*
+(`ChatUI.keepOpen`, `localStorage` `chatKeepOpen`): Enter sends and the box keeps the focus; Enter on an
+empty box or Esc goes back to the game. It also has per-player volume sliders: 📻 radio, 📽️ projector, 🗣️ voices,
 🕹️ arcade (`src/audio/AudioSettings.js`, saved in `localStorage` `audioVolumes`, 0-100 %).
 - Radios multiply their `PositionalAudio` volume, projectors their YouTube volume, and voices their
   `PositionalAudio` gain.
@@ -648,21 +650,32 @@ ROM picker. People standing round it watch the game live (WebRTC from the player
   - Snake and Pong's own `AudioListener` master volume. A
 slider releases focus when let go, so movement keys work right away.
 
-## Projector (shared YouTube)
+## Projector (shared YouTube / Twitch)
 
 A 16:9 screen on each room's right wall (`src/world/Projector.js`), with a projector box hanging in
 front of it. The right-wall paintings moved to the front wall, left of the door. The video is a real
-YouTube iframe (IFrame API, `src/media/youtube.js`) placed in 3D by a `CSS3DRenderer` layer **under** the
+embed iframe placed in 3D by a `CSS3DRenderer` layer **under** the
 transparent WebGL canvas (`Renderer`). A mesh with `NoBlending` + opacity 0 punches a hole in the canvas
 where the screen is, so walls and players in front still cover it. The iframe gets no pointer events: all
 control goes through the panel (`src/ui/ProjectorUI.js`), opened by clicking the screen. The player can
-paste a YouTube link (watch, youtu.be, shorts, embed, live), pause/resume, or turn it off.
+paste a YouTube link (watch, youtu.be, shorts, embed, live) or a Twitch one (a channel → its live
+stream, `twitch.tv/videos/<id>` → a past broadcast; clips are refused: their embed has no volume
+control), pause/resume, or turn it off.
+
+Players: `src/media/ScreenPlayers.js` wraps the YouTube IFrame API (`youtube.js`) and the Twitch embed
+API (`twitch.js`, `player.twitch.tv/js/embed/v1.js`) behind one interface; the projector swaps the
+player when the provider family changes and drops it when turned off. Twitch needs every page domain
+in `parent` (ours, plus the forum's if embedded: `twitchParents()`). A live channel can't seek, so it
+only follows play/pause; a channel that isn't live is reported once in chat.
 
 Sync: the server keeps `{ videoId, startedAt, pausedAt }` per room (server clock). Clients estimate the
 server clock (`src/network/ServerClock.js`, from `init` and every projector message), play from
 `now - startedAt`, and re-seek when more than 1.5 s off (checked every 2 s). Pause stores the position;
-resume shifts `startedAt`. YouTube audio can't go through Web Audio, so walls are imitated with volume
-only (`OCCLUSION_VOLUME`: 1 / 0.5 / 0.12) on top of distance. If the browser blocks autoplay with sound,
+resume shifts `startedAt`. Iframe audio can't go through Web Audio, so walls are imitated with volume
+only (`OCCLUSION_VOLUME`: 1 / 0.4 / 0.08) on top of distance. From outside the room the distance is the
+path through the door(s) (`Projector.soundPathLength`: screen → its door → the listener, via the
+listener's own door if they're in another bar), not straight through the wall, so it's quiet behind the
+screen's wall and in the bar next to it. If the browser blocks autoplay with sound,
 the next click anywhere starts it. Non-embeddable/missing videos are reported in chat.
 
 ## Voice chat (push to talk)

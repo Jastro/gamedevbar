@@ -23,7 +23,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `voiceSignal` | `targetId`, `signal` (`{description}` or `{candidate}`, ≤ 16 KB) | relayed only to `targetId` as `voiceSignal` with `fromId` |
 | `voiceTalking` | `talking` (bool) | `voiceTalking` to others |
 | `radioSet` | `roomId`, `stationId` (or `null` = off) | store, `radioState` to all |
-| `projectorPlay` | `roomId`, `videoId` (11-char YouTube id) | start at server time now, `projectorState` to all |
+| `projectorPlay` | `roomId`, `provider` (`youtube` (default) / `twitch` / `twitch-vod`), `videoId` (11-char YouTube id / Twitch login / VOD number) | start at server time now, `projectorState` to all |
 | `projectorPause` / `projectorResume` / `projectorStop` | `roomId` | update/clear, `projectorState` to all |
 | `virconStart` | `roomId` (cabinet id: the room id for the Vircon32, `<room>-pokebonk` for Pokebonk), `romTitle`, `watchable` (bool; false for uploaded carts) | take the room's cabinet → `virconState` to all, or `virconBusy` to sender |
 | `virconStop` | `roomId` | free it (only its player) → `virconState` to all |
@@ -83,7 +83,7 @@ must match `[a-z0-9_-]{1,32}` (else `pj`); `score` must be a finite number; `due
 | `voiceTalking` | `userId`, `talking` | 🎙️ sprite on that avatar |
 | `radioState` | `roomId`, `stationId`, `by` | switch that room's radio, 📻 chat line |
 | `radioStates` | `stations: { roomId: stationId }` | join snapshot |
-| `projectorState` | `roomId`, `state` (`{ videoId, startedAt, pausedAt }` or `null`), `by`, `serverTime` | apply + 📽️ chat line |
+| `projectorState` | `roomId`, `state` (`{ provider, videoId, startedAt, pausedAt }` or `null`), `by`, `serverTime` | apply + 📽️ chat line |
 | `projectorStates` | `screens: { roomId: state }`, `serverTime` | join snapshot |
 | `doorStates` | `doors: { doorId: isOpen }` | apply instantly (join snapshot) |
 | `virconState` | `roomId`, `state` (`{ playerId, playerName, romTitle, watchable }` or `null`) | cabinet screen; the asker starts playing; spectators connect or drop |

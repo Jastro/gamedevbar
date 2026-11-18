@@ -1,14 +1,27 @@
-// Shared YouTube projector per room. The server keeps when the video started
-// (server clock) and where it was paused; clients derive the position from
-// that, so everyone watches the same moment.
+// Shared projector per room (YouTube video, Twitch channel or Twitch VOD). The
+// server keeps when the video started (server clock) and where it was paused;
+// clients derive the position from that, so everyone watches the same moment
+// (a live channel just follows play/pause).
 const ROOM_ID_PATTERN = /^[a-z0-9_-]{1,32}$/;
-const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
+// provider -> what its videoId looks like (YouTube id, Twitch login, VOD number).
+const VIDEO_ID_PATTERNS = {
+    youtube: /^[A-Za-z0-9_-]{11}$/,
+    twitch: /^[a-z0-9_]{1,25}$/,
+    'twitch-vod': /^\d{1,12}$/
+};
 const MAX_ROOMS = 32;
 
 function registerProjector(hub) {
     const screens = new Map(); // roomId -> { videoId, startedAt, pausedAt: seconds | null }
 
     const validRoom = (roomId) => typeof roomId === 'string' && ROOM_ID_PATTERN.test(roomId);
+
+    // Older clients send no provider: YouTube.
+    const validMedia = (data) => {
+        const provider = data.provider ?? 'youtube';
+        const pattern = Object.hasOwn(VIDEO_ID_PATTERNS, provider) ? VIDEO_ID_PATTERNS[provider] : null;
+        return pattern && typeof data.videoId === 'string' && pattern.test(data.videoId) ? provider : null;
+    };
 
     const publish = (roomId, by) => {
         hub.broadcastAll({
@@ -21,9 +34,10 @@ function registerProjector(hub) {
     };
 
     hub.on('projectorPlay', ({ user }, data) => {
-        if (!validRoom(data.roomId) || typeof data.videoId !== 'string' || !VIDEO_ID_PATTERN.test(data.videoId)) return;
+        const provider = validMedia(data);
+        if (!validRoom(data.roomId) || !provider) return;
         if (!screens.has(data.roomId) && screens.size >= MAX_ROOMS) return;
-        screens.set(data.roomId, { videoId: data.videoId, startedAt: Date.now(), pausedAt: null });
+        screens.set(data.roomId, { provider, videoId: data.videoId, startedAt: Date.now(), pausedAt: null });
         publish(data.roomId, user.username);
     });
 

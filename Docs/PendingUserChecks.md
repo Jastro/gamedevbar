@@ -3,6 +3,20 @@
 Things only a human can judge. Run `npm run dev`, open http://localhost:5148 (two browser windows for
 multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOVER.md.
 
+- [ ] **HUD scale** (2026-11-18). At your usual window size the chat, buttons and panels look exactly
+      as before; making the window smaller shrinks them all together (never bigger than now). Right
+      click → the ring and the emoji panel still open under the cursor. Sizes: `REF_WIDTH`/`REF_HEIGHT`/
+      `MIN_SCALE` in `src/ui/UIScale.js` (full size from 1920×900 up).
+- [ ] **Chat stays open** (2026-11-18). ⚙️ → 💬 *Mantener el chat abierto al enviar*: Enter sends and you
+      keep typing; Enter on an empty box or Esc returns to the game. Remembered after a reload.
+- [ ] **Twitch on the projector** (2026-11-18). Paste a live channel (`twitch.tv/<canal>`) and a past
+      broadcast (`twitch.tv/videos/<id>`): it plays, the volume follows distance and the ⚙️ slider,
+      pause/resume work for both (the VOD resumes at the shared position in two windows), switching
+      back to a YouTube link works. A clip link shows the "no clips" message. Also try it on the live
+      domain (Twitch's `parent` check) and, later, inside the forum embed.
+- [ ] **Projector through walls** (2026-11-18). With a video on in Gamedev, stand on the road behind its
+      screen wall, then inside Offtopic by the shared side: now faint (≈5 % with both doors open, 1 %
+      shut; was 27-50 %). At Gamedev's open door it should still be clearly audible.
 - [ ] **Muffled music from outside.** Enter Gamedev, wait for El Fary, walk out (door open) onto the plaza,
       then close the door (`F`) and walk across to Desarrollo's door. Expected: clear inside; slightly dull
       with the door open; clearly muffled (bassy, quieter) with it closed; smooth transitions, no clicks.

@@ -2,7 +2,9 @@
 // openAt(x, y, items, { onBack }) with items [{ icon, label, onSelect }]:
 // picking one closes the ring and runs it; the middle button closes it (or
 // goes back a level). Esc or a click elsewhere closes it too.
-const MARGIN = 120; // keeps the whole ring inside the window
+import { getUIScale } from './UIScale';
+
+const MARGIN = 120; // keeps the whole ring inside the window (at full UI scale)
 
 export class RadialMenu {
     constructor() {
@@ -21,11 +23,16 @@ export class RadialMenu {
         });
     }
 
+    // x, y in viewport pixels (clientX/Y); so are the ones passed on to onSelect/onBack.
     openAt(x, y, items, { onBack } = {}) {
-        const left = Math.min(Math.max(MARGIN, x), window.innerWidth - MARGIN);
-        const top = Math.min(Math.max(MARGIN, y), window.innerHeight - MARGIN);
-        this.element.style.left = `${left}px`;
-        this.element.style.top = `${top}px`;
+        // The ring is zoomed with the HUD (--ui-scale): its CSS pixels are
+        // `scale` viewport pixels.
+        const scale = getUIScale();
+        const margin = MARGIN * scale;
+        const left = Math.min(Math.max(margin, x), window.innerWidth - margin);
+        const top = Math.min(Math.max(margin, y), window.innerHeight - margin);
+        this.element.style.left = `${left / scale}px`;
+        this.element.style.top = `${top / scale}px`;
         this.element.replaceChildren();
 
         const radius = items.length > 4 ? 92 : 68;

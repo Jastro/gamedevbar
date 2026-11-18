@@ -48,10 +48,13 @@ bar/           drinks (menu, alcohol, decay math shared with the server), DrinkS
 interactions/  one file per clickable type: seat, radio, arcade, door, barTap, bathroom fixtures, player
                (click an avatar → ui/ProfileUI)…
 audio/         OcclusionChain (wall/door muffling shared by radios and voices)
+media/         youtube + twitch (API loaders, link parsing), ScreenPlayers (one player interface over
+               both embeds, used by the projector)
 voice/         VoiceChat (mesh, PTT, positional voices), VoicePeer (one RTCPeerConnection)
 ui/            StartScreen, LoadingScreen, ModelSelector, RoomSelector, CustomizeUI (👤 menu),
                ControlsHelpUI (❔ panel: the list of every control, keep it in sync), ChatUI,
-               EmotesUI, RadialMenu (right click), VoiceUI, VoiceSettingsUI, RadioUI, ProjectorUI, VirconUI, FloatingPanel
+               EmotesUI, RadialMenu (right click), VoiceUI, VoiceSettingsUI, RadioUI, ProjectorUI, VirconUI, FloatingPanel,
+               UIScale (--ui-scale: the HUD shrinks with small windows; see index.html's `zoom` rule)
 ```
 
 Flow: `Game` builds every system in its constructor. The path picks the entry: `/<roomId>`
