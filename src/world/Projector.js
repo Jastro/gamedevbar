@@ -268,6 +268,25 @@ export class Projector {
         return this.group.localToWorld(new THREE.Vector3(0, 0, 0));
     }
 
+    // "Tocar la pantalla": the embed takes the mouse (to accept Twitch's or
+    // YouTube's own prompts: mature content, unmute, start watching).
+    setInteractive(interactive) {
+        this.playerElement.classList.toggle('interactive', interactive);
+    }
+
+    // A camera straight in front of the screen, close enough to fill most of
+    // the view (like the arcade cabinets' play view).
+    getViewpoint(camera) {
+        const halfTan = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+        const fitHeight = (SCREEN_HEIGHT / 2) / halfTan;
+        const fitWidth = (SCREEN_WIDTH / 2) / (halfTan * camera.aspect);
+        const distance = Math.max(fitHeight, fitWidth) / 0.92;
+        return {
+            position: this.group.localToWorld(new THREE.Vector3(0, 0, distance)),
+            lookAt: this.getWorldCenter()
+        };
+    }
+
     // How far the sound travels to the listener. Outside the room it goes out
     // through the door (and in through the listener's bar's door), not
     // through the wall: next to the screen's wall, outside or in the bar next

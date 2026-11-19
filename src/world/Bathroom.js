@@ -415,6 +415,31 @@ export class Bathroom {
         return this.room.toWorld(x, y, z);
     }
 
+    // The mirror's first frame used to freeze the game for a moment: drawing
+    // the scene into its texture needs other shader variants of every
+    // material in view (no tone mapping, linear color), compiled right then.
+    // Compile them beforehand, in the background (compileAsync), once, when
+    // the player walks into this bar (BathroomSync).
+    warmMirror(renderer, scene, camera) {
+        if (this.mirrorWarmed || !renderer?.compileAsync) return;
+        this.mirrorWarmed = true;
+        const wasVisible = this.mirror.visible;
+        const target = renderer.getRenderTarget();
+        this.mirror.visible = true;
+        try {
+            // The mirror's own material, as drawn on screen.
+            renderer.compileAsync(scene, camera).catch(() => {});
+            // Everything else, as the mirror draws it into its texture.
+            renderer.setRenderTarget(this.mirror.getRenderTarget());
+            renderer.compileAsync(scene, camera).catch(() => {});
+        } catch (error) {
+            console.warn('Bathroom: mirror warm-up failed', error);
+        } finally {
+            renderer.setRenderTarget(target);
+            this.mirror.visible = wasVisible;
+        }
+    }
+
     // Whether the local player is in here: the mirror (an extra render of the
     // scene) only matters then.
     setLocalInside(inside) {

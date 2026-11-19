@@ -20,7 +20,8 @@
     #emotes-panel,
     #race-hud,
     #car-countdown,
-    #webgame-exit {
+    #webgame-exit,
+    #projector-exit {
       zoom: var(--ui-scale);
     }
 
@@ -983,8 +984,15 @@
       pointer-events: auto;
     }
 
-    body.webgame-playing #webgl-layer {
+    body.webgame-playing #webgl-layer,
+    body.screen-touching #webgl-layer {
       pointer-events: none;
+    }
+
+    /* "Tocar la pantalla": the projector's embed takes the mouse. */
+    .projector-video.interactive,
+    .projector-video.interactive iframe {
+      pointer-events: auto;
     }
 
     #fade-overlay {
@@ -1040,7 +1048,8 @@
       font-weight: 800;
     }
 
-    #webgame-exit {
+    #webgame-exit,
+    #projector-exit {
       position: fixed;
       top: 16px;
       right: 16px;
@@ -1050,7 +1059,9 @@
     }
 
     #webgame-exit a,
-    #webgame-exit button {
+    #webgame-exit button,
+    #projector-exit a,
+    #projector-exit button {
       padding: 8px 14px;
       border: none;
       border-radius: 8px;
@@ -1061,7 +1072,8 @@
       cursor: pointer;
     }
 
-    #webgame-exit button {
+    #webgame-exit button,
+    #projector-exit button {
       background: #dc5a0b;
     }
 

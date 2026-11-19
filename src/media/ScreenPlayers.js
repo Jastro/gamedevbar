@@ -135,8 +135,14 @@ class TwitchScreenPlayer extends ScreenPlayer {
         const Twitch = await loadTwitchApi();
         await waitAttached(this.container);
         if (this.destroyed) return;
+        // Twitch puts its iframe *inside* this element (YouTube replaces
+        // it), so it must fill the screen: with no height the iframe's
+        // height: 100% fell back to the browser's default 150 px and the
+        // stream showed in a strip at the top of the screen.
         const host = document.createElement('div');
         host.id = `twitch-screen-${++twitchElementCount}`;
+        host.style.width = '100%';
+        host.style.height = '100%';
         this.container.appendChild(host);
         this.lastVolume = null;
         this.reportedOffline = false;
@@ -164,6 +170,14 @@ class TwitchScreenPlayer extends ScreenPlayer {
         this.player.addEventListener(Twitch.Player.ONLINE, () => {
             this.reportedOffline = false;
         });
+        // Twitch wants a click on its own player (autoplay with sound blocked).
+        if (Twitch.Player.PLAYBACK_BLOCKED) {
+            this.player.addEventListener(Twitch.Player.PLAYBACK_BLOCKED, () => {
+                if (this.destroyed || this.reportedBlocked) return;
+                this.reportedBlocked = true;
+                this.onError?.('Twitch pide confirmación: abre el proyector y pulsa «🖱️ Tocar la pantalla»');
+            });
+        }
     }
 
     mediaOptions(media) {

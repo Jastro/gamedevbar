@@ -12,6 +12,7 @@ export const FIELD_Y = 1.05;
 const ROD_Y = FIELD_Y + 0.2;
 const WALL_HEIGHT = 0.22;
 const ROD_OVERHANG = 0.45;   // rod length past each side of the field
+const BLOCKER_HEIGHT = 2.4;  // above any jump: nobody gets onto the table
 // Players' feet from the table's center line: clear of the blocker (handles
 // included), or they'd be stuck in it when they walk off.
 export const STAND_DISTANCE = 1.5;
@@ -181,12 +182,16 @@ export class Foosball {
         this.group = group;
         this.room.add(group);
         group.updateMatrixWorld(true);
-        // Blocks walking (handles included), and you can't jump onto it.
+        // Blocks walking (handles included), and you can't jump onto it: the
+        // invisible box goes higher than a jump lifts your feet (≈1.5, see
+        // LocalPlayer JUMP_SPEED/GRAVITY); at the table's own height a jump
+        // cleared it and you could stand on the rods.
+        const blockerHeight = Math.max(FIELD_Y + WALL_HEIGHT, BLOCKER_HEIGHT);
         const blocker = new THREE.Mesh(
-            new THREE.BoxGeometry(length + 0.3, FIELD_Y + WALL_HEIGHT, width + ROD_OVERHANG * 2 - 0.1),
+            new THREE.BoxGeometry(length + 0.3, blockerHeight, width + ROD_OVERHANG * 2 - 0.1),
             new THREE.MeshBasicMaterial({ visible: false })
         );
-        blocker.position.y = (FIELD_Y + WALL_HEIGHT) / 2;
+        blocker.position.y = blockerHeight / 2;
         blocker.raycast = () => {};
         group.add(blocker);
         blocker.updateMatrixWorld(true);

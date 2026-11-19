@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils';
 import { ROOMS, ROOM_HALF_WIDTH, ROOM_HALF_DEPTH } from './RoomLayout';
 import { playSynth } from '../audio/synth';
+import { renderRain } from '../audio/rain';
 import { regionUniforms, clipToOutdoors, LAMP_MAX } from '../rendering/RegionLights';
 
 // Real time and weather in Madrid (server: server/features/weather.js).
@@ -31,7 +32,12 @@ const LAMP_COLOR = new THREE.Color(0xffd590);
 const LAMP_HEIGHT = 5;
 const LAMP_INTENSITY = 14;
 const LAMP_DISTANCE = 26;
-const RAIN_VOLUME = { outside: 0.2, inside: 0.035 }; // lowered 2026-11-18 (was 0.35 / 0.06)
+// Rain sound (src/audio/rain.js: drops on a soft bed), times the ⚙️ 🌧️ slider
+// (audioSettings 'weather', which also scales thunder). About as loud as the
+// old white-noise hiss at 0.1 / 0.018 (2026-11-19); inside, through the roof,
+// it's also low-passed.
+const RAIN_VOLUME = { outside: 0.18, inside: 0.03 };
+const RAIN_TONE = { outside: 2600, inside: 700 }; // low-pass Hz (darker 2026-11-19: highs sounded like chimes)
 
 // WMO weather codes → what we draw.
 export function weatherKind(code) {
@@ -219,23 +225,29 @@ export class Weather {
         scene.add(this.snow);
     }
 
-    // A looping hiss, built once the audio listener exists.
+    // The player's weather volume (⚙️ → 🌧️ Lluvia), 0..1.
+    weatherVolume() {
+        return this.game.audioSettings?.get('weather') ?? 1;
+    }
+
+    // The rain loop (drops on a soft bed, stereo), built once the audio
+    // listener exists.
     ensureRainSound() {
         const listener = this.game.environment.audioListener;
         if (this.rainSound || !listener) return;
         const context = listener.context;
-        const length = context.sampleRate * 2;
-        const buffer = context.createBuffer(1, length, context.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
+        const channels = renderRain(context.sampleRate);
+        const buffer = context.createBuffer(2, channels[0].length, context.sampleRate);
+        channels.forEach((data, i) => buffer.copyToChannel(data, i));
         this.rainSound = new THREE.Audio(listener);
         this.rainSound.setBuffer(buffer);
         this.rainSound.setLoop(true);
         this.rainSound.setVolume(0);
-        const filter = context.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 1600;
-        this.rainSound.setFilter(filter);
+        this.rainFilter = context.createBiquadFilter();
+        this.rainFilter.type = 'lowpass';
+        this.rainFilter.Q.value = 0.5;
+        this.rainFilter.frequency.value = RAIN_TONE.outside;
+        this.rainSound.setFilter(this.rainFilter);
     }
 
     // --- Per frame -----------------------------------------------------------
@@ -258,7 +270,8 @@ export class Weather {
                 this.flash = 1;
                 const camera = this.game.camera.getCamera();
                 const listener = this.game.environment.audioListener;
-                setTimeout(() => playSynth(listener, camera, new THREE.Vector3(0, 0, -2), 'thunder', 5), 700);
+                const gain = this.weatherVolume();
+                if (gain > 0) setTimeout(() => playSynth(listener, camera, new THREE.Vector3(0, 0, -2), 'thunder', 5, gain), 700);
             }
         }
 
@@ -289,10 +302,15 @@ export class Weather {
         this.ensureRainSound();
         if (this.rainSound) {
             const strength = raining ? (kind === 'drizzle' ? 0.4 : 1) : 0;
-            const volume = strength * (this.outside ? RAIN_VOLUME.outside : RAIN_VOLUME.inside);
+            const volume = strength * (this.outside ? RAIN_VOLUME.outside : RAIN_VOLUME.inside) * this.weatherVolume();
             if (volume > 0 && !this.rainSound.isPlaying && this.rainSound.context.state === 'running') this.rainSound.play();
             if (volume === 0 && this.rainSound.isPlaying) this.rainSound.stop();
             this.rainSound.setVolume(volume);
+            const tone = this.outside ? RAIN_TONE.outside : RAIN_TONE.inside;
+            if (tone !== this.rainTone) {
+                this.rainTone = tone;
+                this.rainFilter.frequency.setTargetAtTime(tone, this.rainSound.context.currentTime, 0.15);
+            }
         }
     }
 

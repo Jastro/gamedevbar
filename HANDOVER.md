@@ -31,7 +31,20 @@ Docs: [Architecture](Docs/Architecture.md), [Systems](Docs/Systems.md), [Protoco
   platforms blocked any body below their top, however high they hang; now they only block a body
   reaching past their bottom (`CollisionManager`), which also frees the floor under the gallery tables.
   Chat log resizable from its top-right corner (min 300×150, remembered, double click resets), text
-  wraps to any width. Rain, birds and crickets quieter. **Checked in a local Chrome on the real game:**
+  wraps to any width. Rain, birds and crickets quieter; rain lowered again (0.1 / 0.018) and a ⚙️ 🌧️
+  Lluvia volume slider for rain and thunder (`audioSettings` 'weather', `playSynth` got a `gain`).
+  Futbolín can't be climbed: its invisible blocker is 2.4 high (a jump lifts the feet ≈1.5; at the
+  table's own 1.27 you could hop on).
+- 2026-11-19 Rain is drops on a soft bed (`src/audio/rain.js`) instead of white noise, muffled inside.
+  Twitch on the projector filled only a 150 px strip (its iframe sits inside our holder div, which had
+  no height): fixed. New 🖱️ Tocar la pantalla mode on the projector to click Twitch/YouTube prompts
+  (content warnings, unmute). **Checked in a local Chrome:** a Twitch channel fills the screen, touch
+  mode hands the mouse to the iframe and gives it back; rain rendered offline (spectrogram + preview
+  WAV) and the slider scales it in game.
+- 2026-11-19 The lag spike entering a toilet was the mirror's first frame compiling 13 shader variants
+  (render-target versions of every material in view); `Bathroom.warmMirror` compiles them in the
+  background when you enter the bar. **Measured in a local Chrome:** 0 new programs on entering, first
+  frame inside like any other (was ~5x); entering the bar costs one slightly longer frame. **Checked in a local Chrome on the real game:**
   probe in front of all four doors (only wall and door left), terrace tables still block up there,
   chat drag/min/persist/fit/reset and rewrap; `vite build` passes.
 - 2026-10-25 Spotlights at night on the fountain (from the Mediavida mast) and the guillotine (a post

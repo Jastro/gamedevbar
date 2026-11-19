@@ -109,14 +109,15 @@ const RECIPES = {
 };
 
 // Plays a recipe at `position` inside `parent` (an object in the scene).
-export function playSynth(listener, parent, position, name, refDistance = 3) {
+// gain: a multiplier on the recipe's volume (e.g. a player's volume setting).
+export function playSynth(listener, parent, position, name, refDistance = 3, gain = 1) {
     const recipe = RECIPES[name];
     if (!listener || !recipe) return;
     const context = listener.context;
     const sound = new THREE.PositionalAudio(listener);
     sound.setBuffer(noiseBuffer(context, name, recipe.duration, recipe.envelope));
     sound.setRefDistance(refDistance);
-    sound.setVolume(recipe.volume);
+    sound.setVolume(recipe.volume * gain);
     const filter = context.createBiquadFilter();
     filter.type = recipe.filter.type;
     filter.Q.value = recipe.filter.q;

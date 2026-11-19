@@ -150,6 +150,10 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   - The handle on the tank flushes: a whoosh, and the bowl's content spins away.
   - The other sounds are synthesized noise (`src/audio/synth.js`), so there are no new files.
 - **Sink:** washes your hands. The mirror above it is a `Reflector`, rendered only while you're inside.
+  Its first frame used to freeze the game ~1 s (drawing into its texture needs other shader variants of
+  every material in view, 13 here): `Bathroom.warmMirror` compiles them in the background
+  (`renderer.compileAsync` with the mirror's render target set) once, when you walk into that bar
+  (`BathroomSync.update`). While you're inside, the mirror still draws the scene a second time each frame.
   Its shaders (and what it reflects) compile once as you enter the bar (`Game.warmUpBathrooms`: each
   bathroom drawn once from inside), and the walls' drawings upload on joining, so stepping into the
   cubicle doesn't hitch (it was ~120 ms).
@@ -259,7 +263,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
   each road a little out from the plaza and along the ring road's outer edge (18). Every lamp casts a
   soft additive glow on the ground (not drawn inside a bar: `clipToOutdoors`). Their light is not
   three.js lights (each would cost every lit material): `RegionLights` lights outside pixels from every
-  lamp (up to 32) in the material shader, so all lamps light at once and none reach into a bar. Rain has a looping hiss, quieter inside (`RAIN_VOLUME` 0.2 / 0.035, lowered 2026-11-18).
+  lamp (up to 32) in the material shader, so all lamps light at once and none reach into a bar. Rain sound (`src/audio/rain.js`, 2026-11-19): a 6 s stereo loop of drops (short low taps, 380-1000 Hz: a few cycles of an upward chirp plus a dull noise patter; mostly small, a few big; higher, longer sines sounded like chimes) on a soft low bed that swells, seamless, almost nothing above 2 kHz; `RAIN_VOLUME` 0.18 outside / 0.03 inside (about the loudness of the old white-noise hiss at its lowered level) and `RAIN_TONE` low-pass 1900 / 700 Hz (inside it's heard through the roof), times the ⚙️ 🌧️ Lluvia slider, which also scales the thunder.
 - **Clock:** above the door inside each bar (`WallClock.js`): *your* local time (browser) and *your*
   weather (`LocalWeather.js`): the browser asks once for your location, rounded to ~10 km, kept a day,
   and fetched from Open-Meteo straight from your browser ("Tu zona"). Denied: the Canary timezone gets
@@ -411,6 +415,7 @@ The three bar paintings over that corner were raised to y 4.6 so they clear the 
 
 - **Table** on the left side of each bar (`src/world/Foosball.js`, room-local (-9.5, 0, -1.5), turned 90°:
   it runs front to back, players stand left and right of it). Table space has its own frame (below).
+  Its invisible blocker is 2.4 high, above any jump, so nobody gets onto the table.
   Layout (pitch, goals, 8 rods, men, ball) in `server/shared/foosball.json`, read by both sides.
 - **Joining:** F on one long side joins that side's team (🔴 red at +z, 🔵 blue at -z), 2 per team. Alone
   you move all 4 of your rods; with a partner, the back player has goalie + defense, the front one
@@ -649,7 +654,7 @@ corner resets it). Messages wrap to whatever width (`overflow-wrap: anywhere`, l
 ⚙️ (next to the mic button) also has a 💬 Chat option, *Mantener el chat abierto al enviar*
 (`ChatUI.keepOpen`, `localStorage` `chatKeepOpen`): Enter sends and the box keeps the focus; Enter on an
 empty box or Esc goes back to the game. It also has per-player volume sliders: 📻 radio, 📽️ projector, 🗣️ voices,
-🕹️ arcade (`src/audio/AudioSettings.js`, saved in `localStorage` `audioVolumes`, 0-100 %).
+🕹️ arcade, 🌧️ rain (rain hiss and thunder) (`src/audio/AudioSettings.js`, saved in `localStorage` `audioVolumes`, 0-100 %).
 - Radios multiply their `PositionalAudio` volume, projectors their YouTube volume, and voices their
   `PositionalAudio` gain.
 - Arcade drives:
@@ -674,7 +679,17 @@ Players: `src/media/ScreenPlayers.js` wraps the YouTube IFrame API (`youtube.js`
 API (`twitch.js`, `player.twitch.tv/js/embed/v1.js`) behind one interface; the projector swaps the
 player when the provider family changes and drops it when turned off. Twitch needs every page domain
 in `parent` (ours, plus the forum's if embedded: `twitchParents()`). A live channel can't seek, so it
-only follows play/pause; a channel that isn't live is reported once in chat.
+only follows play/pause; a channel that isn't live is reported once in chat. Twitch nests its iframe in our
+holder div (YouTube replaces it), so that div is sized 100% × 100% (without it the stream showed in a
+150 px strip at the top).
+
+**🖱️ Tocar la pantalla** (panel button): Twitch and YouTube show prompts on their own player that need a
+click (content warnings, click to unmute, start watching), and the iframe normally gets no mouse. This
+mode (`ProjectorUI.startTouch`) puts the camera square on the screen (`Projector.getViewpoint`), sets
+`playMode` (no walking), gives the embed the mouse (`.projector-video.interactive`, `body.screen-touching`
+lets clicks through the WebGL canvas, like the web-game cabinets) and shows an exit bar (`#projector-exit`:
+open on Twitch/YouTube, ✕ Salir; Esc too). Each viewer accepts on their own screen. Twitch's
+`PLAYBACK_BLOCKED` puts a hint in chat once.
 
 Sync: the server keeps `{ videoId, startedAt, pausedAt }` per room (server clock). Clients estimate the
 server clock (`src/network/ServerClock.js`, from `init` and every projector message), play from

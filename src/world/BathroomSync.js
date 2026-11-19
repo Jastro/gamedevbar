@@ -182,10 +182,15 @@ export class BathroomSync {
     update(deltaTime) {
         const { players, environment, serverClock } = this.game;
         const local = players.localPlayer;
+        const localRoom = local ? this.game.world.getRoomAt(local.position) : null;
         this.bathrooms.forEach(bathroom => {
             bathroom.listener = environment.audioListener;
             bathroom.update(deltaTime, serverClock);
             bathroom.setLocalInside(Boolean(local && bathroom.containsPoint(local.position)));
+            // In its bar: get the mirror's shaders ready before anyone walks in.
+            if (localRoom && localRoom === bathroom.room && !bathroom.mirrorWarmed) {
+                bathroom.warmMirror(this.game.renderer?.renderer, this.game.scene.getScene(), this.game.camera.getCamera());
+            }
         });
         // Walked out with the toilet panel open: it no longer applies.
         if (this.panel.isOpen && this.panelBathroom && !this.isInside(this.panelBathroom)) this.panel.close();

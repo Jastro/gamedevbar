@@ -6,8 +6,19 @@ multiplayer checks). Delete items once resolved; turn notes into tasks in HANDOV
 - [ ] **Chat resize** (2026-11-18). Drag the chat's top-right corner: it grows up/right, can't go under
       the minimum or over the buttons, the input below follows, text rewraps; the size survives a reload;
       double click on the corner resets it.
-- [ ] **Quieter rain and nature** (2026-11-18). Rain ≈ -5 dB, birds ≈ -5 dB, crickets ≈ -3 dB. Enough?
+- [ ] **Quieter rain and nature** (2026-11-18/19). Rain ≈ -11 dB from the original, birds ≈ -5 dB, crickets
+      ≈ -3 dB, and ⚙️ → 🌧️ Lluvia scales rain and thunder per player (0 = silent). Enough?
       (`RAIN_VOLUME` in `Weather.js`, `VOLUME` in `Soundscape.js`.)
+- [ ] **No hitch entering the toilet** (2026-11-19). Walk into a bar, then into its bathroom: no freeze at
+      the door (the mirror's shaders are compiled when you enter the bar). Also no new hitch entering the bar.
+- [ ] **New rain sound** (2026-11-19): drops instead of white noise. Soothing? Loud enough outside,
+      muffled inside? Tune `DROPS_PER_SECOND` / levels in `src/audio/rain.js`, `RAIN_VOLUME` / `RAIN_TONE`
+      in `Weather.js`.
+- [ ] **Twitch fills the screen + 🖱️ Tocar la pantalla** (2026-11-19). A live channel fills the whole
+      projector (was a strip at the top). If Twitch shows a warning/"start watching"/unmute: panel →
+      🖱️ Tocar la pantalla → click it → ✕ Salir; you can't walk meanwhile, Esc also exits.
+- [ ] **Futbolín can't be climbed** (2026-11-19). Jump at it from every side: you bounce off its edge
+      and never stand on it; the rods still work from both sides.
 - [ ] **No wall left of the doors** (2026-11-18). Walk along each bar's front, left of the door seen from
       the plaza (under the terrace tables): nothing stops you. Up on the terrace the tables still block.
 - [ ] **HUD scale** (2026-11-18). At your usual window size the chat, buttons and panels look exactly
